@@ -11,6 +11,7 @@
     "selectability",
     "collection_date",
     "trigger",
+    "missed_expected_collection_dates",
     "started_at",
     "completed_at",
     "timezone",
@@ -42,6 +43,14 @@
         "schedule",
         "workflow_dispatch"
       ]
+    },
+    "missed_expected_collection_dates": {
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/date"
+      }
     },
     "started_at": {
       "$ref": "#/$defs/utc"

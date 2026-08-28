@@ -6,10 +6,10 @@ Keep narrative docs short and link here for the full command surface.
 ## Top-level `yolozu --help`
 
 ```text
-usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,promote-image-pipeline,scout-algorithms,registry,completion,comp} ...
+usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,promote-image-pipeline,scout-algorithms,check-qualification-freshness,registry,completion,comp} ...
 
 positional arguments:
-  {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,promote-image-pipeline,scout-algorithms,registry,completion,comp}
+  {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,promote-image-pipeline,scout-algorithms,check-qualification-freshness,registry,completion,comp}
     guide               Show beginner-friendly routes and copy-paste commands.
     doctor (dr)         Check the environment. Use --explain for beginner-friendly next actions.
     list                List registries and built-in catalogs.
@@ -45,6 +45,8 @@ positional arguments:
     promote-image-pipeline
                         Review one exact Candidate-to-Experimental or Experimental-to-Stable promotion; dry-run by default.
     scout-algorithms    Plan or collect a bounded monitored-source candidate inbox (Experimental).
+    check-qualification-freshness
+                        Read active qualification expiry and governed-input drift without mutation.
     registry            AI-first tool registry: list/show/validate/run tools from the canonical manifest.
     completion (comp)   Print shell completion script (bash/zsh).
 
@@ -197,6 +199,7 @@ Contact: develop@toppymicros.com
 | check_map_targets | stable | tools/check_map_targets.py | Compare eval_suite results against a target table and exit non-zero on failure. |
 | check_mcp_settings | stable | tools/check_mcp_settings.py | Audit MCP settings by checking manifest alignment and generated MCP/Actions reference freshness. |
 | check_predictions_parity | experimental | tools/check_predictions_parity.py | Compare two prediction JSONs and report mismatches (IoU/tolerance-based). |
+| check_qualification_freshness | experimental | tools/check_qualification_freshness.py | Warn on active qualification expiry and governed drift without qualification, extension, activation, promotion, external notice, or Beads mutation. |
 | check_repo_governance | stable | tools/check_repo_governance.py | Audit repository governance posture from local workflow evidence and exported GitHub settings snapshots. |
 | check_segmentation_parity | experimental | tools/check_segmentation_parity.py | Compare two segmentation predictions artifacts and report mask-level parity mismatches. |
 | continual_decide | research | tools/continual_decide.py | Device-agnostic policy gate for continual-learning eval results that emits a promote/review/hold decision report with a research_report boundary. |

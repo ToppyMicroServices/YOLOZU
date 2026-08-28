@@ -195,6 +195,14 @@
       "schema": "docs/schemas/metrics_report.schema.json",
       "summary": "Stable metrics report schema emitted by yolozu.metrics_report.build_report()."
     },
+    "ocr_bundle_interface_json": {
+      "schema": "docs/schemas/ocr_bundle_interface.schema.json",
+      "summary": "Immutable OCR language, script, and detector/recognizer component declaration used by core; it contains no model availability or support claim."
+    },
+    "ocr_result_json": {
+      "schema": "docs/schemas/ocr_result.schema.json",
+      "summary": "Bounded successful OCR output with inert untrusted recognized text, exact quadrilateral geometry, separate confidences, mapped language/script status, pinned provenance, and content-free summaries."
+    },
     "predictions_json": {
       "schema": "docs/schemas/predictions.schema.json",
       "summary": "YOLOZU predictions JSON (list of {image,detections} or {predictions:[...],meta:{...}}).",
@@ -204,6 +212,11 @@
       "producer": "python3 tools/validate_predictions.py <path> --json",
       "schema": "docs/schemas/predictions_validation_result.schema.json",
       "summary": "Bounded machine-readable success/failure result for predictions validation."
+    },
+    "qualification_freshness_report_json": {
+      "producer": "python3 tools/check_qualification_freshness.py [--output <dir>]",
+      "schema": "docs/schemas/qualification_freshness_report.schema.json",
+      "summary": "Read-only aggregate warning for active qualification expiry or governed runtime, artifact, bundle, license, revocation, and activation drift; it never extends or re-runs evidence."
     },
     "qualification_report_json": {
       "producer": "python3 tools/qualify_image_pipeline.py --job <job.json> --input <path> --bundle-id <id> --bundle-version <version>",
@@ -3129,6 +3142,125 @@
       "tags": [
         "predictions",
         "parity"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "algorithm_bundle_registry_json",
+          "bundle_lifecycle_record_json",
+          "evidence_activation_record_json",
+          "qualification_report_json"
+        ],
+        "produces": [
+          "qualification_freshness_report_json",
+          "managed_output_checksums_json"
+        ]
+      },
+      "docs": [
+        "docs/adaptive_image_routing.md",
+        "docs/qualification_freshness.md",
+        "docs/schemas/qualification_freshness_report.schema.json",
+        "manual/chapters/04_cli_reference.tex",
+        "reports/adaptive_qualification_freshness_foundation_2026-08-29.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Only with --output, atomically publish one aggregate freshness report and checksum manifest inside the workspace.",
+            "flag": "--output",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/check_qualification_freshness.py",
+      "examples": [
+        {
+          "command": "python3 tools/check_qualification_freshness.py",
+          "description": "Read the packaged public activation state and print a no-write aggregate freshness report."
+        },
+        {
+          "command": "python3 tools/check_qualification_freshness.py --evidence-root site/evidence --output reports/qualification_freshness",
+          "description": "Write one site-confined local-only report without uploading, notifying, or mutating Beads."
+        },
+        {
+          "command": "python3 tools/check_qualification_freshness.py --help",
+          "description": "Inspect the read-only freshness monitor interface contract."
+        }
+      ],
+      "id": "check_qualification_freshness",
+      "inputs": [
+        {
+          "flag": "--evidence-root",
+          "kind": "dir",
+          "name": "evidence_root",
+          "required": false
+        },
+        {
+          "flag": "--registry-root",
+          "kind": "dir",
+          "name": "registry_root",
+          "required": false
+        },
+        {
+          "flag": "--as-of",
+          "kind": "string",
+          "name": "as_of",
+          "required": false
+        },
+        {
+          "flag": "--missed-run-date",
+          "kind": "string",
+          "name": "missed_run_date",
+          "required": false
+        },
+        {
+          "flag": "--output",
+          "kind": "dir",
+          "name": "output",
+          "required": false
+        },
+        {
+          "default": ".",
+          "flag": "--workspace",
+          "kind": "dir",
+          "name": "workspace",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "stdout or <output>/qualification_freshness_report.json",
+          "description": "Aggregate public-ID or site-local expiry/drift rows with explicit unknown/conflict states and no raw telemetry.",
+          "kind": "file",
+          "name": "qualification_freshness_report"
+        },
+        {
+          "default": "<output>/checksums.json when --output is used",
+          "description": "Code-owned checksum manifest for the managed report.",
+          "kind": "file",
+          "name": "checksums"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false
+      },
+      "runner": "python3",
+      "summary": "Warn on active qualification expiry and governed drift without qualification, extension, activation, promotion, external notice, or Beads mutation.",
+      "tags": [
+        "adaptive-inference",
+        "automation",
+        "evidence",
+        "qualification"
       ]
     },
     {
@@ -17808,6 +17940,12 @@
           "kind": "string",
           "name": "trigger",
           "required": true
+        },
+        {
+          "flag": "--missed-collection-date",
+          "kind": "string",
+          "name": "missed_collection_date",
+          "required": false
         },
         {
           "default": ".",

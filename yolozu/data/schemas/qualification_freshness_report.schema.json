@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/qualification_freshness_report.schema.json",
+  "title": "YOLOZU qualification freshness report v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schema_version",
+    "collected_at",
+    "timezone",
+    "scheduled_timezone",
+    "source_trust_domain",
+    "source_scope",
+    "upload_eligible",
+    "missed_expected_run_dates",
+    "rows",
+    "summary",
+    "retention",
+    "automation_caveat"
+  ],
+  "properties": {
+    "kind": { "const": "qualification_freshness_report" },
+    "schema_version": { "const": 1 },
+    "collected_at": { "$ref": "#/$defs/utc" },
+    "timezone": { "const": "UTC" },
+    "scheduled_timezone": { "const": "Asia/Tokyo" },
+    "source_trust_domain": {
+      "enum": ["yolozu_managed", "site_managed", "operator_asserted", "unknown"]
+    },
+    "source_scope": {
+      "enum": ["repository_owned_public_ids_only", "site_confined_local_only"]
+    },
+    "upload_eligible": { "type": "boolean" },
+    "missed_expected_run_dates": {
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/date" }
+    },
+    "rows": {
+      "type": "array",
+      "maxItems": 8192,
+      "items": { "$ref": "#/$defs/row" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["active_or_problem_rows", "action_required_rows", "state_counts"],
+      "properties": {
+        "active_or_problem_rows": { "$ref": "#/$defs/nonnegative" },
+        "action_required_rows": { "$ref": "#/$defs/nonnegative" },
+        "state_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ok", "due_30", "due_14", "due_7", "expired",
+            "runtime_drift", "artifact_or_bundle_drift", "conflict", "unknown"
+          ],
+          "properties": {
+            "ok": { "$ref": "#/$defs/nonnegative" },
+            "due_30": { "$ref": "#/$defs/nonnegative" },
+            "due_14": { "$ref": "#/$defs/nonnegative" },
+            "due_7": { "$ref": "#/$defs/nonnegative" },
+            "expired": { "$ref": "#/$defs/nonnegative" },
+            "runtime_drift": { "$ref": "#/$defs/nonnegative" },
+            "artifact_or_bundle_drift": { "$ref": "#/$defs/nonnegative" },
+            "conflict": { "$ref": "#/$defs/nonnegative" },
+            "unknown": { "$ref": "#/$defs/nonnegative" }
+          }
+        }
+      }
+    },
+    "retention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository_artifact_days", "site_output", "raw_performance_or_host_data"],
+      "properties": {
+        "repository_artifact_days": { "const": 30 },
+        "site_output": { "const": "user_owned_local_only" },
+        "raw_performance_or_host_data": { "const": "not_collected" }
+      }
+    },
+    "automation_caveat": { "type": "string", "minLength": 1, "maxLength": 512 }
+  },
+  "$defs": {
+    "sha256_or_null": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "id_or_null": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"
+    },
+    "utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "nonnegative": { "type": "integer", "minimum": 0 },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selection_key", "report_id", "report_digest", "bundle_spec_digest",
+        "artifact_set_digest", "valid_until", "days_remaining", "state", "reason_codes"
+      ],
+      "properties": {
+        "selection_key": { "$ref": "#/$defs/sha256_or_null" },
+        "report_id": { "$ref": "#/$defs/id_or_null" },
+        "report_digest": { "$ref": "#/$defs/sha256_or_null" },
+        "bundle_spec_digest": { "$ref": "#/$defs/sha256_or_null" },
+        "artifact_set_digest": { "$ref": "#/$defs/sha256_or_null" },
+        "valid_until": {
+          "oneOf": [{ "$ref": "#/$defs/utc" }, { "type": "null" }]
+        },
+        "days_remaining": { "type": ["integer", "null"], "minimum": 0 },
+        "state": {
+          "enum": [
+            "ok", "due_30", "due_14", "due_7", "expired", "runtime_drift",
+            "artifact_or_bundle_drift", "conflict", "unknown"
+          ]
+        },
+        "reason_codes": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$"
+          }
+        }
+      }
+    }
+  }
+}

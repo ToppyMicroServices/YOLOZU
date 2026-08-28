@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">140 manifest entries with declared maturity, inputs,
+  <p class="lead">141 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -379,6 +379,22 @@ python3 tools/check_mcp_settings.py --strict --output reports/mcp_settings_check
   <h3>Examples</h3>
   <pre><code>python3 tools/check_predictions_parity.py --reference reports/pred_ref.json --candidate reports/pred_cand.json --image-size 640 --iou-thresh 0.99 --score-atol 1e-4 --bbox-atol 1e-4</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/check_predictions_parity.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/onnx_export_parity.md" target="_blank" rel="noopener noreferrer">onnx_export_parity.md</a></p>
+</details>
+
+<details class="card" id="tool-check-qualification-freshness" data-tool-id="check_qualification_freshness"
+  data-search-card data-search-text="check_qualification_freshness Warn on active qualification expiry and governed drift without qualification, extension, activation, promotion, external notice, or Beads mutation. experimental tools/check_qualification_freshness.py python3 tools/check_qualification_freshness.py python3 tools/check_qualification_freshness.py --evidence-root site/evidence --output reports/qualification_freshness python3 tools/check_qualification_freshness.py --help">
+  <summary><code>check_qualification_freshness</code> — Warn on active qualification expiry and governed drift without qualification, extension, activation, promotion, external notice, or Beads mutation.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>tools/check_qualification_freshness.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--evidence-root</code> — dir</li><li><code>--registry-root</code> — dir</li><li><code>--as-of</code> — string</li><li><code>--missed-run-date</code> — string</li><li><code>--output</code> — dir</li><li><code>--workspace</code> — default=., dir</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/check_qualification_freshness.py
+python3 tools/check_qualification_freshness.py --evidence-root site/evidence --output reports/qualification_freshness
+python3 tools/check_qualification_freshness.py --help</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/check_qualification_freshness.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/adaptive_image_routing.md" target="_blank" rel="noopener noreferrer">adaptive_image_routing.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/qualification_freshness.md" target="_blank" rel="noopener noreferrer">qualification_freshness.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/qualification_freshness_report.schema.json" target="_blank" rel="noopener noreferrer">qualification_freshness_report.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/04_cli_reference.tex" target="_blank" rel="noopener noreferrer">04_cli_reference.tex</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/adaptive_qualification_freshness_foundation_2026-08-29.md" target="_blank" rel="noopener noreferrer">adaptive_qualification_freshness_foundation_2026-08-29.md</a></p>
 </details>
 
 <details class="card" id="tool-check-repo-governance" data-tool-id="check_repo_governance"
@@ -1816,7 +1832,7 @@ python3 tools/run_ttt_evidence_suite.py -d data/coco128 -x /path/to/shifted -c /
     <span><code>tools/scout_algorithms.py</code></span>
   </div>
   <h3>Inputs</h3>
-  <ul class="check-list"><li><code>--sources</code> — required, file</li><li><code>--output-dir</code> — required, dir</li><li><code>--collection-date</code> — required, string</li><li><code>--trigger</code> — required, string</li><li><code>--workspace</code> — default=., dir</li><li><code>--collect</code> — string</li></ul>
+  <ul class="check-list"><li><code>--sources</code> — required, file</li><li><code>--output-dir</code> — required, dir</li><li><code>--collection-date</code> — required, string</li><li><code>--trigger</code> — required, string</li><li><code>--missed-collection-date</code> — string</li><li><code>--workspace</code> — default=., dir</li><li><code>--collect</code> — string</li></ul>
   <h3>Examples</h3>
   <pre><code>python3 tools/scout_algorithms.py --sources docs/algorithm_intake/sources.json --output-dir reports/algorithm_scout --collection-date 2026-08-26 --trigger workflow_dispatch
 python3 tools/scout_algorithms.py --sources docs/algorithm_intake/sources.json --output-dir reports/algorithm_scout --collection-date 2026-08-26 --trigger workflow_dispatch --collect

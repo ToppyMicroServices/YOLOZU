@@ -59,19 +59,26 @@ The environment-qualified local image-processing program targets an Experimental
   reviewed interface contract for exact global maintenance and explicit same-family
   per-channel rollback. It never mutates from metrics alone, and no canonical
   lifecycle event was added with the interface. A bounded non-executing candidate-screening provider derives pass,
-  hold, or reject before selection. Its packaged stream is empty; custom input
-  stays operator-asserted and cannot satisfy the managed-pass gate. A file-free
+  hold, or reject before selection. Its packaged stream has two current hold
+  records and no pass; custom input stays operator-asserted and cannot satisfy
+  the managed-pass gate. A file-free
   pure selector evaluates already validated records, and the MCP-only
   `recommend_image_pipeline` tool exposes its bounded read-only
   recommendation path. MCP-only `process_images` adds pinned revalidation,
   dry-run-by-default execution gating, and bounded managed output publication.
   The packaged registry contains three non-promoted Candidate baselines with
-  unbound execution. The screening/evidence streams and runner maps are empty, so the
+  unbound execution. The support/evidence streams and runner maps are empty, so the
   default response records `maturity_disallowed`, abstains, and cannot run a real
   adaptive model.
 - Monitored-source inbox: [`algorithm_intake/README.md`](algorithm_intake/README.md).
   `yolozu scout-algorithms` is network-free and write-free by default. Explicit
   collection produces only a dated nonselectable candidate report.
+- Qualification freshness: [`qualification_freshness.md`](qualification_freshness.md).
+  The weekly public monitor and explicit local-only site mode warn on expiry or
+  governed drift without extending evidence or mutating Beads.
+- OCR contract-only foundation: [`ocr_interface_contract.md`](ocr_interface_contract.md).
+  Recognized text remains inert untrusted user output, separate from detection
+  labels. No OCR model, adapter, document parser, or support claim is shipped.
 
 ## Primary Focus
 

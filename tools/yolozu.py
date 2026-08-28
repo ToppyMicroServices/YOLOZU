@@ -56,6 +56,7 @@ _PKG_PASSTHROUGH_COMMANDS = {
     "review-image-pipeline-support-profiles",
     "update-image-pipeline-lifecycle",
     "scout-algorithms",
+    "check-qualification-freshness",
     "resources",
     "test",
     "train",

@@ -44,7 +44,11 @@ jobs:
             tests.test_adaptive_environment_profile \
             tests.test_adaptive_bundle_registry \
             tests.test_adaptive_algorithm_scout \
+            tests.test_algorithm_scout_workflow \
+            tests.test_adaptive_qualification_freshness \
+            tests.test_qualification_freshness_workflow \
             tests.test_adaptive_candidate_screening \
+            tests.test_ocr_contract \
             tests.test_adaptive_support_profile_governance \
             tests.test_adaptive_lifecycle_governance \
             tests.test_adaptive_promotion_governance \
@@ -78,8 +82,11 @@ jobs:
             "yolozu/data/schemas/algorithm_scout_report.schema.json",
             "yolozu/data/schemas/local_artifact_inventory.schema.json",
             "yolozu/data/schemas/qualification_report.schema.json",
+            "yolozu/data/schemas/qualification_freshness_report.schema.json",
             "yolozu/data/schemas/evidence_activation_record.schema.json",
             "yolozu/data/schemas/candidate_screening_record.schema.json",
+            "yolozu/data/schemas/ocr_bundle_interface.schema.json",
+            "yolozu/data/schemas/ocr_result.schema.json",
             "yolozu/data/schemas/candidate_isolation_probe.schema.json",
             "yolozu/data/schemas/screening_eligibility_observation.schema.json",
             "yolozu/data/schemas/support_profile_spec.schema.json",
@@ -214,7 +221,11 @@ jobs:
             tests.test_adaptive_environment_profile \
             tests.test_adaptive_bundle_registry \
             tests.test_adaptive_algorithm_scout \
+            tests.test_algorithm_scout_workflow \
+            tests.test_adaptive_qualification_freshness \
+            tests.test_qualification_freshness_workflow \
             tests.test_adaptive_candidate_screening \
+            tests.test_ocr_contract \
             tests.test_adaptive_support_profile_governance \
             tests.test_adaptive_lifecycle_governance \
             tests.test_adaptive_promotion_governance \
@@ -246,8 +257,11 @@ jobs:
             "yolozu/data/schemas/algorithm_scout_report.schema.json",
             "yolozu/data/schemas/local_artifact_inventory.schema.json",
             "yolozu/data/schemas/qualification_report.schema.json",
+            "yolozu/data/schemas/qualification_freshness_report.schema.json",
             "yolozu/data/schemas/evidence_activation_record.schema.json",
             "yolozu/data/schemas/candidate_screening_record.schema.json",
+            "yolozu/data/schemas/ocr_bundle_interface.schema.json",
+            "yolozu/data/schemas/ocr_result.schema.json",
             "yolozu/data/schemas/candidate_isolation_probe.schema.json",
             "yolozu/data/schemas/screening_eligibility_observation.schema.json",
             "yolozu/data/schemas/support_profile_spec.schema.json",

@@ -46,6 +46,7 @@ __all__ = [
     "build_scout_plan",
     "collect_algorithm_candidates",
     "load_algorithm_scout_sources",
+    "prepare_scout_workflow_artifact",
 ]
 
 
@@ -169,6 +170,7 @@ class ScoutPlan:
     output_dir: str
     collection_date: str
     trigger: str
+    missed_collection_dates: tuple[str, ...]
     enabled_sources: tuple[AlgorithmScoutSource, ...]
 
     def to_dict(self) -> dict[str, Any]:
@@ -179,6 +181,7 @@ class ScoutPlan:
             "mode": "plan",
             "collection_date": self.collection_date,
             "trigger": self.trigger,
+            "missed_expected_collection_dates": list(self.missed_collection_dates),
             "sources_path": self.sources_path,
             "output_dir": self.output_dir,
             "enabled_source_count": len(self.enabled_sources),
@@ -376,6 +379,7 @@ def build_scout_plan(
     output_dir: str,
     collection_date: str,
     trigger: str,
+    missed_collection_dates: Iterable[str] = (),
     workspace_root: str | Path = ".",
     repository_root: str | Path | None = None,
 ) -> ScoutPlan:
@@ -384,11 +388,31 @@ def build_scout_plan(
     sources = load_algorithm_scout_sources(sources_path, repository_root=repo)
     if trigger not in {"schedule", "workflow_dispatch"}:
         raise _fail("trigger_invalid", "trigger must be schedule or workflow_dispatch")
+    normalized_missed_dates = tuple(
+        _validate_calendar_date(value) for value in missed_collection_dates
+    )
+    if len(normalized_missed_dates) > 8:
+        raise _fail(
+            "missed_collection_limit",
+            "at most eight expected collection dates may be recorded",
+        )
+    if len(set(normalized_missed_dates)) != len(normalized_missed_dates):
+        raise _fail(
+            "missed_collection_duplicate",
+            "missed collection dates must be unique",
+        )
+    current_date = _validate_calendar_date(collection_date)
+    if any(value >= current_date for value in normalized_missed_dates):
+        raise _fail(
+            "missed_collection_order",
+            "missed collection dates must precede the current collection date",
+        )
     return ScoutPlan(
         sources_path=CANONICAL_SOURCES_PATH.as_posix(),
         output_dir=_relative_output_dir(output_dir),
-        collection_date=_validate_calendar_date(collection_date),
+        collection_date=current_date,
         trigger=trigger,
+        missed_collection_dates=tuple(sorted(normalized_missed_dates)),
         enabled_sources=tuple(source for source in sources if source.enabled),
     )
 
@@ -1286,6 +1310,7 @@ def collect_algorithm_candidates(
         "selectability": "inbox_only",
         "collection_date": plan.collection_date,
         "trigger": plan.trigger,
+        "missed_expected_collection_dates": list(plan.missed_collection_dates),
         "started_at": started_at,
         "completed_at": completed_at,
         "timezone": "UTC",
@@ -1339,3 +1364,118 @@ def collect_algorithm_candidates(
         transaction.write_bytes("algorithm_scout_report.json", encoded)
         transaction.commit()
     return report, 3 if failures else 0, workspace / destination / "algorithm_scout_report.json"
+
+
+def prepare_scout_workflow_artifact(
+    *,
+    workspace_root: str | Path,
+    output_dir: str,
+    collection_date: str,
+    trigger: str,
+    artifact_root: str = "workflow_artifacts",
+) -> Path:
+    """Validate and stage the bounded public scout artifact for GitHub Actions."""
+
+    workspace = _workspace(workspace_root)
+    checked_date = _validate_calendar_date(collection_date)
+    if trigger not in {"schedule", "workflow_dispatch"}:
+        raise _fail("trigger_invalid", "trigger must be schedule or workflow_dispatch")
+    checked_output = _relative_output_dir(output_dir)
+    destination = f"{checked_output}/{checked_date}"
+    report_limits = ManagedOutputLimits(
+        max_files=2,
+        max_file_bytes=REPORT_MAX_BYTES,
+        max_total_bytes=REPORT_MAX_BYTES + 4096,
+    )
+    validate_managed_output_destination(
+        root=workspace,
+        destination=destination,
+        limits=report_limits,
+        force=True,
+    )
+    report_path = workspace / destination / "algorithm_scout_report.json"
+    if report_path.is_symlink() or not report_path.is_file():
+        raise _fail("workflow_report_invalid", "validated scout report is missing")
+    encoded = report_path.read_bytes()
+    if len(encoded) > REPORT_MAX_BYTES:
+        raise _fail("workflow_report_invalid", "scout report exceeds its byte cap")
+    report = load_bounded_json_bytes(encoded, label="workflow algorithm scout report")
+    if not isinstance(report, dict):
+        raise _fail("workflow_report_invalid", "scout report must be an object")
+    expected = {
+        "kind": REPORT_KIND,
+        "schema_version": REPORT_SCHEMA_VERSION,
+        "collection_date": checked_date,
+        "trigger": trigger,
+        "timezone": "UTC",
+    }
+    if any(report.get(key) != value for key, value in expected.items()):
+        raise _fail("workflow_report_invalid", "scout report identity does not match the run")
+    if canonical_json_v1(report) != encoded:
+        raise _fail("workflow_report_invalid", "scout report is not canonical JSON")
+    sources = report.get("sources")
+    summary = report.get("summary")
+    missed = report.get("missed_expected_collection_dates")
+    if (
+        not isinstance(sources, list)
+        or len(sources) > MAX_SOURCES
+        or not isinstance(summary, dict)
+        or not isinstance(missed, list)
+        or len(missed) > 8
+    ):
+        raise _fail("workflow_report_invalid", "scout report bounds are invalid")
+    source_rows: list[str] = []
+    for source in sources:
+        if not isinstance(source, dict):
+            raise _fail("workflow_report_invalid", "source status must be an object")
+        source_id = source.get("source_id")
+        status_value = source.get("collection_status")
+        if (
+            not isinstance(source_id, str)
+            or _SOURCE_ID_RE.fullmatch(source_id) is None
+            or status_value not in {"collected", "failed", "missed"}
+        ):
+            raise _fail("workflow_report_invalid", "source status is invalid")
+        source_rows.append(f"- `{source_id}`: `{status_value}`")
+    markdown = "\n".join(
+        [
+            f"# Algorithm scout — {checked_date}",
+            "",
+            f"- Trigger: `{trigger}`",
+            "- Schedule timezone: `Asia/Tokyo` (GitHub cron is UTC)",
+            "- Artifact retention: 30 days",
+            "- Raw fetched bodies/cache: not retained; runner temporary files expire at job end",
+            "- Coverage: explicit monitored primary sources only; not exhaustive or always-latest discovery",
+            "- Automation caveat: this inbox is not qualification, support, adoption, recommendation, or promotion evidence",
+            "- Missed expected collections: "
+            + (", ".join(f"`{value}`" for value in missed) if missed else "none recorded"),
+            "",
+            "## Aggregate source outcomes",
+            "",
+            *source_rows,
+            "",
+        ]
+    ).encode("utf-8")
+    if len(markdown) > 128 * 1024:
+        raise _fail("workflow_report_invalid", "scout Markdown exceeds its byte cap")
+    checked_artifact_root = _relative_output_dir(artifact_root)
+    _ensure_directory_chain(workspace, checked_artifact_root)
+    artifact_destination = f"{checked_artifact_root}/algorithm-scout-{checked_date}"
+    with ManagedOutputTransaction(
+        root=workspace,
+        destination=artifact_destination,
+        declared_paths=(
+            f"docs/algorithm_intake/{checked_date}.json",
+            f"docs/algorithm_intake/{checked_date}.md",
+        ),
+        limits=ManagedOutputLimits(
+            max_files=3,
+            max_file_bytes=REPORT_MAX_BYTES,
+            max_total_bytes=REPORT_MAX_BYTES + 132 * 1024,
+        ),
+        force=True,
+    ) as transaction:
+        transaction.write_bytes(f"docs/algorithm_intake/{checked_date}.json", encoded)
+        transaction.write_bytes(f"docs/algorithm_intake/{checked_date}.md", markdown)
+        transaction.commit()
+    return workspace / artifact_destination

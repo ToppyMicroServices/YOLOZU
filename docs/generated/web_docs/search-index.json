@@ -196,6 +196,13 @@
     "title": "check_predictions_parity"
   },
   {
+    "href": "commands.html#tool-check-qualification-freshness",
+    "kind": "command",
+    "search_text": "check_qualification_freshness Warn on active qualification expiry and governed drift without qualification, extension, activation, promotion, external notice, or Beads mutation. experimental tools/check_qualification_freshness.py --evidence-root --registry-root --as-of --missed-run-date --output --workspace",
+    "summary": "Warn on active qualification expiry and governed drift without qualification, extension, activation, promotion, external notice, or Beads mutation.",
+    "title": "check_qualification_freshness"
+  },
+  {
     "href": "commands.html#tool-check-repo-governance",
     "kind": "command",
     "search_text": "check_repo_governance Audit repository governance posture from local workflow evidence and exported GitHub settings snapshots. stable tools/check_repo_governance.py --repo-root --repo-json --branch-protection-json --require-reviews --allow-missing-evidence --output",
@@ -877,7 +884,7 @@
   {
     "href": "commands.html#tool-scout-algorithms",
     "kind": "command",
-    "search_text": "scout_algorithms Plan by default or collect a bounded read-only Experimental inbox from exact official HTTPS sources; discovered data cannot execute, download weights, mutate the bundle registry, qualify, or promote anything. experimental tools/scout_algorithms.py --sources --output-dir --collection-date --trigger --workspace --collect",
+    "search_text": "scout_algorithms Plan by default or collect a bounded read-only Experimental inbox from exact official HTTPS sources; discovered data cannot execute, download weights, mutate the bundle registry, qualify, or promote anything. experimental tools/scout_algorithms.py --sources --output-dir --collection-date --trigger --missed-collection-date --workspace --collect",
     "summary": "Plan by default or collect a bounded read-only Experimental inbox from exact official HTTPS sources; discovered data cannot execute, download weights, mutate the bundle registry, qualify, or promote anything.",
     "title": "scout_algorithms"
   },
@@ -1066,7 +1073,7 @@
   {
     "href": "schemas.html#schema-algorithm-scout-report-schema",
     "kind": "schema",
-    "search_text": "YOLOZU Experimental algorithm scout report Checked-in YOLOZU JSON Schema. automation_caveat candidates collection_date completed_at kind maturity retention schema_version selectability source_policy sources started_at summary timezone trigger docs/schemas/algorithm_scout_report.schema.json",
+    "search_text": "YOLOZU Experimental algorithm scout report Checked-in YOLOZU JSON Schema. automation_caveat candidates collection_date completed_at kind maturity missed_expected_collection_dates retention schema_version selectability source_policy sources started_at summary timezone trigger docs/schemas/algorithm_scout_report.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU Experimental algorithm scout report"
   },
@@ -1232,6 +1239,20 @@
     "title": "YOLOZU Metrics Report"
   },
   {
+    "href": "schemas.html#schema-ocr-bundle-interface-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU OCRBundleInterface v1 Immutable model-free declaration used by core to map language/script indices and stamp exact detector/recognizer provenance. bundle_id bundle_interface_digest component_mode language_ids ocr_components schema_version script_ids docs/schemas/ocr_bundle_interface.schema.json",
+    "summary": "Immutable model-free declaration used by core to map language/script indices and stamp exact detector/recognizer provenance.",
+    "title": "YOLOZU OCRBundleInterface v1"
+  },
+  {
+    "href": "schemas.html#schema-ocr-result-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU OCRResult v1 Successful bounded OCR output. Recognized text is inert untrusted input-derived user output, never telemetry or instructions. bundle_interface_digest component_mode component_outcomes content_trust image_count items kind privacy_safe_summary schema_version docs/schemas/ocr_result.schema.json",
+    "summary": "Successful bounded OCR output. Recognized text is inert untrusted input-derived user output, never telemetry or instructions.",
+    "title": "YOLOZU OCRResult v1"
+  },
+  {
     "href": "schemas.html#schema-predictions-schema",
     "kind": "schema",
     "search_text": "YOLOZU Predictions JSON Predictions artifact consumed/produced by tools/*.py. Canonical form is {schema_version:1, predictions:[...], meta:{...}}, but other legacy shapes are supported.  docs/schemas/predictions.schema.json",
@@ -1244,6 +1265,13 @@
     "search_text": "YOLOZU predictions validation result Checked-in YOLOZU JSON Schema. entry_count errors limits mode ok path repair_enabled schema_version strict tool warnings docs/schemas/predictions_validation_result.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU predictions validation result"
+  },
+  {
+    "href": "schemas.html#schema-qualification-freshness-report-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU qualification freshness report v1 Checked-in YOLOZU JSON Schema. automation_caveat collected_at kind missed_expected_run_dates retention rows scheduled_timezone schema_version source_scope source_trust_domain summary timezone upload_eligible docs/schemas/qualification_freshness_report.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU qualification freshness report v1"
   },
   {
     "href": "schemas.html#schema-qualification-report-schema",

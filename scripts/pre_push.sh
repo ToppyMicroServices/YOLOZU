@@ -86,6 +86,7 @@ else
     tests.test_adaptive_bundle_registry \
     tests.test_adaptive_algorithm_scout \
     tests.test_adaptive_candidate_screening \
+    tests.test_ocr_contract \
     tests.test_candidate_isolation_policy \
     tests.test_adaptive_support_profile_governance \
     tests.test_adaptive_lifecycle_governance \

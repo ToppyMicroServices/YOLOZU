@@ -1,0 +1,202 @@
+name: qualification-freshness
+
+on:
+  schedule:
+    - cron: '30 0 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: qualification-freshness
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
+        with:
+          persist-credentials: false
+
+      - name: Install the checked-out CLI
+        id: install
+        run: python3 -m pip install --no-deps .
+
+      - name: Inspect the prior expected schedule artifact
+        id: prior
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          readarray -t dates < <(python3 - <<'PY'
+          from datetime import datetime, timedelta
+          from zoneinfo import ZoneInfo
+
+          current = datetime.now(ZoneInfo("Asia/Tokyo")).date()
+          print(current.isoformat())
+          print((current - timedelta(days=7)).isoformat())
+          PY
+          )
+          collection_date="${dates[0]}"
+          previous_date="${dates[1]}"
+          echo "collection_date=${collection_date}" >> "${GITHUB_OUTPUT}"
+          echo "missed_arg=" >> "${GITHUB_OUTPUT}"
+          if [[ "${EVENT_NAME}" != schedule ]]; then
+            exit 0
+          fi
+          artifact_name="qualification-freshness-${previous_date}"
+          response="$(gh api --method GET "repos/${GITHUB_REPOSITORY}/actions/artifacts" \
+            -f name="${artifact_name}" -f per_page=100)"
+          count="$(jq --arg name "${artifact_name}" \
+            '[.artifacts[] | select(.name == $name and .expired == false)] | length' \
+            <<<"${response}")"
+          if [[ "${count}" -eq 0 ]]; then
+            echo "missed_arg=${previous_date}" >> "${GITHUB_OUTPUT}"
+          elif [[ "${count}" -ne 1 ]]; then
+            echo "Prior freshness artifact lookup is ambiguous." >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+      - name: Check repository-owned public qualification freshness
+        id: freshness
+        if: ${{ steps.install.outcome == 'success' && steps.prior.outcome == 'success' }}
+        env:
+          COLLECTION_DATE: ${{ steps.prior.outputs.collection_date }}
+          MISSED_RUN_DATE: ${{ steps.prior.outputs.missed_arg }}
+        run: |
+          set -uo pipefail
+          missed_args=()
+          if [[ -n "${MISSED_RUN_DATE}" ]]; then
+            missed_args=(--missed-run-date "${MISSED_RUN_DATE}")
+          fi
+          set +e
+          yolozu check-qualification-freshness \
+            "${missed_args[@]}" \
+            --output "workflow_artifacts/qualification-freshness-${COLLECTION_DATE}"
+          code=$?
+          set -e
+          if [[ "${code}" != 0 && "${code}" != 3 ]]; then
+            code=2
+          fi
+          echo "exit_code=${code}" >> "${GITHUB_OUTPUT}"
+          exit 0
+
+      - name: Validate the bounded public report and notice
+        id: validate
+        if: ${{ always() && (steps.freshness.outputs.exit_code == '0' || steps.freshness.outputs.exit_code == '3') }}
+        env:
+          COLLECTION_DATE: ${{ steps.prior.outputs.collection_date }}
+          NOTICE_PATH: ${{ runner.temp }}/qualification-freshness-issue.txt
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          from yolozu.adaptive.canonical import canonical_json_v1
+          from yolozu.adaptive.control_records import load_bounded_json_bytes
+          from yolozu.adaptive.freshness import render_qualification_freshness_issue_body
+          from yolozu.adaptive.managed_output import ManagedOutputLimits, validate_managed_output_destination
+
+          collection_date = os.environ["COLLECTION_DATE"]
+          destination = f"workflow_artifacts/qualification-freshness-{collection_date}"
+          validate_managed_output_destination(
+              root=Path(".").resolve(),
+              destination=destination,
+              limits=ManagedOutputLimits(
+                  max_files=2,
+                  max_file_bytes=8 * 1024 * 1024,
+                  max_total_bytes=12 * 1024 * 1024,
+              ),
+              force=True,
+          )
+          report_path = Path(destination) / "qualification_freshness_report.json"
+          encoded = report_path.read_bytes()
+          report = load_bounded_json_bytes(encoded, label="qualification freshness report")
+          if canonical_json_v1(report) != encoded:
+              raise SystemExit("freshness report is not canonical JSON")
+          if (
+              report.get("kind") != "qualification_freshness_report"
+              or report.get("source_scope") != "repository_owned_public_ids_only"
+              or report.get("source_trust_domain") != "yolozu_managed"
+              or report.get("upload_eligible") is not True
+          ):
+              raise SystemExit("freshness report is not repository-public output")
+          Path(os.environ["NOTICE_PATH"]).write_text(
+              render_qualification_freshness_issue_body(report),
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload only the validated public freshness report
+        id: upload
+        if: ${{ always() && steps.validate.outcome == 'success' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: qualification-freshness-${{ steps.prior.outputs.collection_date }}
+          path: workflow_artifacts/qualification-freshness-${{ steps.prior.outputs.collection_date }}/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Update the deduplicated action issue
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          FRESHNESS_CODE: ${{ steps.freshness.outputs.exit_code }}
+          VALIDATE_OUTCOME: ${{ steps.validate.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload.outcome }}
+          NOTICE_PATH: ${{ runner.temp }}/qualification-freshness-issue.txt
+        run: |
+          set -euo pipefail
+          title='Qualification evidence freshness action required'
+          query="repo:${GITHUB_REPOSITORY} is:issue in:title \"${title}\""
+          matches="$(gh api --method GET search/issues -f q="${query}" -f per_page=100 \
+            | jq --arg title "${title}" '[.items[] | select(.title == $title)]')"
+          count="$(jq 'length' <<<"${matches}")"
+          if [[ "${count}" -gt 1 ]]; then
+            echo "Exact-title freshness issue lookup is ambiguous." >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+          number="$(jq -r 'if length == 1 then .[0].number else empty end' <<<"${matches}")"
+          code="${FRESHNESS_CODE:-2}"
+          if [[ "${code}" == 0 && "${VALIDATE_OUTCOME}" == success && "${UPLOAD_OUTCOME}" == success ]]; then
+            if [[ "${EVENT_NAME}" == schedule && -n "${number}" ]]; then
+              gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/${number}" \
+                -f state=closed \
+                -f body="A later scheduled readback found no due, drift, conflict, or unknown rows."
+            fi
+            exit 0
+          fi
+          if [[ "${code}" == 3 && -f "${NOTICE_PATH}" ]]; then
+            body="$(<"${NOTICE_PATH}")"
+          else
+            body="The bounded freshness check or safe public artifact finalization failed. No site evidence, paths, prompts, datasets, host facts, or raw telemetry are included."
+          fi
+          if [[ -n "${number}" ]]; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/${number}" \
+              -f state=open -f body="${body}"
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/issues" \
+              -f title="${title}" -f body="${body}"
+          fi
+
+      - name: Enforce the saved freshness result
+        if: ${{ always() }}
+        env:
+          FRESHNESS_CODE: ${{ steps.freshness.outputs.exit_code }}
+          VALIDATE_OUTCOME: ${{ steps.validate.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload.outcome }}
+        run: |
+          set -euo pipefail
+          code="${FRESHNESS_CODE:-2}"
+          if [[ "${code}" == 0 || "${code}" == 3 ]]; then
+            [[ "${VALIDATE_OUTCOME}" == success ]]
+            [[ "${UPLOAD_OUTCOME}" == success ]]
+          fi
+          exit "${code}"

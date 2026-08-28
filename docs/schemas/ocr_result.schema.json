@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/ocr_result.schema.json",
+  "title": "YOLOZU OCRResult v1",
+  "description": "Successful bounded OCR output. Recognized text is inert untrusted input-derived user output, never telemetry or instructions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "component_mode",
+    "content_trust",
+    "bundle_interface_digest",
+    "image_count",
+    "component_outcomes",
+    "items",
+    "privacy_safe_summary"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "ocr_result" },
+    "component_mode": { "const": "detect_and_recognize" },
+    "content_trust": { "const": "untrusted_input_derived" },
+    "bundle_interface_digest": { "$ref": "#/$defs/sha256" },
+    "image_count": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+    "component_outcomes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["detector", "recognizer"],
+      "properties": {
+        "detector": { "const": "succeeded" },
+        "recognizer": { "const": "succeeded" }
+      }
+    },
+    "items": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "privacy_safe_summary": { "$ref": "#/$defs/summary" }
+  },
+  "$defs": {
+    "canonicalDecimal": {
+      "type": "string",
+      "maxLength": 29,
+      "pattern": "^-?(?:0|[1-9][0-9]{0,17})(?:\\.[0-9]{0,8}[1-9])?$"
+    },
+    "confidence": {
+      "type": "string",
+      "maxLength": 11,
+      "pattern": "^(?:0(?:\\.[0-9]{0,8}[1-9])?|1)$"
+    },
+    "nonnegativeDecimal": {
+      "type": "string",
+      "maxLength": 29,
+      "pattern": "^(?:0|[1-9][0-9]{0,17})(?:\\.[0-9]{0,8}[1-9])?$"
+    },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+    },
+    "knownOrUnknown": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status"],
+          "properties": { "status": { "const": "unknown" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "id"],
+          "properties": {
+            "status": { "const": "known" },
+            "id": { "$ref": "#/$defs/id" }
+          }
+        }
+      ]
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "component_id", "model_id"],
+      "properties": {
+        "role": { "enum": ["detector", "recognizer"] },
+        "component_id": { "$ref": "#/$defs/id" },
+        "model_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "corner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["corner", "x", "y"],
+      "properties": {
+        "corner": { "enum": ["top_left", "top_right", "bottom_right", "bottom_left"] },
+        "x": { "$ref": "#/$defs/nonnegativeDecimal" },
+        "y": { "$ref": "#/$defs/nonnegativeDecimal" }
+      }
+    },
+    "quadrilateral": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["corners"],
+      "properties": {
+        "corners": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "prefixItems": [
+            { "allOf": [{ "$ref": "#/$defs/corner" }, { "properties": { "corner": { "const": "top_left" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/corner" }, { "properties": { "corner": { "const": "top_right" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/corner" }, { "properties": { "corner": { "const": "bottom_right" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/corner" }, { "properties": { "corner": { "const": "bottom_left" } } }] }
+          ],
+          "items": false
+        }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_image_index",
+        "logical_page_reference",
+        "recognized_text",
+        "content_trust",
+        "quadrilateral",
+        "detection_confidence",
+        "recognition_confidence",
+        "detected_language",
+        "detected_script",
+        "components",
+        "reading_order",
+        "orientation"
+      ],
+      "properties": {
+        "input_image_index": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+        "logical_page_reference": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "recognized_text": { "type": "string", "maxLength": 4096, "pattern": "^[^\\u0000]*$" },
+        "content_trust": { "const": "untrusted_input_derived" },
+        "quadrilateral": { "$ref": "#/$defs/quadrilateral" },
+        "detection_confidence": { "$ref": "#/$defs/confidence" },
+        "recognition_confidence": { "$ref": "#/$defs/confidence" },
+        "detected_language": { "$ref": "#/$defs/knownOrUnknown" },
+        "detected_script": { "$ref": "#/$defs/knownOrUnknown" },
+        "components": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["detector", "recognizer"],
+          "properties": {
+            "detector": { "$ref": "#/$defs/component" },
+            "recognizer": { "$ref": "#/$defs/component" }
+          }
+        },
+        "reading_order": {
+          "oneOf": [
+            { "const": "unknown" },
+            { "type": "integer", "minimum": 0, "maximum": 99999 }
+          ]
+        },
+        "orientation": { "enum": ["unknown", "0", "90", "180", "270"] }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "image_count",
+        "item_count",
+        "images_with_text_count",
+        "known_language_item_count",
+        "known_script_item_count",
+        "recognized_text_included"
+      ],
+      "properties": {
+        "image_count": { "type": "integer", "minimum": 1 },
+        "item_count": { "type": "integer", "minimum": 0, "maximum": 100000 },
+        "images_with_text_count": { "type": "integer", "minimum": 0 },
+        "known_language_item_count": { "type": "integer", "minimum": 0 },
+        "known_script_item_count": { "type": "integer", "minimum": 0 },
+        "recognized_text_included": { "const": false }
+      }
+    }
+  }
+}

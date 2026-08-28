@@ -106,6 +106,7 @@ class TestCandidateArtifactAiSurface(unittest.TestCase):
                     "yolozu/adaptive/promotion.py",
                     "yolozu/adaptive/processing.py",
                     "yolozu/adaptive/algorithm_scout.py",
+                    "yolozu/adaptive/freshness.py",
                     "yolozu/adaptive/screening.py",
                     "yolozu/adaptive/support_profiles.py",
                     "yolozu/adaptive/control_stream.py",
@@ -121,7 +122,10 @@ class TestCandidateArtifactAiSurface(unittest.TestCase):
                     "yolozu/data/schemas/selection_decision.schema.json",
                     "yolozu/data/schemas/algorithm_scout_sources.schema.json",
                     "yolozu/data/schemas/algorithm_scout_report.schema.json",
+                    "yolozu/data/schemas/qualification_freshness_report.schema.json",
                     "yolozu/data/schemas/candidate_screening_record.schema.json",
+                    "yolozu/data/schemas/ocr_bundle_interface.schema.json",
+                    "yolozu/data/schemas/ocr_result.schema.json",
                     "yolozu/data/schemas/candidate_isolation_probe.schema.json",
                     "yolozu/data/schemas/support_profile_set_proposal.schema.json",
                     "yolozu/data/schemas/lifecycle_rollback_bindings.schema.json",
@@ -229,6 +233,7 @@ print(json.dumps({
     "adaptive_isolation": package.joinpath("adaptive").joinpath("isolation.py").is_file(),
     "adaptive_isolation_policy": package.joinpath("adaptive").joinpath("isolation_policy.py").is_file(),
     "adaptive_algorithm_scout": package.joinpath("adaptive").joinpath("algorithm_scout.py").is_file(),
+    "adaptive_freshness": package.joinpath("adaptive").joinpath("freshness.py").is_file(),
     "adaptive_screening": package.joinpath("adaptive").joinpath("screening.py").is_file(),
     "adaptive_safe_https": package.joinpath("adaptive").joinpath("safe_https.py").is_file(),
     "adaptive_registry": data.joinpath("adaptive_routing").joinpath("bundle_specs.json").is_file(),
@@ -242,7 +247,10 @@ print(json.dumps({
     "adaptive_selection_schema": data.joinpath("schemas").joinpath("selection_decision.schema.json").is_file(),
     "adaptive_scout_sources_schema": data.joinpath("schemas").joinpath("algorithm_scout_sources.schema.json").is_file(),
     "adaptive_scout_report_schema": data.joinpath("schemas").joinpath("algorithm_scout_report.schema.json").is_file(),
+    "adaptive_freshness_schema": data.joinpath("schemas").joinpath("qualification_freshness_report.schema.json").is_file(),
     "adaptive_screening_schema": data.joinpath("schemas").joinpath("candidate_screening_record.schema.json").is_file(),
+    "ocr_bundle_schema": data.joinpath("schemas").joinpath("ocr_bundle_interface.schema.json").is_file(),
+    "ocr_result_schema": data.joinpath("schemas").joinpath("ocr_result.schema.json").is_file(),
     "adaptive_isolation_probe_schema": data.joinpath("schemas").joinpath("candidate_isolation_probe.schema.json").is_file(),
     "py_typed": package.joinpath("py.typed").is_file(),
     "numpy_available": importlib.util.find_spec("numpy") is not None,
@@ -287,6 +295,8 @@ print(json.dumps({
             for key in (
                 "adaptive_environment_schema",
                 "adaptive_algorithm_scout",
+                "adaptive_freshness",
+                "adaptive_freshness_schema",
                 "adaptive_evidence",
                 "adaptive_isolation",
                 "adaptive_isolation_policy",
@@ -330,6 +340,20 @@ print(json.dumps({
                 msg=f"installed scout help failed:\n{scout_help.stdout}\n{scout_help.stderr}",
             )
             self.assertIn("--collect", scout_help.stdout)
+            freshness_help = self._run(
+                [str(yolozu_entry), "check-qualification-freshness", "--help"],
+                cwd=consumer,
+                env=clean_env,
+            )
+            self.assertEqual(
+                freshness_help.returncode,
+                0,
+                msg=(
+                    "installed freshness help failed:\n"
+                    f"{freshness_help.stdout}\n{freshness_help.stderr}"
+                ),
+            )
+            self.assertIn("--evidence-root", freshness_help.stdout)
             strict_validation = self._run(
                 [
                     str(yolozu_entry),

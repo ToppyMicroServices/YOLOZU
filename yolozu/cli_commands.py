@@ -1342,6 +1342,7 @@ def _cmd_scout_algorithms(args: argparse.Namespace) -> int:
             output_dir=str(args.output_dir),
             collection_date=str(args.collection_date),
             trigger=str(args.trigger),
+            missed_collection_dates=tuple(args.missed_collection_date or ()),
             workspace_root=str(args.workspace),
         )
     except (AlgorithmScoutError, OSError, ValueError) as exc:
@@ -1377,6 +1378,40 @@ def _cmd_scout_algorithms(args: argparse.Namespace) -> int:
         return 1
     print(str(report_path))
     return int(exit_code)
+
+
+def _cmd_check_qualification_freshness(args: argparse.Namespace) -> int:
+    from yolozu.adaptive.freshness import (
+        QualificationFreshnessError,
+        check_qualification_freshness,
+        write_qualification_freshness_report,
+    )
+
+    try:
+        report = check_qualification_freshness(
+            workspace_root=str(args.workspace),
+            evidence_root=args.evidence_root,
+            registry_root=args.registry_root,
+            as_of=args.as_of,
+            missed_run_dates=tuple(args.missed_run_date or ()),
+        )
+        if args.output is None:
+            print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+        else:
+            path = write_qualification_freshness_report(
+                report,
+                workspace_root=str(args.workspace),
+                output=str(args.output),
+            )
+            print(str(path))
+    except (OSError, TypeError, ValueError, QualificationFreshnessError) as exc:
+        code = getattr(exc, "code", "input_invalid")
+        print(
+            json.dumps({"ok": False, "error": str(code), "exit_code": 2}),
+            file=sys.stderr,
+        )
+        return 2
+    return 3 if report["summary"]["action_required_rows"] else 0
 
 
 def _cmd_doctor_import(args: argparse.Namespace) -> int:
