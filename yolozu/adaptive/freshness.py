@@ -305,7 +305,6 @@ def _load_evidence(
                 maximum_bytes=_MAX_REPORT_BYTES,
                 label="qualification report",
             )
-            checksum_bytes = None
         else:
             report_dir = root / "qualification_reports" / report_id
             report_bytes = _read_regular(
@@ -328,8 +327,7 @@ def _load_evidence(
         if report.report_id != report_id or report.report_digest != report_digest:
             raise _fail("activation_conflict", "activation/report identity mismatch")
         if root is not None and trust == "site_managed" and (
-            checksum_bytes is None
-            or not _site_checksum_is_exact(report_bytes, checksum_bytes)
+            not _site_checksum_is_exact(report_bytes, checksum_bytes)
             or not qualification_report_has_code_owned_issuer(report)
         ):
             raise _fail("report_invalid", "site report package is not exact and code-owned")
