@@ -604,6 +604,15 @@ lower applicable throughput/FPS or quality in its declared direction and no high
 p95, p99, process-tree RSS, or accelerator memory. Unknown, partial, incomparable,
 missing, expanded, narrowed, or reordered evidence fails closed.
 
+The normal CI suite runs six offline failure fixtures for artifact SHA-256 mismatch,
+runtime incompatibility, qualification timeout, metric regression, license failure,
+and predictions interface contract failure. Each failed drill leaves the Stable
+pointer and canonical control inputs byte-identical. The selector either keeps the
+exact eligible last-known-good Stable bundle or explicitly abstains, and a separate
+reviewed fixture proves an exact one-channel rollback. See the
+[failure-drill report](../reports/adaptive_promotion_failure_drills_2026-08-29.md).
+These fixtures are control-path tests, not real qualification or support evidence.
+
 Approval atomically appends only one `public_assignment` and then reprojects and
 reads back its pointer, profile set, and evidence bindings. It pins and verifies that
 `bundle_specs.json`, `support_profiles.jsonl`, `candidate_screening.jsonl`, and
