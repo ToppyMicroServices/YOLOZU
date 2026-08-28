@@ -1290,6 +1290,45 @@ def _cmd_update_image_pipeline_lifecycle(args: argparse.Namespace) -> int:
     return 0 if outcome.status in {"dry_run_ready", "applied"} else 2
 
 
+def _cmd_promote_image_pipeline(args: argparse.Namespace) -> int:
+    from yolozu.adaptive.promotion import promote_image_pipeline
+
+    profiles: list[dict[str, str]] = []
+    for raw in args.profile or ():
+        profile_id, separator, profile_digest = raw.partition("=")
+        if not separator or not profile_id or not profile_digest:
+            raise SystemExit("--profile must use PROFILE_ID=PROFILE_DIGEST")
+        profiles.append(
+            {"profile_id": profile_id, "profile_digest": profile_digest}
+        )
+    try:
+        outcome = promote_image_pipeline(
+            workspace_root=str(args.workspace),
+            family_id=getattr(args, "family_id", None),
+            source_channel=getattr(args, "source_channel", None),
+            target_channel=getattr(args, "target_channel", None),
+            bundle_spec_digest=getattr(args, "bundle_spec_digest", None),
+            expected_source_pointer_digest=getattr(args, "expected_source_pointer_digest", None),
+            expected_target_pointer_digest=getattr(args, "expected_target_pointer_digest", None),
+            expected_lifecycle_head_digest=getattr(args, "expected_lifecycle_head_digest", None),
+            expected_support_profile_index_head=getattr(args, "expected_support_profile_index_head", None),
+            expected_profile_set_record_digest=getattr(args, "expected_profile_set_record_digest", None),
+            expected_profile_set_digest=getattr(args, "expected_profile_set_digest", None),
+            profiles=profiles,
+            evidence_bindings_path=getattr(args, "evidence_bindings", None),
+            rollback_target=getattr(args, "rollback_target", None),
+            failure_drill_report_path=getattr(args, "failure_drill_report", None),
+            approver_role_id=getattr(args, "approver_role_id", None),
+            public_review_id=getattr(args, "public_review_id", None),
+            reason=getattr(args, "reason", None),
+            approve=bool(args.approve),
+        )
+    except (OSError, TypeError, ValueError) as exc:
+        raise SystemExit(str(exc)) from exc
+    print(json.dumps(outcome.to_dict(), ensure_ascii=False, indent=2, sort_keys=True))
+    return 0 if outcome.status in {"dry_run_ready", "applied"} else 2
+
+
 def _cmd_scout_algorithms(args: argparse.Namespace) -> int:
     from yolozu.adaptive.algorithm_scout import (
         AlgorithmScoutError,

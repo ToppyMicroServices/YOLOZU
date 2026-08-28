@@ -1007,6 +1007,7 @@ def _validate_advertised_constraints(value: Any) -> dict[str, Any]:
             "execution_mode",
             "max_cold_start_ms",
             "max_p95_latency_ms",
+            "max_p99_latency_ms",
             "max_runner_tree_peak_rss_bytes",
             "max_accelerator_process_tree_peak_bytes",
             "min_repeat_throughput_fps",
@@ -1026,7 +1027,7 @@ def _validate_advertised_constraints(value: Any) -> dict[str, Any]:
         allowed=frozenset({"batch", "soft_realtime"}),
     )
     out: dict[str, Any] = {"execution_mode": mode}
-    for key in ("max_cold_start_ms", "max_p95_latency_ms"):
+    for key in ("max_cold_start_ms", "max_p95_latency_ms", "max_p99_latency_ms"):
         if key in record:
             out[key] = canonical_decimal_v1(
                 record[key], field=f"advertised_constraints.{key}", positive=True
@@ -1536,10 +1537,40 @@ _ASSIGNMENT_KEYS = frozenset(
         "profiles",
         "evidence_bindings",
         "rollback_target_prior_assignment_digest",
+        "promotion_source_channel",
+        "promotion_source_pointer_digest",
+        "promotion_target_pointer_digest",
+        "rollback_target_status",
+        "stable_comparator_status",
+        "failure_drill_report_digest",
+        "failure_drill_reference",
+        "automated_pass_reference",
     }
 )
 _ASSIGNMENT_OPTIONAL_KEYS = frozenset(
-    {"rollback_target_prior_assignment_digest"}
+    {
+        "rollback_target_prior_assignment_digest",
+        "promotion_source_channel",
+        "promotion_source_pointer_digest",
+        "promotion_target_pointer_digest",
+        "rollback_target_status",
+        "stable_comparator_status",
+        "failure_drill_report_digest",
+        "failure_drill_reference",
+        "automated_pass_reference",
+    }
+)
+_PROMOTION_KEYS = frozenset(
+    {
+        "promotion_source_channel",
+        "promotion_source_pointer_digest",
+        "promotion_target_pointer_digest",
+        "rollback_target_status",
+        "stable_comparator_status",
+        "failure_drill_report_digest",
+        "failure_drill_reference",
+        "automated_pass_reference",
+    }
 )
 _NONE_KEYS = frozenset(
     {
@@ -1615,6 +1646,8 @@ def _lifecycle_common(record: Mapping[str, Any]) -> dict[str, Any]:
                             "review_license",
                             "revoke",
                             "rollback_channel",
+                            "promote_candidate_to_experimental",
+                            "promote_experimental_to_stable",
                         }
                     ),
                 ),
@@ -1741,9 +1774,18 @@ def validate_bundle_lifecycle_record(
             "enable": "enable",
             "license_review": "review_license",
             "revoke": "revoke",
-            "public_assignment": "rollback_channel",
             "channel_none": "rollback_channel",
         }.get(str(event_type))
+        if event_type == "public_assignment":
+            if operation not in {
+                "rollback_channel",
+                "promote_candidate_to_experimental",
+                "promote_experimental_to_stable",
+            }:
+                raise ValueError(
+                    "maintenance_operation does not match the lifecycle event"
+                )
+            expected_operation = operation
         if operation != expected_operation:
             raise ValueError("maintenance_operation does not match the lifecycle event")
         if scope == "bundle_global" and not _GLOBAL_OPTIONAL_KEYS.issubset(record):
@@ -1919,6 +1961,107 @@ def validate_bundle_lifecycle_record(
             normalized["rollback_target_prior_assignment_digest"] = _sha256(
                 record["rollback_target_prior_assignment_digest"],
                 field="rollback_target_prior_assignment_digest",
+            )
+        promotion_keys = _PROMOTION_KEYS.intersection(record)
+        if operation in {
+            "promote_candidate_to_experimental",
+            "promote_experimental_to_stable",
+        } and promotion_keys != _PROMOTION_KEYS:
+            raise ValueError("reviewed promotion requires complete lifecycle metadata")
+        if promotion_keys and promotion_keys != _PROMOTION_KEYS:
+            raise ValueError("promotion lifecycle metadata must be complete")
+        if promotion_keys:
+            if operation not in {
+                "promote_candidate_to_experimental",
+                "promote_experimental_to_stable",
+            }:
+                raise ValueError("promotion metadata is reserved for reviewed promotion")
+            source_channel = _enum(
+                record["promotion_source_channel"],
+                field="promotion_source_channel",
+                allowed=frozenset({"Candidate", "Experimental"}),
+            )
+            source_pointer = _sha256(
+                record["promotion_source_pointer_digest"],
+                field="promotion_source_pointer_digest",
+            )
+            target_pointer_raw = record["promotion_target_pointer_digest"]
+            target_pointer = (
+                None
+                if target_pointer_raw is None
+                else _sha256(
+                    target_pointer_raw,
+                    field="promotion_target_pointer_digest",
+                )
+            )
+            rollback_status = _enum(
+                record["rollback_target_status"],
+                field="rollback_target_status",
+                allowed=frozenset({"none_abstention", "prior_assignment"}),
+            )
+            comparator_status = _enum(
+                record["stable_comparator_status"],
+                field="stable_comparator_status",
+                allowed=frozenset(
+                    {
+                        "not_applicable_candidate_to_experimental",
+                        "comparator_not_applicable_first_assignment",
+                        "exact_current_stable",
+                    }
+                ),
+            )
+            drill_digest_raw = record["failure_drill_report_digest"]
+            drill_reference_raw = record["failure_drill_reference"]
+            automated_reference_raw = record["automated_pass_reference"]
+            drill_digest = (
+                None
+                if drill_digest_raw is None
+                else _sha256(drill_digest_raw, field="failure_drill_report_digest")
+            )
+            drill_reference = (
+                None
+                if drill_reference_raw is None
+                else _token(drill_reference_raw, field="failure_drill_reference")
+            )
+            automated_reference = (
+                None
+                if automated_reference_raw is None
+                else _token(automated_reference_raw, field="automated_pass_reference")
+            )
+            if operation == "promote_candidate_to_experimental":
+                if source_channel != "Candidate" or channel != "Experimental":
+                    raise ValueError("Candidate promotion channel pair is invalid")
+                if comparator_status != "not_applicable_candidate_to_experimental":
+                    raise ValueError("Candidate promotion comparator status is invalid")
+                if any(
+                    item is not None
+                    for item in (drill_digest, drill_reference, automated_reference)
+                ):
+                    raise ValueError("Candidate promotion forbids Stable drill metadata")
+            else:
+                if source_channel != "Experimental" or channel != "Stable":
+                    raise ValueError("Stable promotion channel pair is invalid")
+                if comparator_status == "not_applicable_candidate_to_experimental":
+                    raise ValueError("Stable promotion comparator status is invalid")
+                if any(
+                    item is None
+                    for item in (drill_digest, drill_reference, automated_reference)
+                ):
+                    raise ValueError("Stable promotion requires complete drill metadata")
+            prior_digest_present = "rollback_target_prior_assignment_digest" in record
+            if (rollback_status == "prior_assignment") != prior_digest_present:
+                raise ValueError("promotion rollback target metadata is inconsistent")
+            normalized.update(
+                {
+                    "promotion_source_channel": source_channel,
+                    "promotion_source_pointer_digest": source_pointer,
+                    "promotion_target_pointer_digest": target_pointer,
+                    "rollback_target_status": rollback_status,
+                    "stable_comparator_status": comparator_status,
+                    "failure_drill_report_digest": drill_digest,
+                    "failure_drill_reference": drill_reference,
+                    "automated_pass_reference": automated_reference,
+                }
             )
     else:
         family_id = _token(
@@ -2135,6 +2278,59 @@ def project_bundle_lifecycle(
                             "rollback target assignment digest does not reference "
                             "an exact prior assignment"
                         )
+                elif event.get("maintenance_operation") in {
+                    "promote_candidate_to_experimental",
+                    "promote_experimental_to_stable",
+                }:
+                    source_key = (
+                        event["family_id"],
+                        event["promotion_source_channel"],
+                    )
+                    source_pointer = pointers.get(source_key)
+                    if (
+                        source_pointer is None
+                        or source_pointer["bundle_spec_digest"] != spec_digest
+                        or source_pointer["lifecycle_event_digest"]
+                        != event["promotion_source_pointer_digest"]
+                    ):
+                        raise ValueError(
+                            "promotion source is not the exact current pointer"
+                        )
+                    target_key = (event["family_id"], event["channel"])
+                    target_pointer = pointers.get(target_key)
+                    target_digest = (
+                        None
+                        if target_pointer is None
+                        else target_pointer["lifecycle_event_digest"]
+                    )
+                    if target_digest != event["promotion_target_pointer_digest"]:
+                        raise ValueError(
+                            "promotion target expectation is stale"
+                        )
+                    if event["rollback_target_status"] == "prior_assignment":
+                        if (
+                            target_pointer is None
+                            or event["rollback_target_prior_assignment_digest"]
+                            != target_pointer["lifecycle_event_digest"]
+                        ):
+                            raise ValueError(
+                                "promotion prior rollback target is not current"
+                            )
+                    operation = event["maintenance_operation"]
+                    comparator = event["stable_comparator_status"]
+                    if operation == "promote_experimental_to_stable":
+                        if target_pointer is None:
+                            if comparator != "comparator_not_applicable_first_assignment":
+                                raise ValueError(
+                                    "first Stable promotion requires no-comparator status"
+                                )
+                        elif (
+                            comparator != "exact_current_stable"
+                            or target_pointer["profiles"] != event["profiles"]
+                        ):
+                            raise ValueError(
+                                "Stable replacement changed its exact profile set"
+                            )
             elif support_profiles is not None:
                 head = event["support_profile_index_head"]
                 if head != ZERO_DIGEST and head not in support_profiles.record_by_digest:

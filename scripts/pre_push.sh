@@ -89,6 +89,7 @@ else
     tests.test_candidate_isolation_policy \
     tests.test_adaptive_support_profile_governance \
     tests.test_adaptive_lifecycle_governance \
+    tests.test_adaptive_promotion_governance \
     tests.test_adaptive_managed_output \
     tests.test_adaptive_recommendation \
     tests.test_adaptive_processing \

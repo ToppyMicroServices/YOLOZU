@@ -12959,6 +12959,202 @@
     {
       "contracts": {
         "consumes": [
+          "algorithm_bundle_registry_json",
+          "bundle_lifecycle_record_json",
+          "support_profile_record_json",
+          "candidate_screening_record_json",
+          "qualification_report_json",
+          "evidence_activation_record_json",
+          "lifecycle_rollback_bindings_json"
+        ],
+        "produces": [
+          "bundle_lifecycle_record_json"
+        ]
+      },
+      "docs": [
+        "README.md",
+        "Readme_jp.md",
+        "docs/adaptive_image_routing.md",
+        "docs/production_readiness.md",
+        "docs/schemas/bundle_lifecycle_record.schema.json",
+        "docs/schemas/support_profile_spec.schema.json",
+        "reports/adaptive_promotion_governance_2026-08-29.md"
+      ],
+      "effects": {
+        "fixed_writes": [
+          {
+            "description": "With --approve, atomically appends only one exact evidence-bound reviewed channel assignment.",
+            "kind": "file",
+            "path": "yolozu/data/adaptive_routing/bundle_lifecycle.jsonl",
+            "scope": "path"
+          }
+        ],
+        "writes": []
+      },
+      "entrypoint": "tools/promote_image_pipeline.py",
+      "examples": [
+        {
+          "command": "python3 tools/promote_image_pipeline.py --family-id <family> --source-channel Candidate --target-channel Experimental --bundle-spec-digest <sha256> --expected-source-pointer-digest <sha256> --expected-target-pointer-digest none --expected-lifecycle-head-digest <sha256> --expected-support-profile-index-head <sha256> --expected-profile-set-record-digest <sha256> --expected-profile-set-digest <sha256> --profile <id>=<sha256> --evidence-bindings reports/promotion-bindings.json --rollback-target none --approver-role-id repo_maintainer --public-review-id gh-<number> --reason 'Review exact promotion'",
+          "description": "Dry-run all exact source, target, support, evidence, approval, rollback-readiness, and channel-specific gates without mutation."
+        },
+        {
+          "command": "python3 tools/promote_image_pipeline.py --help",
+          "description": "Inspect the reviewed promotion interface contract."
+        }
+      ],
+      "id": "promote_image_pipeline",
+      "inputs": [
+        {
+          "flag": "--family-id",
+          "kind": "string",
+          "name": "family_id",
+          "required": false
+        },
+        {
+          "flag": "--source-channel",
+          "kind": "string",
+          "name": "source_channel",
+          "required": false
+        },
+        {
+          "flag": "--target-channel",
+          "kind": "string",
+          "name": "target_channel",
+          "required": false
+        },
+        {
+          "flag": "--bundle-spec-digest",
+          "kind": "string",
+          "name": "bundle_spec_digest",
+          "required": false
+        },
+        {
+          "flag": "--expected-source-pointer-digest",
+          "kind": "string",
+          "name": "expected_source_pointer_digest",
+          "required": false
+        },
+        {
+          "flag": "--expected-target-pointer-digest",
+          "kind": "string",
+          "name": "expected_target_pointer_digest",
+          "required": false
+        },
+        {
+          "flag": "--expected-lifecycle-head-digest",
+          "kind": "string",
+          "name": "expected_lifecycle_head_digest",
+          "required": false
+        },
+        {
+          "flag": "--expected-support-profile-index-head",
+          "kind": "string",
+          "name": "expected_support_profile_index_head",
+          "required": false
+        },
+        {
+          "flag": "--expected-profile-set-record-digest",
+          "kind": "string",
+          "name": "expected_profile_set_record_digest",
+          "required": false
+        },
+        {
+          "flag": "--expected-profile-set-digest",
+          "kind": "string",
+          "name": "expected_profile_set_digest",
+          "required": false
+        },
+        {
+          "flag": "--profile",
+          "kind": "string",
+          "name": "profile",
+          "required": false
+        },
+        {
+          "flag": "--evidence-bindings",
+          "kind": "file",
+          "name": "evidence_bindings",
+          "required": false
+        },
+        {
+          "flag": "--rollback-target",
+          "kind": "string",
+          "name": "rollback_target",
+          "required": false
+        },
+        {
+          "flag": "--failure-drill-report",
+          "kind": "file",
+          "name": "failure_drill_report",
+          "required": false
+        },
+        {
+          "flag": "--approver-role-id",
+          "kind": "string",
+          "name": "approver_role_id",
+          "required": false
+        },
+        {
+          "flag": "--public-review-id",
+          "kind": "string",
+          "name": "public_review_id",
+          "required": false
+        },
+        {
+          "flag": "--reason",
+          "kind": "string",
+          "name": "reason",
+          "required": false
+        },
+        {
+          "default": ".",
+          "flag": "--workspace",
+          "kind": "dir",
+          "name": "workspace",
+          "required": false
+        },
+        {
+          "flag": "--approve",
+          "kind": "string",
+          "name": "approve",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "stdout",
+          "description": "Bounded machine-readable dry-run or apply result with every failed gate and exact observed identities.",
+          "kind": "stdout",
+          "name": "promotion_outcome"
+        },
+        {
+          "default": "yolozu/data/adaptive_routing/bundle_lifecycle.jsonl",
+          "description": "Canonical append-only lifecycle stream after explicit approval and successful readback.",
+          "kind": "file",
+          "name": "bundle_lifecycle_stream"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Dry-run or atomically append one exact reviewed Candidate-to-Experimental or Experimental-to-Stable assignment after complete managed evidence, rollback-readiness, and Stable non-regression gates.",
+      "tags": [
+        "adaptive-inference",
+        "experimental",
+        "governance",
+        "lifecycle",
+        "promotion",
+        "ssot"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
           "metrics_report_json"
         ]
       },

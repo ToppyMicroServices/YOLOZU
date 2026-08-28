@@ -51,6 +51,7 @@
         "execution_mode": { "enum": ["batch", "soft_realtime"] },
         "max_cold_start_ms": { "$ref": "#/$defs/decimal" },
         "max_p95_latency_ms": { "$ref": "#/$defs/decimal" },
+        "max_p99_latency_ms": { "$ref": "#/$defs/decimal" },
         "max_runner_tree_peak_rss_bytes": { "type": "integer", "minimum": 1, "maximum": 9223372036854775807 },
         "max_accelerator_process_tree_peak_bytes": { "type": "integer", "minimum": 1, "maximum": 9223372036854775807 },
         "min_repeat_throughput_fps": { "$ref": "#/$defs/decimal" },

@@ -104,6 +104,7 @@ from .lifecycle import (
     LifecycleUpdateOutcome,
     update_image_pipeline_lifecycle,
 )
+from .promotion import PromotionOutcome, promote_image_pipeline
 from .processing import (
     ProcessingError,
     process_images,
@@ -191,6 +192,7 @@ __all__ = [
     "PinnedVerifiedArtifactSet",
     "PinnedInput",
     "ProcessingError",
+    "PromotionOutcome",
     "QualificationWorkloadProfile",
     "QualificationReport",
     "QualificationError",
@@ -244,6 +246,7 @@ __all__ = [
     "project_support_profiles",
     "review_image_pipeline_support_profiles",
     "process_images",
+    "promote_image_pipeline",
     "qualification_input_schedule",
     "qualify_image_pipeline",
     "qualification_report_has_code_owned_issuer",

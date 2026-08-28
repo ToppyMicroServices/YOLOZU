@@ -129,6 +129,14 @@ append one reviewed lifecycle record only; it cannot rewrite earlier records,
 bundle specs, artifacts, evidence, or support-profile definitions. Global revocation
 is terminal. Channel rollback changes only the named Experimental or Stable pointer.
 
+`promote-image-pipeline` reuses those canonical records and the complete ordered
+managed activation-binding shape. Promotion lifecycle records audit-bind the exact
+source/target pointers, explicit rollback readiness, and Stable comparator/drill
+status. `SupportProfileSpec.advertised_constraints.max_p99_latency_ms` is an
+optional backward-compatible absolute gate and is mandatory in the stricter Stable
+promotion policy. This adds no derived registry or support projection and does not
+change the schema version of existing v1 records.
+
 `load_algorithm_bundle_registry` accepts only the exact packaged registry/lifecycle
 pair above or an explicit workspace-confined directory containing those two exact
 basenames. The packaged pair is `yolozu_managed`; a custom pair is always

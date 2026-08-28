@@ -106,7 +106,7 @@
         "reason": { "type": "string", "minLength": 1, "maxLength": 512 },
         "occurred_at": { "$ref": "#/$defs/utc" },
         "event_digest": { "$ref": "#/$defs/sha256" },
-        "maintenance_operation": { "enum": ["disable", "enable", "review_license", "revoke", "rollback_channel"] },
+        "maintenance_operation": { "enum": ["disable", "enable", "review_license", "revoke", "rollback_channel", "promote_candidate_to_experimental", "promote_experimental_to_stable"] },
         "actor_role_id": { "enum": ["repo_maintainer", "release_reviewer", "site_operator", "automation"] },
         "review_status": { "enum": ["approved", "pending", "rejected"] }
       }
@@ -149,10 +149,7 @@
           "additionalProperties": false,
           "allOf": [
             {
-              "if": {
-                "required": ["maintenance_operation"],
-                "properties": { "maintenance_operation": { "const": "rollback_channel" } }
-              },
+              "if": { "properties": { "maintenance_operation": { "const": "rollback_channel" } }, "required": ["maintenance_operation"] },
               "then": { "required": ["rollback_target_prior_assignment_digest"] }
             }
           ],
@@ -170,7 +167,15 @@
             "profile_set_digest": { "$ref": "#/$defs/sha256" },
             "profiles": { "type": "array", "maxItems": 32, "items": { "$ref": "#/$defs/profile_reference" } },
             "evidence_bindings": { "type": "array", "maxItems": 32, "items": { "$ref": "#/$defs/evidence_binding" } },
-            "rollback_target_prior_assignment_digest": { "$ref": "#/$defs/sha256" }
+            "rollback_target_prior_assignment_digest": { "$ref": "#/$defs/sha256" },
+            "promotion_source_channel": { "enum": ["Candidate", "Experimental"] },
+            "promotion_source_pointer_digest": { "$ref": "#/$defs/sha256" },
+            "promotion_target_pointer_digest": { "$ref": "#/$defs/nullable_sha256" },
+            "rollback_target_status": { "enum": ["none_abstention", "prior_assignment"] },
+            "stable_comparator_status": { "enum": ["not_applicable_candidate_to_experimental", "comparator_not_applicable_first_assignment", "exact_current_stable"] },
+            "failure_drill_report_digest": { "$ref": "#/$defs/nullable_sha256" },
+            "failure_drill_reference": { "type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$" },
+            "automated_pass_reference": { "type": ["string", "null"], "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$" }
           }
         }
       ]

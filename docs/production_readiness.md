@@ -112,8 +112,14 @@ The separate `update-image-pipeline-lifecycle` interface contract is dry-run-fir
 It can append one reviewed exact global maintenance event or one explicit same-family
 Experimental/Stable rollback to a previously assigned target only after stale-head, immutable identity, historical
 profile-set, current managed evidence, and public-review gates pass. Global revoke is
-terminal. The implementation does not add automatic rollback, Stable promotion, or
-metrics-driven mutation, and no canonical lifecycle event was appended.
+terminal. The separate dry-run-first `promote-image-pipeline` interface contract
+implements exact reviewed Candidate-to-Experimental and Experimental-to-Stable
+assignment gates. Stable review requires a passed failure-drill artifact, distinct
+human approval, preregistered absolute gates, and exact current-Stable non-regression
+when a comparator exists. It rejects site-managed evidence and profile-set changes,
+and it writes only one lifecycle assignment after explicit `--approve`. This does
+not add automatic rollback/promotion or metrics-driven mutation, and no canonical
+promotion event was appended. The packaged state remains Candidate-only.
 Source, candidate-artifact, and installed MCP checks confirm that boundary; their
 positive selector and executor cases are fixtures, not selected public execution.
 See the [installed-artifact verification report](../reports/adaptive_routing_installed_verification_2026-08-26.md).

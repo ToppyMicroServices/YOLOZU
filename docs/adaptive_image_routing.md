@@ -573,6 +573,46 @@ qualification reports, or evidence streams. The packaged lifecycle still contain
 only the three Candidate registrations; no real lifecycle maintenance or rollback
 event was appended with this implementation.
 
+### Reviewed channel promotion
+
+`yolozu promote-image-pipeline` is the implemented Experimental maintainer
+interface contract for the separate Candidate-to-Experimental and
+Experimental-to-Stable operations. It is dry-run by default. Mutation requires
+`--approve`, the exact current source pointer, the exact target pointer or literal
+`none`, the lifecycle and support-profile heads, the current target-channel set
+record and set digest, a byte-for-byte ordered profile echo, and the complete
+current repository-managed activation binding set. A public repository review uses
+only a non-personal role ID and bounded reference/reason.
+
+Candidate-to-Experimental also requires one current repository-managed screening
+pass, approved immutable artifact/license state, a bound validated execution
+interface contract, and explicit rollback readiness. A first assignment records
+`none_abstention`; a later assignment either audit-binds the exact current prior
+assignment or explicitly records the reviewed `none` fallback. Third-party isolated
+execution additionally remains blocked without both a current CandidateBuildRecord
+and matching live code-owned isolation capability. The current repository has no
+supported isolation backend, so that branch cannot be promoted.
+
+Experimental-to-Stable additionally requires a canonical passed failure-drill
+report whose automated-pass reference is distinct from the human review. The first
+Stable assignment records `comparator_not_applicable_first_assignment` and applies
+all preregistered absolute gates without inventing a baseline. A later replacement
+must keep the exact ordered profile ID/digest set. For every profile it compares the
+same environment, workload, protocol, quality dataset/vocabulary, latency interval,
+and collector identities. Exact ratios and CanonicalDecimalV1 values enforce no
+lower applicable throughput/FPS or quality in its declared direction and no higher
+p95, p99, process-tree RSS, or accelerator memory. Unknown, partial, incomparable,
+missing, expanded, narrowed, or reordered evidence fails closed.
+
+Approval atomically appends only one `public_assignment` and then reprojects and
+reads back its pointer, profile set, and evidence bindings. It pins and verifies that
+`bundle_specs.json`, `support_profiles.jsonl`, `candidate_screening.jsonl`, and
+`evidence_activation.jsonl` did not change. Documentation and manifest updates are
+reviewed in the same repository commit, but this does not claim cross-file crash
+atomicity. No derived registry, channel, or support projection is serialized. The
+canonical packaged streams remain Candidate-only; implementation and fixtures do
+not promote a real model or establish a Stable support claim.
+
 The environment fingerprint identifies a measured configuration, not one unique
 physical host. It excludes identifying host data. Evidence from representative
 images describes only that measured workload. It does not prove the same latency or
