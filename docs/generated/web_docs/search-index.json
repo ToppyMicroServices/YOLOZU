@@ -938,6 +938,13 @@
     "title": "tune_gate_weights"
   },
   {
+    "href": "commands.html#tool-update-image-pipeline-lifecycle",
+    "kind": "command",
+    "search_text": "update_image_pipeline_lifecycle Dry-run or atomically append one exact reviewed lifecycle maintenance or previously assigned same-family channel rollback event audit-bound to its historical assignment digest; metrics and dormant candidates never mutate lifecycle state. experimental tools/update_image_pipeline_lifecycle.py  --family-id --bundle-spec-digest --artifact-set-digest --expected-lifecycle-head-digest --expected-bundle-state-event-digest --channel --expected-current-pointer-digest --expected-prior-assignment-digest --expected-support-profile-index-head --expected-prior-support-profile-index-head --expected-prior-profile-set-record-digest --expected-prior-profile-set-digest --target-bundle-spec-digest --target-artifact-set-digest --evidence-bindings --license-review --actor-role-id --public-review-id --review-status --reason --workspace --approve",
+    "summary": "Dry-run or atomically append one exact reviewed lifecycle maintenance or previously assigned same-family channel rollback event audit-bound to its historical assignment digest; metrics and dormant candidates never mutate lifecycle state.",
+    "title": "update_image_pipeline_lifecycle"
+  },
+  {
     "href": "commands.html#tool-validate-instance-segmentation-predictions",
     "kind": "command",
     "search_text": "validate_instance_segmentation_predictions Validate YOLOZU instance segmentation predictions JSON (per-image instances; PNG masks). stable tools/validate_instance_segmentation_predictions.py ",
@@ -1181,6 +1188,13 @@
     "search_text": "YOLOZU Instance Segmentation Predictions JSON Predictions artifact for instance segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported.  docs/schemas/instance_segmentation_predictions.schema.json",
     "summary": "Predictions artifact for instance segmentation evaluation. Canonical form is {predictions:[...], meta:{...}}, but other simple shapes are supported.",
     "title": "YOLOZU Instance Segmentation Predictions JSON"
+  },
+  {
+    "href": "schemas.html#schema-lifecycle-rollback-bindings-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU LifecycleRollbackBindings v1 Canonical complete ordered repository-managed activation set for one explicit non-none channel rollback. bindings schema_version docs/schemas/lifecycle_rollback_bindings.schema.json",
+    "summary": "Canonical complete ordered repository-managed activation set for one explicit non-none channel rollback.",
+    "title": "YOLOZU LifecycleRollbackBindings v1"
   },
   {
     "href": "schemas.html#schema-local-artifact-inventory-schema",

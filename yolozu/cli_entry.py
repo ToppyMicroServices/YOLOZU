@@ -30,6 +30,7 @@ from .cli_commands import (
     _cmd_qualify_image_pipeline,
     _cmd_activate_qualification_evidence,
     _cmd_review_image_pipeline_support_profiles,
+    _cmd_update_image_pipeline_lifecycle,
     _cmd_scout_algorithms,
     _cmd_validate,
     _cmd_eval_instance_seg,
@@ -1426,6 +1427,104 @@ def main(argv: list[str] | None = None) -> int:
         help="Apply the atomic append; omission is always dry-run.",
     )
 
+    lifecycle_update = sub.add_parser(
+        "update-image-pipeline-lifecycle",
+        help="Review one exact lifecycle or rollback update; dry-run by default.",
+    )
+    lifecycle_update.add_argument(
+        "operation",
+        choices=("disable", "enable", "revoke", "review-license", "rollback-channel"),
+        help="Exact reviewed maintenance operation.",
+    )
+    lifecycle_update.add_argument("--family-id", help="Exact bundle family ID.")
+    lifecycle_update.add_argument(
+        "--bundle-spec-digest", help="Exact affected immutable bundle spec digest."
+    )
+    lifecycle_update.add_argument(
+        "--artifact-set-digest", help="Exact affected immutable artifact-set digest."
+    )
+    lifecycle_update.add_argument(
+        "--expected-lifecycle-head-digest",
+        help="Observed global lifecycle stream head digest.",
+    )
+    lifecycle_update.add_argument(
+        "--expected-bundle-state-event-digest",
+        help="Observed current bundle-state event digest for global operations.",
+    )
+    lifecycle_update.add_argument(
+        "--channel",
+        choices=("Experimental", "Stable"),
+        help="Exact pointer changed by rollback-channel.",
+    )
+    lifecycle_update.add_argument(
+        "--expected-current-pointer-digest",
+        help="Observed lifecycle digest of the current channel pointer.",
+    )
+    lifecycle_update.add_argument(
+        "--expected-prior-assignment-digest",
+        help="Exact lifecycle digest of the assignment being rolled back.",
+    )
+    lifecycle_update.add_argument(
+        "--expected-support-profile-index-head",
+        help="Observed current global support-profile stream head.",
+    )
+    lifecycle_update.add_argument(
+        "--expected-prior-support-profile-index-head",
+        help="Historical support-profile head frozen by the prior assignment.",
+    )
+    lifecycle_update.add_argument(
+        "--expected-prior-profile-set-record-digest",
+        help="Historical complete profile-set assignment record digest.",
+    )
+    lifecycle_update.add_argument(
+        "--expected-prior-profile-set-digest",
+        help="Historical ordered advertised profile-set digest.",
+    )
+    lifecycle_update.add_argument(
+        "--target-bundle-spec-digest",
+        help="Exact same-family rollback target digest, or literal none.",
+    )
+    lifecycle_update.add_argument(
+        "--target-artifact-set-digest",
+        help="Exact target artifact-set digest for a non-none rollback.",
+    )
+    lifecycle_update.add_argument(
+        "--evidence-bindings",
+        help="Workspace-confined canonical JSON with the complete exact activation set.",
+    )
+    lifecycle_update.add_argument(
+        "--license-review",
+        action="append",
+        metavar="ARTIFACT_ID=STATE",
+        help="Complete ordered review set; STATE is approved, unknown, or blocked.",
+    )
+    lifecycle_update.add_argument(
+        "--actor-role-id",
+        choices=("repo_maintainer", "release_reviewer"),
+        help="Non-personal repository review role.",
+    )
+    lifecycle_update.add_argument(
+        "--public-review-id", help="Bounded public repository review reference."
+    )
+    lifecycle_update.add_argument(
+        "--review-status",
+        choices=("approved", "pending", "rejected"),
+        help="Public review decision; only approved can pass mutation gates.",
+    )
+    lifecycle_update.add_argument(
+        "--reason", help="Public review reason in 1..512 UTF-8 bytes."
+    )
+    lifecycle_update.add_argument(
+        "--workspace",
+        default=".",
+        help="Repository workspace containing the canonical SSOT.",
+    )
+    lifecycle_update.add_argument(
+        "--approve",
+        action="store_true",
+        help="Apply the atomic append; omission is always dry-run.",
+    )
+
     scout = sub.add_parser(
         "scout-algorithms",
         help="Plan or collect a bounded monitored-source candidate inbox (Experimental).",
@@ -1551,6 +1650,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_activate_qualification_evidence(args)
     if args.command == "review-image-pipeline-support-profiles":
         return _cmd_review_image_pipeline_support_profiles(args)
+    if args.command == "update-image-pipeline-lifecycle":
+        return _cmd_update_image_pipeline_lifecycle(args)
     if args.command == "scout-algorithms":
         return _cmd_scout_algorithms(args)
     if args.command == "list":

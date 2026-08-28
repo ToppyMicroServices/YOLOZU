@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/lifecycle_rollback_bindings.schema.json",
+  "title": "YOLOZU LifecycleRollbackBindings v1",
+  "description": "Canonical complete ordered repository-managed activation set for one explicit non-none channel rollback.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "bindings"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "bindings": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/binding" }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "component": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile_id",
+        "profile_digest",
+        "activation_id",
+        "activation_digest",
+        "trust_domain_claim"
+      ],
+      "properties": {
+        "profile_id": { "$ref": "#/$defs/component" },
+        "profile_digest": { "$ref": "#/$defs/sha256" },
+        "activation_id": { "$ref": "#/$defs/id" },
+        "activation_digest": { "$ref": "#/$defs/sha256" },
+        "trust_domain_claim": { "const": "yolozu_managed" }
+      }
+    }
+  }
+}

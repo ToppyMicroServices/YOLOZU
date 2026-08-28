@@ -1223,6 +1223,73 @@ def _cmd_review_image_pipeline_support_profiles(args: argparse.Namespace) -> int
     return 0 if outcome.status in {"dry_run_ready", "applied"} else 2
 
 
+def _cmd_update_image_pipeline_lifecycle(args: argparse.Namespace) -> int:
+    from yolozu.adaptive.lifecycle import update_image_pipeline_lifecycle
+
+    license_reviews = None
+    if args.license_review is not None:
+        license_reviews = []
+        for raw in args.license_review:
+            artifact_id, separator, review_state = raw.partition("=")
+            if not separator or not artifact_id or not review_state:
+                raise SystemExit(
+                    "--license-review must use ARTIFACT_ID=approved|unknown|blocked"
+                )
+            license_reviews.append(
+                {"artifact_id": artifact_id, "review_state": review_state}
+            )
+    try:
+        outcome = update_image_pipeline_lifecycle(
+            operation=str(args.operation),
+            workspace_root=str(args.workspace),
+            family_id=getattr(args, "family_id", None),
+            bundle_spec_digest=getattr(args, "bundle_spec_digest", None),
+            artifact_set_digest=getattr(args, "artifact_set_digest", None),
+            expected_lifecycle_head_digest=getattr(
+                args, "expected_lifecycle_head_digest", None
+            ),
+            expected_bundle_state_event_digest=getattr(
+                args, "expected_bundle_state_event_digest", None
+            ),
+            channel=getattr(args, "channel", None),
+            expected_current_pointer_digest=getattr(
+                args, "expected_current_pointer_digest", None
+            ),
+            expected_prior_assignment_digest=getattr(
+                args, "expected_prior_assignment_digest", None
+            ),
+            expected_support_profile_index_head=getattr(
+                args, "expected_support_profile_index_head", None
+            ),
+            expected_prior_support_profile_index_head=getattr(
+                args, "expected_prior_support_profile_index_head", None
+            ),
+            expected_prior_profile_set_record_digest=getattr(
+                args, "expected_prior_profile_set_record_digest", None
+            ),
+            expected_prior_profile_set_digest=getattr(
+                args, "expected_prior_profile_set_digest", None
+            ),
+            target_bundle_spec_digest=getattr(
+                args, "target_bundle_spec_digest", None
+            ),
+            target_artifact_set_digest=getattr(
+                args, "target_artifact_set_digest", None
+            ),
+            evidence_bindings_path=getattr(args, "evidence_bindings", None),
+            license_reviews=license_reviews,
+            actor_role_id=getattr(args, "actor_role_id", None),
+            public_review_id=getattr(args, "public_review_id", None),
+            review_status=getattr(args, "review_status", None),
+            reason=getattr(args, "reason", None),
+            approve=bool(args.approve),
+        )
+    except (OSError, TypeError, ValueError) as exc:
+        raise SystemExit(str(exc)) from exc
+    print(json.dumps(outcome.to_dict(), ensure_ascii=False, indent=2, sort_keys=True))
+    return 0 if outcome.status in {"dry_run_ready", "applied"} else 2
+
+
 def _cmd_scout_algorithms(args: argparse.Namespace) -> int:
     from yolozu.adaptive.algorithm_scout import (
         AlgorithmScoutError,

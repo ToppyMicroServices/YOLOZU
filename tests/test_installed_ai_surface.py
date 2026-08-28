@@ -147,6 +147,7 @@ class TestInstalledAiSurface(unittest.TestCase):
                 "algorithm_bundle_registry.schema.json",
                 "algorithm_bundle_spec.schema.json",
                 "bundle_lifecycle_record.schema.json",
+                "lifecycle_rollback_bindings.schema.json",
                 "environment_profile.schema.json",
                 "image_job_spec.schema.json",
                 "local_artifact_inventory.schema.json",

@@ -44,6 +44,16 @@ command is installed, but the unbound Candidate records and empty runner map mak
 invocation fail actionably without dummy evidence. Its \cmd{--help} documents
 the exact-bundle, timeout, pinned-input, and managed-output interface contract.
 
+The Experimental \cmd{yolozu update-image-pipeline-lifecycle} command is also
+installed. It defaults to a no-write dry-run and requires an approved public review,
+exact observed heads, and \cmd{--approve} before appending one lifecycle event.
+Its rollback operation can restore only the complete historical profile set to a
+previously assigned, currently eligible same-family target or explicit \cmd{none}.
+The event records the exact historical target-assignment digest.
+It does not provide automatic
+rollback or make the Candidate records executable. No lifecycle event is added by
+installing this interface contract.
+
 The installed Python API also exposes \cmd{ManagedOutputTransaction} for
 repository-owned qualification and processing outputs. It uses bounded manifests,
 directory-relative no-follow mutation, and fail-closed recovery on POSIX. It does

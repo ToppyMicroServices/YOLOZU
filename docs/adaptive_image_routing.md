@@ -522,6 +522,49 @@ SSOTs and requires the exact pinned observation again immediately before it reso
 a runner session. Missing, untrusted, conflicting, superseded, or tampered state
 fails closed.
 
+### Reviewed lifecycle maintenance and channel rollback
+
+`yolozu update-image-pipeline-lifecycle` is the implemented Experimental
+maintenance interface contract for one exact lifecycle change. Its operations are
+`disable`, `enable`, `revoke`, `review-license`, and `rollback-channel`. Omission of
+`--approve` always returns a no-write gate result. Approval requires an exact
+immutable bundle spec and artifact-set digest, the observed global lifecycle head,
+a non-personal repository role, an approved public review reference and status, and
+a bounded reason. Bundle-global operations also require the exact current state-event
+digest. Every approved global event retains the ordered artifact IDs, byte sizes,
+and SHA-256 values and records that existing historical runs remain reproducible.
+
+Global disable and enable change eligibility without rewriting a bundle or its
+artifacts. A license review must provide the complete ordered artifact review set
+and must change at least one review state. Global revoke is terminal and makes the
+bundle ineligible through every channel without deleting its historical pointers,
+spec, artifacts, reports, or evidence. No inverse revoke operation exists.
+
+`rollback-channel` changes only the named Experimental or Stable pointer. It
+requires the exact current pointer/assignment digest, current support-profile head,
+and the support head, set-record digest, and ordered set digest frozen by the
+assignment being rolled back. Target `none` writes an explicit channel-none record
+with empty profiles and bindings while retaining the prior identities for audit.
+A non-`none` target must be a different immutable bundle in the same family. It must
+remain globally enabled and license-approved, have immutable Candidate registration,
+have a prior public assignment to that exact family/channel,
+record that exact historical assignment event digest in the new rollback event,
+pass any applicable current repository-managed screening gate, and have exactly one
+current repository-managed activation for every profile in the historical advertised
+set. The canonical `LifecycleRollbackBindings` input must equal that complete derived
+ordered set. Missing, extra, duplicate, cross-environment, expired, revoked, stale,
+site/operator-asserted, or otherwise untrusted evidence blocks the operation.
+
+Rollback does not choose the latest dormant profile set, accept a caller-authored
+subset, switch families, promote to Stable, or mutate from metrics, monitoring, or
+download activity. A never-assigned Candidate must use the separate reviewed
+promotion path; rollback cannot introduce it. There is no automatic rollback path. The service reopens the
+lifecycle and support streams immediately before the atomic append, validates the
+complete readback, and never mutates bundle specs, artifacts, support profiles,
+qualification reports, or evidence streams. The packaged lifecycle still contains
+only the three Candidate registrations; no real lifecycle maintenance or rollback
+event was appended with this implementation.
+
 The environment fingerprint identifies a measured configuration, not one unique
 physical host. It excludes identifying host data. Evidence from representative
 images describes only that measured workload. It does not prove the same latency or

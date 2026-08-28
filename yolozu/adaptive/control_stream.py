@@ -8,13 +8,68 @@ import stat
 from pathlib import Path
 from typing import Callable
 
-__all__ = ["atomic_replace_control_stream"]
+__all__ = [
+    "atomic_replace_control_stream",
+    "read_control_stream_bytes",
+    "resolve_confined_regular_file",
+    "resolve_workspace_root",
+]
 
 
 FaultHook = Callable[[str], None]
 
 
-def _read_regular(path: Path, *, maximum_bytes: int, label: str) -> bytes:
+def resolve_workspace_root(path: str | Path) -> Path:
+    """Resolve one existing non-symlink workspace directory."""
+
+    lexical = Path(os.path.abspath(Path(path)))
+    if lexical.is_symlink():
+        raise ValueError("workspace root cannot be a symlink")
+    resolved = lexical.resolve(strict=True)
+    if not resolved.is_dir():
+        raise ValueError("workspace root must be a directory")
+    return resolved
+
+
+def resolve_confined_regular_file(
+    path: str | Path,
+    *,
+    workspace: Path,
+    label: str,
+) -> Path:
+    """Resolve one singly linked regular file without crossing workspace."""
+
+    candidate = Path(path)
+    if not candidate.is_absolute():
+        candidate = workspace / candidate
+    lexical = Path(os.path.abspath(candidate))
+    try:
+        relative = lexical.relative_to(workspace)
+    except ValueError as exc:
+        raise ValueError(f"{label} must stay inside the workspace") from exc
+    current = workspace
+    for component in relative.parts:
+        current = current / component
+        if current.is_symlink():
+            raise ValueError(f"{label} contains a symlink component")
+    resolved = lexical.resolve(strict=True)
+    try:
+        resolved.relative_to(workspace)
+    except ValueError as exc:
+        raise ValueError(f"{label} resolves outside the workspace") from exc
+    info = os.stat(resolved, follow_symlinks=False)
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        raise ValueError(f"{label} must be one singly linked regular file")
+    return resolved
+
+
+def read_control_stream_bytes(
+    path: Path,
+    *,
+    maximum_bytes: int,
+    label: str,
+) -> bytes:
+    """Read a bounded singly linked regular file with identity revalidation."""
     before = os.stat(path, follow_symlinks=False)
     if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
         raise ValueError(f"{label} must be one singly linked regular file")
@@ -92,7 +147,11 @@ def atomic_replace_control_stream(
         current = (
             b""
             if before is None
-            else _read_regular(path, maximum_bytes=maximum_bytes, label=label)
+            else read_control_stream_bytes(
+                path,
+                maximum_bytes=maximum_bytes,
+                label=label,
+            )
         )
         if current != observed_bytes:
             raise ValueError(f"{label} changed after dry-run validation")

@@ -183,6 +183,7 @@ jobs:
             tests.test_adaptive_algorithm_scout \
             tests.test_adaptive_candidate_screening \
             tests.test_adaptive_support_profile_governance \
+            tests.test_adaptive_lifecycle_governance \
             tests.test_adaptive_managed_output \
             tests.test_adaptive_qualification \
             tests.test_adaptive_recommendation \
@@ -255,6 +256,7 @@ jobs:
             tests.test_adaptive_algorithm_scout \
             tests.test_adaptive_candidate_screening \
             tests.test_adaptive_support_profile_governance \
+            tests.test_adaptive_lifecycle_governance \
             tests.test_adaptive_managed_output \
             tests.test_adaptive_qualification \
             tests.test_adaptive_recommendation \
@@ -341,6 +343,7 @@ jobs:
             tests/test_adaptive_algorithm_scout.py \
             tests/test_adaptive_candidate_screening.py \
             tests/test_adaptive_support_profile_governance.py \
+            tests/test_adaptive_lifecycle_governance.py \
             tests/test_adaptive_evidence_activation.py \
             tests/test_adaptive_qualification.py \
             tests/test_adaptive_recommendation.py \
@@ -418,6 +421,7 @@ jobs:
           yolozu doctor --output -
           yolozu activate-qualification-evidence --help
           yolozu review-image-pipeline-support-profiles --help
+          yolozu update-image-pipeline-lifecycle --help
           yolozu qualify-image-pipeline --help
           yolozu demo instance-seg --num-images 2 --image-size 48 --max-instances 2 --run-dir "${RUNNER_TEMP}/yolozu_demo"
 
@@ -444,6 +448,7 @@ jobs:
           yolozu doctor --output -
           yolozu activate-qualification-evidence --help
           yolozu review-image-pipeline-support-profiles --help
+          yolozu update-image-pipeline-lifecycle --help
           yolozu export --help
           yolozu qualify-image-pipeline --help
           python -c "from yolozu import resources; paths = resources.list_resource_paths(); assert 'schemas/predictions.schema.json' in paths; assert 'schemas/adaptive_vision_roadmap.schema.json' in paths; assert 'manifest/adaptive_vision_roadmap.json' in paths; assert 'protocols/yolo26_eval.json' in paths; print('resources OK:', len(paths))"

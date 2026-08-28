@@ -6,10 +6,10 @@ Keep narrative docs short and link here for the full command surface.
 ## Top-level `yolozu --help`
 
 ```text
-usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,scout-algorithms,registry,completion,comp} ...
+usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,scout-algorithms,registry,completion,comp} ...
 
 positional arguments:
-  {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,scout-algorithms,registry,completion,comp}
+  {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,scout-algorithms,registry,completion,comp}
     guide               Show beginner-friendly routes and copy-paste commands.
     doctor (dr)         Check the environment. Use --explain for beginner-friendly next actions.
     list                List registries and built-in catalogs.
@@ -40,6 +40,8 @@ positional arguments:
                         Review one exact qualification report; dry-run unless --approve is set.
     review-image-pipeline-support-profiles
                         Review one complete dormant support-profile set; dry-run by default.
+    update-image-pipeline-lifecycle
+                        Review one exact lifecycle or rollback update; dry-run by default.
     scout-algorithms    Plan or collect a bounded monitored-source candidate inbox (Experimental).
     registry            AI-first tool registry: list/show/validate/run tools from the canonical manifest.
     completion (comp)   Print shell completion script (bash/zsh).
@@ -299,6 +301,7 @@ Contact: develop@toppymicros.com
 | train_hf_detr_runtime_smoke | experimental | tools/train_hf_detr_runtime_smoke.py | Run a bounded real scratch Transformers DETR optimizer step and emit deterministic checkpoint/predictions/resource evidence. |
 | ttt_compare | research | scripts/ttt_compare.sh | Short shell entrypoint for the fail-closed TTT local diagnostic; requires a fully compatible checkpoint and never promotes efficacy. |
 | tune_gate_weights | research | tools/tune_gate_weights.py | Offline grid-search for inference-time score-fusion weights (CPU-only, simple mAP proxy). |
+| update_image_pipeline_lifecycle | experimental | tools/update_image_pipeline_lifecycle.py | Dry-run or atomically append one exact reviewed lifecycle maintenance or previously assigned same-family channel rollback event audit-bound to its historical assignment digest; metrics and dormant candidates never mutate lifecycle state. |
 | validate_instance_segmentation_predictions | stable | tools/validate_instance_segmentation_predictions.py | Validate YOLOZU instance segmentation predictions JSON (per-image instances; PNG masks). |
 | validate_map_targets | stable | tools/validate_map_targets.py | Validate the mAP target table file (baselines/yolo26_targets.json). |
 | validate_predictions | stable | tools/validate_predictions.py | Validate YOLOZU predictions JSON (permissive by default; strict optional) with compatible human output or an explicit bounded JSON result. |

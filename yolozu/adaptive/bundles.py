@@ -1500,7 +1500,13 @@ _LIFECYCLE_COMMON_KEYS = frozenset(
         "reason",
         "occurred_at",
         "event_digest",
+        "maintenance_operation",
+        "actor_role_id",
+        "review_status",
     }
+)
+_LIFECYCLE_OPTIONAL_COMMON_KEYS = frozenset(
+    {"maintenance_operation", "actor_role_id", "review_status"}
 )
 _GLOBAL_KEYS = frozenset(
     {
@@ -1509,7 +1515,12 @@ _GLOBAL_KEYS = frozenset(
         "artifact_set_digest",
         "bundle_state",
         "artifact_license_reviews",
+        "artifact_members",
+        "existing_runs_reproducible",
     }
+)
+_GLOBAL_OPTIONAL_KEYS = frozenset(
+    {"artifact_members", "existing_runs_reproducible"}
 )
 _ASSIGNMENT_KEYS = frozenset(
     {
@@ -1524,7 +1535,11 @@ _ASSIGNMENT_KEYS = frozenset(
         "profile_set_digest",
         "profiles",
         "evidence_bindings",
+        "rollback_target_prior_assignment_digest",
     }
+)
+_ASSIGNMENT_OPTIONAL_KEYS = frozenset(
+    {"rollback_target_prior_assignment_digest"}
 )
 _NONE_KEYS = frozenset(
     {
@@ -1549,7 +1564,7 @@ def _lifecycle_common(record: Mapping[str, Any]) -> dict[str, Any]:
     )
     if (sequence == 1) != (previous == ZERO_DIGEST):
         raise ValueError("previous_event_digest: zero sentinel only for sequence 1")
-    return {
+    normalized = {
         "schema_version": 1,
         "stream_id": _enum(
             record["stream_id"],
@@ -1577,6 +1592,88 @@ def _lifecycle_common(record: Mapping[str, Any]) -> dict[str, Any]:
         "occurred_at": _utc(record["occurred_at"], field="occurred_at"),
         "event_digest": _sha256(record["event_digest"], field="event_digest"),
     }
+    optional = _LIFECYCLE_OPTIONAL_COMMON_KEYS.intersection(record)
+    if optional and optional != _LIFECYCLE_OPTIONAL_COMMON_KEYS:
+        raise ValueError("maintenance lifecycle metadata must be complete")
+    if optional:
+        actor = _token(
+            record["actor_role_id"],
+            field="actor_role_id",
+            pattern=_ROLE_ID_RE,
+        )
+        if actor != normalized["reviewer_role_id"]:
+            raise ValueError("actor_role_id must match reviewer_role_id")
+        normalized.update(
+            {
+                "maintenance_operation": _enum(
+                    record["maintenance_operation"],
+                    field="maintenance_operation",
+                    allowed=frozenset(
+                        {
+                            "disable",
+                            "enable",
+                            "review_license",
+                            "revoke",
+                            "rollback_channel",
+                        }
+                    ),
+                ),
+                "actor_role_id": actor,
+                "review_status": _enum(
+                    record["review_status"],
+                    field="review_status",
+                    allowed=frozenset({"approved", "pending", "rejected"}),
+                ),
+            }
+        )
+    return normalized
+
+
+def _validate_artifact_members(
+    value: Any,
+    bundle: AlgorithmBundleSpec,
+) -> list[dict[str, Any]]:
+    items = _list(value, field="artifact_members", minimum=1, maximum=32)
+    expected = [
+        {
+            "artifact_id": artifact["artifact_id"],
+            "expected_size_bytes": artifact["expected_size_bytes"],
+            "sha256": artifact["sha256"],
+        }
+        for artifact in bundle.to_dict()["artifacts"]
+    ]
+    normalized: list[dict[str, Any]] = []
+    for index, item in enumerate(items):
+        record = _mapping(item, field=f"artifact_members[{index}]")
+        keys = frozenset({"artifact_id", "expected_size_bytes", "sha256"})
+        _keys(
+            record,
+            field=f"artifact_members[{index}]",
+            allowed=keys,
+            required=keys,
+        )
+        normalized.append(
+            {
+                "artifact_id": _token(
+                    record["artifact_id"],
+                    field=f"artifact_members[{index}].artifact_id",
+                    pattern=_COMPONENT_RE,
+                ),
+                "expected_size_bytes": _integer(
+                    record["expected_size_bytes"],
+                    field=f"artifact_members[{index}].expected_size_bytes",
+                    minimum=1,
+                    maximum=MAX_ARTIFACT_BYTES,
+                ),
+                "sha256": _sha256(
+                    record["sha256"],
+                    field=f"artifact_members[{index}].sha256",
+                ),
+            }
+        )
+    if normalized != expected:
+        raise ValueError("artifact_members must exactly match the immutable bundle")
+    return normalized
 
 
 def validate_bundle_lifecycle_record(
@@ -1613,8 +1710,58 @@ def validate_bundle_lifecycle_record(
     else:
         raise ValueError("BundleLifecycleRecord: invalid scope/type combination")
     allowed = _LIFECYCLE_COMMON_KEYS | variant_keys
-    _keys(record, field="BundleLifecycleRecord", allowed=allowed, required=allowed)
+    required = allowed - _LIFECYCLE_OPTIONAL_COMMON_KEYS
+    if scope == "bundle_global":
+        required -= _GLOBAL_OPTIONAL_KEYS
+    elif scope == "channel_assignment":
+        required -= _ASSIGNMENT_OPTIONAL_KEYS
+    _keys(record, field="BundleLifecycleRecord", allowed=allowed, required=required)
     normalized = _lifecycle_common(record)
+    operation = normalized.get("maintenance_operation")
+    if operation is not None:
+        if normalized["actor_role_id"] not in {
+            "repo_maintainer",
+            "release_reviewer",
+        }:
+            raise ValueError(
+                "lifecycle maintenance requires a repository review role"
+            )
+        if normalized["review_status"] != "approved":
+            raise ValueError("lifecycle maintenance requires approved review status")
+        if normalized["review_reference"]["kind"] != "public_repository_id":
+            raise ValueError(
+                "lifecycle maintenance requires a public repository review"
+            )
+        if normalized["issuer_claim"] != "repository_source":
+            raise ValueError(
+                "lifecycle maintenance requires repository source provenance"
+            )
+        expected_operation = {
+            "disable": "disable",
+            "enable": "enable",
+            "license_review": "review_license",
+            "revoke": "revoke",
+            "public_assignment": "rollback_channel",
+            "channel_none": "rollback_channel",
+        }.get(str(event_type))
+        if operation != expected_operation:
+            raise ValueError("maintenance_operation does not match the lifecycle event")
+        if scope == "bundle_global" and not _GLOBAL_OPTIONAL_KEYS.issubset(record):
+            raise ValueError(
+                "bundle maintenance requires immutable artifact audit metadata"
+            )
+        if (
+            operation == "rollback_channel"
+            and scope == "channel_assignment"
+            and "rollback_target_prior_assignment_digest" not in record
+        ):
+            raise ValueError(
+                "non-none rollback requires its prior target assignment digest"
+            )
+    elif "rollback_target_prior_assignment_digest" in record:
+        raise ValueError(
+            "prior target assignment digest is reserved for reviewed rollback"
+        )
     bundles = registry.by_spec_digest()
 
     if scope == "bundle_global":
@@ -1663,6 +1810,21 @@ def validate_bundle_lifecycle_record(
                 ),
             }
         )
+        global_optional = _GLOBAL_OPTIONAL_KEYS.intersection(record)
+        if global_optional and global_optional != _GLOBAL_OPTIONAL_KEYS:
+            raise ValueError("bundle maintenance audit metadata must be complete")
+        if global_optional:
+            normalized.update(
+                {
+                    "artifact_members": _validate_artifact_members(
+                        record["artifact_members"], bundle
+                    ),
+                    "existing_runs_reproducible": _boolean(
+                        record["existing_runs_reproducible"],
+                        field="existing_runs_reproducible",
+                    ),
+                }
+            )
     elif scope == "channel_assignment":
         spec_digest = _sha256(
             record["target_bundle_spec_digest"], field="target_bundle_spec_digest"
@@ -1753,6 +1915,11 @@ def validate_bundle_lifecycle_record(
                 "evidence_bindings": bindings,
             }
         )
+        if "rollback_target_prior_assignment_digest" in record:
+            normalized["rollback_target_prior_assignment_digest"] = _sha256(
+                record["rollback_target_prior_assignment_digest"],
+                field="rollback_target_prior_assignment_digest",
+            )
     else:
         family_id = _token(
             record["family_id"], field="family_id", pattern=_COMPONENT_RE
@@ -1951,6 +2118,23 @@ def project_bundle_lifecycle(
                         "public assignment requires a validated support-profile projection"
                     )
                 validate_support_profile_snapshot(event, support_profiles)
+                if event.get("maintenance_operation") == "rollback_channel":
+                    prior_digest = event[
+                        "rollback_target_prior_assignment_digest"
+                    ]
+                    if not any(
+                        prior.to_dict()["event_digest"] == prior_digest
+                        and prior.to_dict()["event_type"] == "public_assignment"
+                        and prior.to_dict().get("family_id") == event["family_id"]
+                        and prior.to_dict().get("channel") == event["channel"]
+                        and prior.to_dict().get("target_bundle_spec_digest")
+                        == spec_digest
+                        for prior in events
+                    ):
+                        raise ValueError(
+                            "rollback target assignment digest does not reference "
+                            "an exact prior assignment"
+                        )
             elif support_profiles is not None:
                 head = event["support_profile_index_head"]
                 if head != ZERO_DIGEST and head not in support_profiles.record_by_digest:
