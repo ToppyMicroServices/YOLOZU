@@ -126,7 +126,7 @@
     "docs/schemas/bop_download_manifest.schema.json": "ec8d4bb97a5deb05c3e9aad2b514347584c58741c2f2b9f3fc321f7a8d2d793c",
     "docs/schemas/bop_tless_qualification.schema.json": "a83fed50e3df30a4955a7424df53329f7a0499efe20dd58b777856dd94a3a509",
     "docs/schemas/bundle_lifecycle_record.schema.json": "82583b5e81125fbf10b69995242183c304117b2186d25feff99b0d14c828d43d",
-    "docs/schemas/candidate_isolation_probe.schema.json": "d5a9eec338ae89c9e0763fd721db24397ae67b774a5e86d6a33ddb86630122f4",
+    "docs/schemas/candidate_isolation_probe.schema.json": "7fc22576b76e3abcb4798ffe72bca19ce24d70e91dce8d2ac4f51a307469de0a",
     "docs/schemas/candidate_screening_record.schema.json": "3e579317ecd1e0b66d4b6cc504acaffaee75490601d79365af70aa7fee4a21fa",
     "docs/schemas/coco_eval_report.schema.json": "9682726e57bf195bfc790fc67c0c30b058a822a74e018d95bb7bf8d360597556",
     "docs/schemas/compatible_host_external_runtime_qualification.schema.json": "e9d0eb3f2398b597deb0fc7a91a05500923b27a30cfa9d048116fa36a05127f0",
