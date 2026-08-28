@@ -181,7 +181,11 @@ jobs:
             tests.test_adaptive_environment_profile \
             tests.test_adaptive_bundle_registry \
             tests.test_adaptive_algorithm_scout \
+            tests.test_algorithm_scout_workflow \
+            tests.test_adaptive_qualification_freshness \
+            tests.test_qualification_freshness_workflow \
             tests.test_adaptive_candidate_screening \
+            tests.test_ocr_contract \
             tests.test_candidate_isolation_policy \
             tests.test_adaptive_support_profile_governance \
             tests.test_adaptive_lifecycle_governance \
@@ -256,7 +260,11 @@ jobs:
             tests.test_adaptive_environment_profile \
             tests.test_adaptive_bundle_registry \
             tests.test_adaptive_algorithm_scout \
+            tests.test_algorithm_scout_workflow \
+            tests.test_adaptive_qualification_freshness \
+            tests.test_qualification_freshness_workflow \
             tests.test_adaptive_candidate_screening \
+            tests.test_ocr_contract \
             tests.test_candidate_isolation_policy \
             tests.test_adaptive_support_profile_governance \
             tests.test_adaptive_lifecycle_governance \
@@ -345,6 +353,9 @@ jobs:
             tests/test_ssot_capability_coverage.py \
             tests/test_adaptive_vision_roadmap_generator.py \
             tests/test_adaptive_algorithm_scout.py \
+            tests/test_algorithm_scout_workflow.py \
+            tests/test_adaptive_qualification_freshness.py \
+            tests/test_qualification_freshness_workflow.py \
             tests/test_adaptive_candidate_screening.py \
             tests/test_candidate_isolation_policy.py \
             tests/test_adaptive_support_profile_governance.py \

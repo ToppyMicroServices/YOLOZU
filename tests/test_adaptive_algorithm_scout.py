@@ -20,6 +20,7 @@ from yolozu.adaptive.algorithm_scout import (
     _validate_document_magic,
     build_scout_plan,
     collect_algorithm_candidates,
+    prepare_scout_workflow_artifact,
 )
 from yolozu.adaptive.bundles import validate_algorithm_bundle_registry
 from yolozu.adaptive.safe_https import (
@@ -418,6 +419,47 @@ class TestAlgorithmScout(TestCase):
             self.assertEqual(payload["selectability"], "inbox_only")
             self.assertEqual(_FixtureTransport.fetch_count, 0)
 
+    def test_missed_collection_dates_are_recorded_without_backfill(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            plan = build_scout_plan(
+                sources_path=SOURCES,
+                output_dir="reports/algorithm_scout",
+                collection_date="2026-08-31",
+                trigger="schedule",
+                missed_collection_dates=("2026-08-24",),
+                workspace_root=workspace,
+                repository_root=REPO_ROOT,
+            )
+            report, code, _ = collect_algorithm_candidates(
+                plan,
+                workspace_root=workspace,
+                transport_factory=_FixtureTransport,
+                now_utc=lambda: "2026-08-31T00:00:01Z",
+                monotonic=lambda: 0.0,
+            )
+            self.assertEqual(code, 0)
+            self.assertEqual(
+                report["missed_expected_collection_dates"], ["2026-08-24"]
+            )
+            self.assertTrue(
+                all(
+                    item["collection_date"] == "2026-08-31"
+                    for candidate in report["candidates"]
+                    for item in candidate["history"]
+                )
+            )
+            with self.assertRaisesRegex(AlgorithmScoutError, "must precede"):
+                build_scout_plan(
+                    sources_path=SOURCES,
+                    output_dir="reports/algorithm_scout",
+                    collection_date="2026-08-31",
+                    trigger="schedule",
+                    missed_collection_dates=("2026-08-31",),
+                    workspace_root=workspace,
+                    repository_root=REPO_ROOT,
+                )
+
     def test_cli_plan_and_help_do_not_create_output(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
@@ -526,6 +568,26 @@ class TestAlgorithmScout(TestCase):
             ]
             self.assertEqual(historical[0]["version"], "v1")
             self.assertTrue((path.parent / "checksums.json").is_file())
+
+            artifact = prepare_scout_workflow_artifact(
+                workspace_root=workspace,
+                output_dir="reports/algorithm_scout",
+                collection_date="2026-08-26",
+                trigger="workflow_dispatch",
+            )
+            self.assertEqual(
+                sorted(item.relative_to(artifact).as_posix() for item in artifact.rglob("*") if item.is_file()),
+                [
+                    "checksums.json",
+                    "docs/algorithm_intake/2026-08-26.json",
+                    "docs/algorithm_intake/2026-08-26.md",
+                ],
+            )
+            markdown = (artifact / "docs/algorithm_intake/2026-08-26.md").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("Artifact retention: 30 days", markdown)
+            self.assertIn("not exhaustive or always-latest", markdown)
 
     def test_failed_and_deadline_missed_sources_finalize_report_with_exit_three(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

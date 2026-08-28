@@ -33,6 +33,7 @@ from .cli_commands import (
     _cmd_update_image_pipeline_lifecycle,
     _cmd_promote_image_pipeline,
     _cmd_scout_algorithms,
+    _cmd_check_qualification_freshness,
     _cmd_validate,
     _cmd_eval_instance_seg,
     _cmd_onnxrt_export,
@@ -1576,6 +1577,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Validated workflow trigger identity.",
     )
     scout.add_argument(
+        "--missed-collection-date",
+        action="append",
+        default=[],
+        help="Prior expected schedule date that was missed; records unknown only and never backfills (repeat at most eight times).",
+    )
+    scout.add_argument(
         "--workspace",
         default=".",
         help="Workspace boundary (default: current directory).",
@@ -1584,6 +1591,38 @@ def main(argv: list[str] | None = None) -> int:
         "--collect",
         action="store_true",
         help="Enable the only network/write path; omission prints a no-write JSON plan.",
+    )
+
+    freshness = sub.add_parser(
+        "check-qualification-freshness",
+        help="Read active qualification expiry and governed-input drift without mutation.",
+    )
+    freshness.add_argument(
+        "--evidence-root",
+        help="Optional workspace-confined site evidence root; site output remains local-only.",
+    )
+    freshness.add_argument(
+        "--registry-root",
+        help="Optional workspace-confined registry/lifecycle root for local comparison.",
+    )
+    freshness.add_argument(
+        "--as-of",
+        help="Frozen exact RFC3339 UTC second; defaults to the current UTC second.",
+    )
+    freshness.add_argument(
+        "--missed-run-date",
+        action="append",
+        default=[],
+        help="Prior expected schedule date that was missed; records unknown only and never backfills.",
+    )
+    freshness.add_argument(
+        "--output",
+        help="Explicit workspace-relative managed output directory; omission prints JSON only.",
+    )
+    freshness.add_argument(
+        "--workspace",
+        default=".",
+        help="Workspace boundary for explicit inputs and output (default: current directory).",
     )
 
     reg = sub.add_parser("registry", help="AI-first tool registry: list/show/validate/run tools from the canonical manifest.")
@@ -1681,6 +1720,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_promote_image_pipeline(args)
     if args.command == "scout-algorithms":
         return _cmd_scout_algorithms(args)
+    if args.command == "check-qualification-freshness":
+        return _cmd_check_qualification_freshness(args)
     if args.command == "list":
         if args.list_command == "models":
             return _cmd_list_models(args)

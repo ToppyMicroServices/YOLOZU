@@ -482,11 +482,33 @@ class TestAdaptiveCandidateScreening(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_algorithm_bundle_registry(_record())
 
-    def test_empty_packaged_stream_and_custom_stream_preserve_path_trust(self) -> None:
+    def test_packaged_holds_and_custom_stream_preserve_path_trust(self) -> None:
         empty = load_candidate_screening_jsonl_bytes(
             b"", source_trust_domain="yolozu_managed"
         )
         self.assertEqual(empty.current_by_stream, {})
+
+        repo_root = Path(__file__).resolve().parents[1]
+        packaged = load_candidate_screening_jsonl_bytes(
+            (repo_root / "yolozu/data/adaptive_routing/candidate_screening.jsonl").read_bytes(),
+            source_trust_domain="yolozu_managed",
+        )
+        self.assertEqual(len(packaged.current_by_stream), 2)
+        current = [record.to_dict() for record in packaged.current_by_stream.values()]
+        self.assertEqual({record["overall_status"] for record in current}, {"hold"})
+        self.assertEqual(
+            {record["record_id"] for record in current},
+            {
+                "screening-groundingdino-sam21-20260829",
+                "screening-rfdetr-nano-1.9.4-20260829",
+            },
+        )
+        self.assertTrue(
+            all(
+                "runtime_provider_new_surface_hold" in record["reason_codes"]
+                for record in current
+            )
+        )
 
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

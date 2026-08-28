@@ -87,6 +87,14 @@ The report kind is not an AlgorithmBundle registry interface contract, and the
 selector cannot load it. Discovery therefore cannot register, qualify, recommend,
 execute, or promote a model.
 
+The separate `yolozu check-qualification-freshness` command reads only the
+activation stream, its referenced bounded reports, and the current registry and
+runtime bindings. It reports exact due/expired or governed-drift states without
+qualification, validity extension, lifecycle change, promotion, or Beads
+mutation. The repository workflow exposes public identifiers only. An explicit
+site evidence root is local-only and is never inventoried or uploaded by GitHub
+Actions. See [Qualification freshness monitor](qualification_freshness.md).
+
 Candidate screening is a separate, non-executing interface contract. Each
 `CandidateScreeningRecord` binds one credential-free HTTPS source, immutable
 revision, and requested capability. Mechanical checks keep source integrity,
@@ -99,8 +107,10 @@ check remains `reject`.
 The only repository-managed instance stream is
 `yolozu/data/adaptive_routing/candidate_screening.jsonl`. It is append-only,
 bounded to 8,192 complete records and 64 MiB, and projected by per-candidate
-sequence and predecessor digest rather than timestamps. The packaged stream is
-currently empty. An optional workspace-confined `screening_root` may supply the
+sequence and predecessor digest rather than timestamps. The packaged stream has
+two current `hold` records documented in
+[`adaptive_candidate_screenings_2026-08-29.md`](adaptive_candidate_screenings_2026-08-29.md)
+and no pass record. An optional workspace-confined `screening_root` may supply the
 same basename to recommendation preflight, but it is always
 `operator_asserted` and cannot satisfy the managed-pass gate. Trust is derived
 from the selected path, never from JSON content.
@@ -970,9 +980,9 @@ corrupt, or internal failures use `ok=false`.
 
 The tool is MCP-only and `mcp_live`, not `guaranteed_ai_safe`. Optional custom
 registry, screening, and evidence roots stay workspace-confined and operator-asserted; they
-cannot self-assign public trust. The default packaged registry is Candidate-only
-and the screening and public evidence streams remain empty, so an installed default call currently
-abstains. No
+cannot self-assign public trust. The default packaged registry is Candidate-only,
+the screening stream has only current holds, and the public evidence stream is
+empty, so an installed default call currently abstains. No
 SelectionDecision starts inference. `process_images` is the separate explicit
 pinned-execution surface: it defaults to dry-run, rejects stale decisions, and
 cannot run until a real governed bundle and code-owned route are registered.

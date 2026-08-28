@@ -46,11 +46,33 @@ source documents, headers, response bodies, local paths, credentials, and parser
 temporary files are not retained. Repeated runs merge candidate history and
 deduplicate by source URL plus version or revision.
 
+The repository workflow runs every Monday at 00:00 UTC (09:00 Asia/Tokyo),
+with one non-cancelling concurrency group and a 15-minute job limit. The
+collector itself stops after 12 minutes so validation, issue handling, and
+finalization keep a three-minute reserve. A manual `workflow_dispatch` uses the
+same bounded path but is not a substitute for observing the scheduled event.
+
+For exit `0` or `3`, the workflow validates the managed report and uploads only
+`docs/algorithm_intake/YYYY-MM-DD.json`, its privacy-safe aggregate Markdown
+view, and the checksum manifest in `algorithm-scout-YYYY-MM-DD`. GitHub retains
+that artifact for 30 days. Exit `1` or `2` uploads no report, raw body, cache, or
+temporary file. Raw fetched bodies and parser cache exist only in the fresh
+runner temporary directory and expire with the job.
+
+Before a scheduled collection, the workflow reads back the previous expected
+artifact using `actions: read`. If it is absent, the current report records the
+missed date as unknown through `--missed-collection-date`; it does not fetch the
+old date or call current data historical. Failures create or update the single
+exact-title issue `Algorithm scout scheduled run failed` with a bounded generic
+summary. A later successful scheduled run may close that exact issue after
+readback. The workflow never commits a report, changes the registry, opens a
+model PR, or promotes a bundle.
+
 The output kind is `yolozu_algorithm_scout_report` with
 `selectability=inbox_only`. It is deliberately different from the AlgorithmBundle
 registry interface contract. The implemented non-executing screening stage can
 turn one immutable candidate into pass, hold, or reject, but only through the
 separate `CandidateScreeningRecord` interface contract. The packaged append-only
-stream is currently empty. A current repository-managed pass and a later registry
-action are both required before a candidate can enter lifecycle, qualification,
-selection, or execution paths.
+stream currently has two reviewed `hold` records and no pass. A current
+repository-managed pass and a later registry action are both required before a
+candidate can enter lifecycle, qualification, selection, or execution paths.

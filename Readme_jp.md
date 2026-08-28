@@ -134,12 +134,20 @@ Experimental `yolozu scout-algorithms` はcanonicalなofficial-source allowlist�
 network-freeかつwrite-freeのplanです。取得した内容はuntrusted metadataとして扱い、raw
 documentは保持しません。このinboxをAlgorithmBundle registryとしてloadしたり、qualification、
 support、recommendation、adoption、promotionの証拠として使うことはできません。
+Experimental `yolozu check-qualification-freshness` は、activeなqualificationの
+期限とgoverned runtime/bundle driftをread-onlyで確認します。qualificationの再実行や
+期限延長は行いません。repository scheduleが保持するのはboundedなpublic IDだけで、
+明示したsite evidence rootの内容はlocal-onlyのまま外部へuploadしません。
+contract-onlyの[OCR result boundary](docs/ocr_interface_contract.md)では、recognized textを
+detection labelと分離したinertかつuntrustedなuser outputとして扱います。OCR model、adapter、
+document parser、remote service、support claimは含みません。
 candidate screeningは、実行を伴わない独立したinterface contractとして実装しました。
 provenance、integrity、code/weight/dataset license、local availability、task/output、
 runtime、resource、maintenance、security、human reviewを分離し、pass、hold、rejectを
-決定します。必須項目のunknownはholdです。packagedのappend-only screening streamは
-現在空で、workspace inputは常にoperator-assertedなので、この実装だけで利用可能な
-candidateが増えることはありません。POSIX専用の
+決定します。必須項目のunknownはholdです。packagedのappend-only screening streamには
+2026-08-29の[candidate review](docs/adaptive_candidate_screenings_2026-08-29.md)で得た
+currentな`hold`が2件あります。workspace inputは常にoperator-assertedです。managed passは
+ないため、この実装だけで利用可能なcandidateが増えることはありません。POSIX専用の
 Experimental `yolozu qualify-image-pipeline` commandは、pinned no-follow input/asset
 preflight、固定したrepeat/soak protocol、child processのbounded cancellation、
 unactivatedな`qualification_report.json`のatomic publicationを実装しています。

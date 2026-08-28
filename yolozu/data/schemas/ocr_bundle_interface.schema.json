@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/ocr_bundle_interface.schema.json",
+  "title": "YOLOZU OCRBundleInterface v1",
+  "description": "Immutable model-free declaration used by core to map language/script indices and stamp exact detector/recognizer provenance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "bundle_id",
+    "component_mode",
+    "language_ids",
+    "script_ids",
+    "ocr_components",
+    "bundle_interface_digest"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "bundle_id": { "$ref": "#/$defs/id" },
+    "component_mode": { "const": "detect_and_recognize" },
+    "language_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "script_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "ocr_components": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        { "$ref": "#/$defs/detector" },
+        { "$ref": "#/$defs/recognizer" }
+      ],
+      "items": false
+    },
+    "bundle_interface_digest": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$"
+    },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "detector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "component_id", "model_id"],
+      "properties": {
+        "role": { "const": "detector" },
+        "component_id": { "$ref": "#/$defs/id" },
+        "model_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "recognizer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "component_id", "model_id"],
+      "properties": {
+        "role": { "const": "recognizer" },
+        "component_id": { "$ref": "#/$defs/id" },
+        "model_id": { "$ref": "#/$defs/id" }
+      }
+    }
+  }
+}

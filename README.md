@@ -135,12 +135,21 @@ command is a network-free, write-free plan. Collected pages are untrusted metada
 raw documents are not retained, and the inbox cannot be loaded as an
 AlgorithmBundle registry or used as qualification, support, recommendation,
 adoption, or promotion evidence.
+Experimental `yolozu check-qualification-freshness` reads active qualification
+deadlines and governed runtime/bundle drift without re-running or extending
+evidence. The repository schedule retains only bounded public identifiers; an
+explicit site evidence root remains local-only and never uploads site facts.
+The contract-only [OCR result boundary](docs/ocr_interface_contract.md) keeps
+recognized text as inert untrusted user output, separate from detection labels.
+It ships no OCR model, adapter, document parser, remote service, or support claim.
 Candidate screening is implemented as a separate non-executing interface contract.
 It derives pass, hold, or reject from bounded provenance, integrity, license,
 local-availability, task/output, runtime, resource, maintenance, security, and
 human-review facts. Mandatory unknowns remain hold. The sole packaged append-only
-screening stream is currently empty, and workspace screening input is always
-operator-asserted, so no candidate is made available by this implementation.
+screening stream contains two current `hold` decisions from the 2026-08-29
+[candidate review](docs/adaptive_candidate_screenings_2026-08-29.md), and workspace
+screening input is always operator-asserted. Neither record is a managed pass, so
+no candidate is made available by this implementation.
 Explicit workspace catalogs remain operator-asserted and nonselectable. The Experimental
 `yolozu qualify-image-pipeline` command now implements pinned no-follow input
 and asset preflight, a frozen repeat/soak protocol, bounded child-process

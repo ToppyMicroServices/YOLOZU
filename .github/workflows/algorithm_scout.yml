@@ -1,0 +1,192 @@
+name: algorithm-scout
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: algorithm-scout
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
+        with:
+          persist-credentials: false
+
+      - name: Install the checked-out CLI
+        id: install
+        run: python3 -m pip install --no-deps .
+
+      - name: Inspect the prior expected schedule artifact
+        id: prior
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          readarray -t dates < <(python3 - <<'PY'
+          from datetime import date, datetime, timedelta
+          from zoneinfo import ZoneInfo
+
+          current = datetime.now(ZoneInfo("Asia/Tokyo")).date()
+          print(current.isoformat())
+          print((current - timedelta(days=7)).isoformat())
+          PY
+          )
+          collection_date="${dates[0]}"
+          previous_date="${dates[1]}"
+          echo "collection_date=${collection_date}" >> "${GITHUB_OUTPUT}"
+          echo "previous_date=${previous_date}" >> "${GITHUB_OUTPUT}"
+          echo "missed_arg=" >> "${GITHUB_OUTPUT}"
+          if [[ "${EVENT_NAME}" != "schedule" ]]; then
+            exit 0
+          fi
+          artifact_name="algorithm-scout-${previous_date}"
+          response="$(gh api --method GET "repos/${GITHUB_REPOSITORY}/actions/artifacts" \
+            -f name="${artifact_name}" -f per_page=100)"
+          count="$(jq --arg name "${artifact_name}" \
+            '[.artifacts[] | select(.name == $name and .expired == false)] | length' \
+            <<<"${response}")"
+          if [[ "${count}" -eq 0 ]]; then
+            echo "missed_arg=${previous_date}" >> "${GITHUB_OUTPUT}"
+          elif [[ "${count}" -ne 1 ]]; then
+            echo "Prior artifact lookup is ambiguous." >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+      - name: Collect only the allowlisted monitored sources
+        id: scout
+        if: ${{ steps.install.outcome == 'success' && steps.prior.outcome == 'success' }}
+        env:
+          COLLECTION_DATE: ${{ steps.prior.outputs.collection_date }}
+          MISSED_COLLECTION_DATE: ${{ steps.prior.outputs.missed_arg }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -uo pipefail
+          missed_args=()
+          if [[ -n "${MISSED_COLLECTION_DATE}" ]]; then
+            missed_args=(--missed-collection-date "${MISSED_COLLECTION_DATE}")
+          fi
+          set +e
+          yolozu scout-algorithms \
+            --sources docs/algorithm_intake/sources.json \
+            --output-dir reports/algorithm_scout \
+            --collection-date "${COLLECTION_DATE}" \
+            --trigger "${EVENT_NAME}" \
+            "${missed_args[@]}" \
+            --collect
+          code=$?
+          set -e
+          if [[ "${code}" -lt 0 || "${code}" -gt 3 ]]; then
+            code=1
+          fi
+          echo "exit_code=${code}" >> "${GITHUB_OUTPUT}"
+          exit 0
+
+      - name: Validate and stage the bounded report
+        id: stage
+        if: ${{ always() && (steps.scout.outputs.exit_code == '0' || steps.scout.outputs.exit_code == '3') }}
+        env:
+          COLLECTION_DATE: ${{ steps.prior.outputs.collection_date }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from yolozu.adaptive.algorithm_scout import prepare_scout_workflow_artifact
+
+          prepare_scout_workflow_artifact(
+              workspace_root=".",
+              output_dir="reports/algorithm_scout",
+              collection_date=os.environ["COLLECTION_DATE"],
+              trigger=os.environ["EVENT_NAME"],
+          )
+          PY
+
+      - name: Upload only the validated report artifact
+        id: upload
+        if: ${{ always() && steps.stage.outcome == 'success' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: algorithm-scout-${{ steps.prior.outputs.collection_date }}
+          path: workflow_artifacts/algorithm-scout-${{ steps.prior.outputs.collection_date }}/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Update the deduplicated failure issue
+        if: ${{ always() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          COLLECTION_DATE: ${{ steps.prior.outputs.collection_date }}
+          SCOUT_CODE: ${{ steps.scout.outputs.exit_code }}
+          INSTALL_OUTCOME: ${{ steps.install.outcome }}
+          PRIOR_OUTCOME: ${{ steps.prior.outcome }}
+          STAGE_OUTCOME: ${{ steps.stage.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload.outcome }}
+        run: |
+          set -euo pipefail
+          title='Algorithm scout scheduled run failed'
+          query="repo:${GITHUB_REPOSITORY} is:issue in:title \"${title}\""
+          matches="$(gh api --method GET search/issues -f q="${query}" -f per_page=100 \
+            | jq --arg title "${title}" '[.items[] | select(.title == $title)]')"
+          count="$(jq 'length' <<<"${matches}")"
+          if [[ "${count}" -gt 1 ]]; then
+            echo "Exact-title failure issue lookup is ambiguous." >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+          number="$(jq -r 'if length == 1 then .[0].number else empty end' <<<"${matches}")"
+          code="${SCOUT_CODE:-1}"
+          successful=false
+          if [[ "${code}" == 0 && "${STAGE_OUTCOME}" == success && "${UPLOAD_OUTCOME}" == success ]]; then
+            successful=true
+          fi
+          if [[ "${successful}" == true ]]; then
+            if [[ "${EVENT_NAME}" == schedule && -n "${number}" ]]; then
+              gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/${number}" \
+                -f state=closed \
+                -f body="A later scheduled run completed and its bounded artifact was read back by this workflow."
+            fi
+            exit 0
+          fi
+          body="Collection date: ${COLLECTION_DATE:-unknown}
+          Event: ${EVENT_NAME}
+          Exit code: ${code}
+          Install: ${INSTALL_OUTCOME:-unknown}
+          Prior-state lookup: ${PRIOR_OUTCOME:-unknown}
+          Safe report staging: ${STAGE_OUTCOME:-unknown}
+          Safe artifact upload: ${UPLOAD_OUTCOME:-unknown}
+
+          This bounded summary contains no fetched text, secrets, private data, or raw artifacts."
+          if [[ -n "${number}" ]]; then
+            gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/${number}" \
+              -f state=open -f body="${body}"
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/issues" \
+              -f title="${title}" -f body="${body}"
+          fi
+
+      - name: Enforce the saved collection result
+        if: ${{ always() }}
+        env:
+          SCOUT_CODE: ${{ steps.scout.outputs.exit_code }}
+          STAGE_OUTCOME: ${{ steps.stage.outcome }}
+          UPLOAD_OUTCOME: ${{ steps.upload.outcome }}
+        run: |
+          set -euo pipefail
+          code="${SCOUT_CODE:-1}"
+          if [[ "${code}" == 0 || "${code}" == 3 ]]; then
+            [[ "${STAGE_OUTCOME}" == success ]]
+            [[ "${UPLOAD_OUTCOME}" == success ]]
+          fi
+          exit "${code}"
