@@ -118,8 +118,12 @@ assignment gates. Stable review requires a passed failure-drill artifact, distin
 human approval, preregistered absolute gates, and exact current-Stable non-regression
 when a comparator exists. It rejects site-managed evidence and profile-set changes,
 and it writes only one lifecycle assignment after explicit `--approve`. This does
-not add automatic rollback/promotion or metrics-driven mutation, and no canonical
-promotion event was appended. The packaged state remains Candidate-only.
+not add automatic rollback/promotion or metrics-driven mutation. Six deterministic
+offline failure fixtures verify failed promotion, exact last-known-good selection or
+abstention, one reviewed rollback, and byte-identical Stable/control state. They are
+not hardware, performance, containment, or support evidence. No canonical promotion
+event was appended, and the packaged state remains Candidate-only. See the
+[failure-drill report](../reports/adaptive_promotion_failure_drills_2026-08-29.md).
 Source, candidate-artifact, and installed MCP checks confirm that boundary; their
 positive selector and executor cases are fixtures, not selected public execution.
 See the [installed-artifact verification report](../reports/adaptive_routing_installed_verification_2026-08-26.md).
