@@ -103,6 +103,7 @@ class TestCandidateArtifactAiSurface(unittest.TestCase):
                     "yolozu/adaptive/isolation.py",
                     "yolozu/adaptive/isolation_policy.py",
                     "yolozu/adaptive/lifecycle.py",
+                    "yolozu/adaptive/promotion.py",
                     "yolozu/adaptive/processing.py",
                     "yolozu/adaptive/algorithm_scout.py",
                     "yolozu/adaptive/screening.py",
@@ -124,6 +125,8 @@ class TestCandidateArtifactAiSurface(unittest.TestCase):
                     "yolozu/data/schemas/candidate_isolation_probe.schema.json",
                     "yolozu/data/schemas/support_profile_set_proposal.schema.json",
                     "yolozu/data/schemas/lifecycle_rollback_bindings.schema.json",
+                    "yolozu/data/schemas/bundle_lifecycle_record.schema.json",
+                    "yolozu/data/schemas/support_profile_spec.schema.json",
                     "yolozu/data/integrations/mcp_actions_tool_reference.json",
                 ):
                     self.assertIn(required, sdist_names)
@@ -222,6 +225,7 @@ print(json.dumps({
     "schema": data.joinpath("schemas").joinpath("predictions_validation_result.schema.json").is_file(),
     "mcp_reference": data.joinpath("integrations").joinpath("mcp_actions_tool_reference.json").is_file(),
     "adaptive_processing": package.joinpath("adaptive").joinpath("processing.py").is_file(),
+    "adaptive_promotion": package.joinpath("adaptive").joinpath("promotion.py").is_file(),
     "adaptive_isolation": package.joinpath("adaptive").joinpath("isolation.py").is_file(),
     "adaptive_isolation_policy": package.joinpath("adaptive").joinpath("isolation_policy.py").is_file(),
     "adaptive_algorithm_scout": package.joinpath("adaptive").joinpath("algorithm_scout.py").is_file(),
@@ -290,6 +294,7 @@ print(json.dumps({
                 "adaptive_job_schema",
                 "adaptive_lifecycle",
                 "adaptive_processing",
+                "adaptive_promotion",
                 "adaptive_registry",
                 "adaptive_selection_schema",
                 "adaptive_scout_report_schema",

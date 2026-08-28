@@ -686,6 +686,13 @@
     "title": "process_images"
   },
   {
+    "href": "commands.html#tool-promote-image-pipeline",
+    "kind": "command",
+    "search_text": "promote_image_pipeline Dry-run or atomically append one exact reviewed Candidate-to-Experimental or Experimental-to-Stable assignment after complete managed evidence, rollback-readiness, and Stable non-regression gates. experimental tools/promote_image_pipeline.py --family-id --source-channel --target-channel --bundle-spec-digest --expected-source-pointer-digest --expected-target-pointer-digest --expected-lifecycle-head-digest --expected-support-profile-index-head --expected-profile-set-record-digest --expected-profile-set-digest --profile --evidence-bindings --rollback-target --failure-drill-report --approver-role-id --public-review-id --reason --workspace --approve",
+    "summary": "Dry-run or atomically append one exact reviewed Candidate-to-Experimental or Experimental-to-Stable assignment after complete managed evidence, rollback-readiness, and Stable non-regression gates.",
+    "title": "promote_image_pipeline"
+  },
+  {
     "href": "commands.html#tool-publish-benchmark-table",
     "kind": "command",
     "search_text": "publish_benchmark_table Generate official benchmark publication table (JSON+Markdown) from benchmark reports with run-id traceability. stable tools/publish_benchmark_table.py --report --output-json --output-md --title --cadence --protocol-id --source-command --publication-run-id",

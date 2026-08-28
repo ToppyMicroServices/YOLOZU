@@ -6,10 +6,10 @@ Keep narrative docs short and link here for the full command surface.
 ## Top-level `yolozu --help`
 
 ```text
-usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,scout-algorithms,registry,completion,comp} ...
+usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,promote-image-pipeline,scout-algorithms,registry,completion,comp} ...
 
 positional arguments:
-  {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,scout-algorithms,registry,completion,comp}
+  {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,promote-image-pipeline,scout-algorithms,registry,completion,comp}
     guide               Show beginner-friendly routes and copy-paste commands.
     doctor (dr)         Check the environment. Use --explain for beginner-friendly next actions.
     list                List registries and built-in catalogs.
@@ -42,6 +42,8 @@ positional arguments:
                         Review one complete dormant support-profile set; dry-run by default.
     update-image-pipeline-lifecycle
                         Review one exact lifecycle or rollback update; dry-run by default.
+    promote-image-pipeline
+                        Review one exact Candidate-to-Experimental or Experimental-to-Stable promotion; dry-run by default.
     scout-algorithms    Plan or collect a bounded monitored-source candidate inbox (Experimental).
     registry            AI-first tool registry: list/show/validate/run tools from the canonical manifest.
     completion (comp)   Print shell completion script (bash/zsh).
@@ -265,6 +267,7 @@ Contact: develop@toppymicros.com
 | prepare_voc_seg | stable | tools/prepare_voc_seg.py | Prepare Pascal VOC semantic segmentation layout + dataset.json manifest. |
 | probe_candidate_isolation | experimental | tools/probe_candidate_isolation.py | Report the code-owned none-supported candidate-isolation decision without treating backend presence, mocks, or in-process guards as containment. |
 | process_images | experimental | yolozu/integrations/mcp_server.py | Revalidate and explicitly execute one pinned qualified local image pipeline through a code-owned network-free route; dry-run is the default and performs no model execution or writes. |
+| promote_image_pipeline | experimental | tools/promote_image_pipeline.py | Dry-run or atomically append one exact reviewed Candidate-to-Experimental or Experimental-to-Stable assignment after complete managed evidence, rollback-readiness, and Stable non-regression gates. |
 | publish_benchmark_table | stable | tools/publish_benchmark_table.py | Generate official benchmark publication table (JSON+Markdown) from benchmark reports with run-id traceability. |
 | qualify_artifact_research | research | tools/qualify_artifact_research.py | Qualify offline prediction distillation and Hessian refinement with three deterministic repetitions, stable COCO metrics, hashes, measured cost, rollback, and explicit hold gates. |
 | qualify_finetune_lanes | experimental | tools/qualify_finetune_lanes.py | Qualify real-image and external fine-tuning execution in one command while failing closed on projection-only non-dry lanes. Exit 0 means protocol_complete, while promotion remains a separate hold/pass decision and Experimental maturity is retained when labels or task-native metrics are insufficient. |

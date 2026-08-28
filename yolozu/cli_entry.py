@@ -31,6 +31,7 @@ from .cli_commands import (
     _cmd_activate_qualification_evidence,
     _cmd_review_image_pipeline_support_profiles,
     _cmd_update_image_pipeline_lifecycle,
+    _cmd_promote_image_pipeline,
     _cmd_scout_algorithms,
     _cmd_validate,
     _cmd_eval_instance_seg,
@@ -1525,6 +1526,30 @@ def main(argv: list[str] | None = None) -> int:
         help="Apply the atomic append; omission is always dry-run.",
     )
 
+    promote = sub.add_parser(
+        "promote-image-pipeline",
+        help="Review one exact Candidate-to-Experimental or Experimental-to-Stable promotion; dry-run by default.",
+    )
+    promote.add_argument("--family-id", help="Exact bundle family ID.")
+    promote.add_argument("--source-channel", choices=("Candidate", "Experimental"), help="Exact current source channel.")
+    promote.add_argument("--target-channel", choices=("Experimental", "Stable"), help="Exact reviewed target channel.")
+    promote.add_argument("--bundle-spec-digest", help="Exact immutable target bundle-spec digest.")
+    promote.add_argument("--expected-source-pointer-digest", help="Observed exact current source lifecycle pointer digest.")
+    promote.add_argument("--expected-target-pointer-digest", help="Observed target pointer digest, or literal none.")
+    promote.add_argument("--expected-lifecycle-head-digest", help="Observed global lifecycle stream head digest.")
+    promote.add_argument("--expected-support-profile-index-head", help="Observed global support-profile stream head digest.")
+    promote.add_argument("--expected-profile-set-record-digest", help="Exact current target-channel profile-set record digest.")
+    promote.add_argument("--expected-profile-set-digest", help="Exact canonical ordered profile-set digest.")
+    promote.add_argument("--profile", action="append", metavar="PROFILE_ID=PROFILE_DIGEST", help="Complete canonical ordered profile echo; repeat 1..32 times.")
+    promote.add_argument("--evidence-bindings", help="Workspace-confined canonical JSON with the complete exact activation set.")
+    promote.add_argument("--rollback-target", choices=("none", "prior"), help="Explicit rollback readiness target for the new assignment.")
+    promote.add_argument("--failure-drill-report", help="Canonical passed failure-drill report required only for Stable.")
+    promote.add_argument("--approver-role-id", choices=("repo_maintainer", "release_reviewer"), help="Non-personal repository approval role.")
+    promote.add_argument("--public-review-id", help="Bounded public repository review reference.")
+    promote.add_argument("--reason", help="Public review reason in 1..512 UTF-8 bytes.")
+    promote.add_argument("--workspace", default=".", help="Repository workspace containing the canonical SSOT.")
+    promote.add_argument("--approve", action="store_true", help="Apply the validated atomic append; omission is always dry-run.")
+
     scout = sub.add_parser(
         "scout-algorithms",
         help="Plan or collect a bounded monitored-source candidate inbox (Experimental).",
@@ -1652,6 +1677,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_review_image_pipeline_support_profiles(args)
     if args.command == "update-image-pipeline-lifecycle":
         return _cmd_update_image_pipeline_lifecycle(args)
+    if args.command == "promote-image-pipeline":
+        return _cmd_promote_image_pipeline(args)
     if args.command == "scout-algorithms":
         return _cmd_scout_algorithms(args)
     if args.command == "list":

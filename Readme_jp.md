@@ -162,7 +162,18 @@ set全体とprofileごとのcurrent repository-managed activationをexactに復�
 targetの自動選択、callerが作ったsubset、未割当Candidateをpromotionの迂回路にすること、
 promotion、metricだけを根拠とする変更は行わず、rollback eventにはhistorical target assignment
 のexact digestを記録します。
-この変更ではcanonical lifecycle eventを追記していません。localで生成したreportは
+この変更ではcanonical lifecycle eventを追記していません。
+Experimental `yolozu promote-image-pipeline` は、独立したreviewed promotion pathを
+実装します。Candidate-to-ExperimentalとExperimental-to-Stableは別操作で、`--approve`を
+省略すると必ずwrite-free dry-runになります。exactなsource/target pointerとstream head、
+canonicalなordered support-profile set全体、profileごとのcurrent repository-managed
+activationが必要です。Stableではさらに、bounded failure-drill reportのpass、automationと
+別のhuman repository approval、preregistered absolute gate全体、comparatorがある場合の
+current Stable reportとのexactなzero-tolerance比較を要求します。site-managed evidence、
+approvalの推測、Stable profile setの変更は受け付けず、bundle/support/screening/evidence/
+report/artifact inputは変更しません。この実装ではmodelをpromotionしていないため、packaged
+streamはCandidate-onlyのままです。
+localで生成したreportは
 `site_managed` / `site_qualified`までで、任意のworkspace JSONは選択対象に
 なりません。repository-managed trustには、追跡されたreview workflowとpublic review
 referenceが別途必要です。

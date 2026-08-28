@@ -167,6 +167,17 @@ newer dormant target, accept a caller-authored subset, use a never-assigned Cand
 as a promotion shortcut, promote a bundle, or mutate from metrics alone. The rollback
 event records the exact historical target-assignment digest. No lifecycle event was
 appended by this change.
+Experimental `yolozu promote-image-pipeline` implements the separate reviewed
+promotion path. Candidate-to-Experimental and Experimental-to-Stable are distinct
+operations, and omission of `--approve` is always a no-write dry-run. The command
+requires exact source/target pointers and stream heads, the complete canonical
+ordered support-profile set, and one current repository-managed activation per
+profile. Stable additionally requires a passed bounded failure-drill report,
+separate human repository approval, all preregistered absolute gates, and exact
+zero-tolerance comparison with the current Stable reports when a comparator exists.
+It cannot use site-managed evidence, infer approval, change the Stable profile set,
+or modify bundle, support, screening, evidence, report, or artifact inputs. This
+implementation did not promote any model; the packaged streams remain Candidate-only.
 Locally emitted reports can reach only `site_managed` / `site_qualified`; arbitrary
 workspace JSON remains nonselectable. Repository-managed trust additionally requires
 the retained, tracked review workflow and a public review reference.

@@ -185,6 +185,7 @@ jobs:
             tests.test_candidate_isolation_policy \
             tests.test_adaptive_support_profile_governance \
             tests.test_adaptive_lifecycle_governance \
+            tests.test_adaptive_promotion_governance \
             tests.test_adaptive_managed_output \
             tests.test_adaptive_qualification \
             tests.test_adaptive_recommendation \
@@ -259,6 +260,7 @@ jobs:
             tests.test_candidate_isolation_policy \
             tests.test_adaptive_support_profile_governance \
             tests.test_adaptive_lifecycle_governance \
+            tests.test_adaptive_promotion_governance \
             tests.test_adaptive_managed_output \
             tests.test_adaptive_qualification \
             tests.test_adaptive_recommendation \
@@ -347,6 +349,7 @@ jobs:
             tests/test_candidate_isolation_policy.py \
             tests/test_adaptive_support_profile_governance.py \
             tests/test_adaptive_lifecycle_governance.py \
+            tests/test_adaptive_promotion_governance.py \
             tests/test_adaptive_evidence_activation.py \
             tests/test_adaptive_qualification.py \
             tests/test_adaptive_recommendation.py \
