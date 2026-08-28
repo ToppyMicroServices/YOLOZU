@@ -30,6 +30,8 @@ byte-identical pairs. They do not have a third copy under `schemas/`:
   `yolozu/data/schemas/bundle_lifecycle_record.schema.json`
 - `docs/schemas/candidate_screening_record.schema.json` and
   `yolozu/data/schemas/candidate_screening_record.schema.json`
+- `docs/schemas/candidate_isolation_probe.schema.json` and
+  `yolozu/data/schemas/candidate_isolation_probe.schema.json`
 - `docs/schemas/support_profile_spec.schema.json` and
   `yolozu/data/schemas/support_profile_spec.schema.json`
 - `docs/schemas/support_profile_record.schema.json` and

@@ -121,6 +121,11 @@
       "schema": "docs/schemas/bundle_lifecycle_record.schema.json",
       "summary": "Append-only bundle state and channel-pointer record loaded with explicit managed or operator-asserted source trust for future Experimental routing."
     },
+    "candidate_isolation_probe_json": {
+      "producer": "python3 tools/probe_candidate_isolation.py",
+      "schema": "docs/schemas/candidate_isolation_probe.schema.json",
+      "summary": "Bounded fail-closed host observation for the code-owned none-supported candidate-isolation decision; executable presence is not containment evidence."
+    },
     "candidate_screening_record_json": {
       "schema": "docs/schemas/candidate_screening_record.schema.json",
       "summary": "Append-only non-executing candidate screening facts and deterministic pass, hold, or reject outcome; only a current repository-managed pass can satisfy the screening gate."
@@ -12749,6 +12754,60 @@
         "pascal_voc",
         "voc",
         "segmentation"
+      ]
+    },
+    {
+      "contracts": {
+        "produces": [
+          "candidate_isolation_probe_json"
+        ]
+      },
+      "docs": [
+        "docs/adaptive_image_routing.md",
+        "docs/candidate_isolation_threat_model.md",
+        "docs/schemas/candidate_isolation_probe.schema.json"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": []
+      },
+      "entrypoint": "tools/probe_candidate_isolation.py",
+      "examples": [
+        {
+          "command": "python3 tools/probe_candidate_isolation.py",
+          "description": "Print the bounded none-supported decision and host backend-presence observations without starting a backend or candidate."
+        },
+        {
+          "command": "python3 tools/probe_candidate_isolation.py --help",
+          "description": "Inspect the read-only capability-probe interface contract."
+        }
+      ],
+      "id": "probe_candidate_isolation",
+      "inputs": [],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "stdout",
+          "description": "CandidateIsolationCapabilityProbe JSON with every mandatory control left not_run and explicit failure codes while no backend row is supported.",
+          "kind": "stdout",
+          "name": "candidate_isolation_probe"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true,
+        "notes": "Observes fixed executable presence only; never starts a backend or candidate."
+      },
+      "runner": "python3",
+      "summary": "Report the code-owned none-supported candidate-isolation decision without treating backend presence, mocks, or in-process guards as containment.",
+      "tags": [
+        "adaptive-inference",
+        "candidate",
+        "experimental",
+        "isolation",
+        "security"
       ]
     },
     {

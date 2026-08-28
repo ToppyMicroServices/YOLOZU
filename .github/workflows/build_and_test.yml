@@ -182,6 +182,7 @@ jobs:
             tests.test_adaptive_bundle_registry \
             tests.test_adaptive_algorithm_scout \
             tests.test_adaptive_candidate_screening \
+            tests.test_candidate_isolation_policy \
             tests.test_adaptive_support_profile_governance \
             tests.test_adaptive_lifecycle_governance \
             tests.test_adaptive_managed_output \
@@ -255,6 +256,7 @@ jobs:
             tests.test_adaptive_bundle_registry \
             tests.test_adaptive_algorithm_scout \
             tests.test_adaptive_candidate_screening \
+            tests.test_candidate_isolation_policy \
             tests.test_adaptive_support_profile_governance \
             tests.test_adaptive_lifecycle_governance \
             tests.test_adaptive_managed_output \
@@ -342,6 +344,7 @@ jobs:
             tests/test_adaptive_vision_roadmap_generator.py \
             tests/test_adaptive_algorithm_scout.py \
             tests/test_adaptive_candidate_screening.py \
+            tests/test_candidate_isolation_policy.py \
             tests/test_adaptive_support_profile_governance.py \
             tests/test_adaptive_lifecycle_governance.py \
             tests/test_adaptive_evidence_activation.py \

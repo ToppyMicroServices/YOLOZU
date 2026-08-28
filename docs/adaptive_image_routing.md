@@ -53,6 +53,14 @@ exact managed tree containing `predictions.json`, `provenance.json`,
 `checksums.json`, and only referenced masks. The adaptive runner maps remain empty,
 so the installed default cannot execute a real adaptive model.
 
+The reviewed [candidate isolation threat model and backend decision](candidate_isolation_threat_model.md)
+records `none_supported`. `python3 tools/probe_candidate_isolation.py` reports that
+decision and bounded host/backend-presence facts as JSON without starting a backend
+or candidate. A present executable, platform framework, unit-test fixture, or
+in-process guard cannot make an isolated capability available. Acquisition/build
+and isolated-runner implementation remain deferred until one exact backend row
+passes every real mandatory control probe.
+
 The source, candidate sdist/wheel, and installed MCP boundaries are checked in the
 [installed-artifact verification report](../reports/adaptive_routing_installed_verification_2026-08-26.md).
 Its positive selector and executor cases are internal fixtures below the public
