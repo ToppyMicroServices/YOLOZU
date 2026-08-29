@@ -25,7 +25,7 @@ jobs:
 
       - name: Install the checked-out CLI
         id: install
-        run: python3 -m pip install --no-deps .
+        run: python3 -m pip install .
 
       - name: Inspect the prior expected schedule artifact
         id: prior

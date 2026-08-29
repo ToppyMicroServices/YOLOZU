@@ -22,6 +22,10 @@ class TestAlgorithmScoutWorkflow(TestCase):
         self.assertIn("issues: write", self.text)
         self.assertNotIn("artifacts:", self.text)
 
+    def test_checked_out_cli_installs_required_runtime_dependencies(self) -> None:
+        self.assertIn("run: python3 -m pip install .", self.text)
+        self.assertNotIn("pip install --no-deps .", self.text)
+
     def test_collection_invocation_and_exit_control_flow_are_bounded(self) -> None:
         invocation = '''yolozu scout-algorithms \\
             --sources docs/algorithm_intake/sources.json \\
