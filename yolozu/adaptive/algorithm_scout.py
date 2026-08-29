@@ -383,8 +383,8 @@ def build_scout_plan(
     workspace_root: str | Path = ".",
     repository_root: str | Path | None = None,
 ) -> ScoutPlan:
-    _workspace(workspace_root)
-    repo = Path(repository_root).resolve(strict=True) if repository_root is not None else Path(__file__).resolve().parents[2]
+    workspace = _workspace(workspace_root)
+    repo = Path(repository_root).resolve(strict=True) if repository_root is not None else workspace
     sources = load_algorithm_scout_sources(sources_path, repository_root=repo)
     if trigger not in {"schedule", "workflow_dispatch"}:
         raise _fail("trigger_invalid", "trigger must be schedule or workflow_dispatch")
