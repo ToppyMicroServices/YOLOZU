@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/stream_summary.schema.json",
+  "title": "YOLOZU StreamSummary v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "status", "task", "source_kind", "scheduled_frame_count", "processed_frame_count", "dropped_frame_count", "failed_unaccounted_frame_count", "max_consecutive_drops", "frame_queue_count_high_watermark", "frame_queue_decoded_bytes_high_watermark", "callback_item_high_watermark", "callback_bytes_high_watermark", "duration_ns", "p50_latency_ms", "p95_latency_ms", "p99_latency_ms", "drop_fraction_display", "result_count", "mask_artifact_count", "output_file_count", "output_bytes", "termination_reason", "bundle_spec_digest", "evidence_report_digest", "summary_digest"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "status": {"enum": ["completed", "failed"]},
+    "task": {"enum": ["object_detection", "instance_segmentation"]},
+    "source_kind": {"enum": ["local_mp4", "local_camera"]},
+    "scheduled_frame_count": {"type": "integer", "minimum": 0, "maximum": 864000},
+    "processed_frame_count": {"type": "integer", "minimum": 0, "maximum": 864000},
+    "dropped_frame_count": {"type": "integer", "minimum": 0, "maximum": 864000},
+    "failed_unaccounted_frame_count": {"type": "integer", "minimum": 0, "maximum": 864000},
+    "max_consecutive_drops": {"type": "integer", "minimum": 0, "maximum": 864000},
+    "frame_queue_count_high_watermark": {"type": "integer", "minimum": 0, "maximum": 64},
+    "frame_queue_decoded_bytes_high_watermark": {"type": "integer", "minimum": 0, "maximum": 536870912},
+    "callback_item_high_watermark": {"type": "integer", "minimum": 0, "maximum": 64},
+    "callback_bytes_high_watermark": {"type": "integer", "minimum": 0, "maximum": 67108864},
+    "duration_ns": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615},
+    "p50_latency_ms": {"$ref": "#/$defs/nullable_nonnegative_decimal"},
+    "p95_latency_ms": {"$ref": "#/$defs/nullable_nonnegative_decimal"},
+    "p99_latency_ms": {"$ref": "#/$defs/nullable_nonnegative_decimal"},
+    "drop_fraction_display": {"$ref": "#/$defs/nullable_nonnegative_decimal"},
+    "result_count": {"type": "integer", "minimum": 0, "maximum": 1000000},
+    "mask_artifact_count": {"type": "integer", "minimum": 0, "maximum": 10000},
+    "output_file_count": {"type": "integer", "minimum": 0, "maximum": 10004},
+    "output_bytes": {"type": "integer", "minimum": 0, "maximum": 4294967296},
+    "termination_reason": {"enum": ["normal_eof", "duration_cap", "frame_cap", "result_cap", "file_cap", "output_byte_cap", "source_probe_timeout", "camera_open_timeout", "camera_frame_timeout", "runner_probe_timeout", "runner_load_timeout", "decode_timeout", "predict_timeout", "output_timeout", "close_timeout", "cancelled", "cancellation_forced", "consumer_backpressure", "decoder_backend_unsupported", "decoder_sample_limit", "decoder_dpb_limit", "decoder_memory_limit", "camera_binding_ambiguous", "invalid_source", "runner_failure"]},
+    "bundle_spec_digest": {"$ref": "#/$defs/sha256"},
+    "evidence_report_digest": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/sha256"}]},
+    "summary_digest": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "canonical_decimal": {"type": "string", "pattern": "^(?:0|-?(?:(?:[1-9][0-9]{0,17})(?:\\.[0-9]{0,8}[1-9])?|0\\.[0-9]{0,8}[1-9]))$", "maxLength": 29},
+    "nonnegative_decimal": {"allOf": [{"$ref": "#/$defs/canonical_decimal"}, {"not": {"pattern": "^-"}}]},
+    "nullable_nonnegative_decimal": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/nonnegative_decimal"}]}
+  }
+}

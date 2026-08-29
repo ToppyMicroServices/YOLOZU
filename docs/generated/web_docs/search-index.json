@@ -1197,6 +1197,13 @@
     "title": "YOLOZU Fine-Tuning Lane Qualification"
   },
   {
+    "href": "schemas.html#schema-frame-result-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU FrameResult v1 Transport shape and scalar bounds. validate_frame_result is the normative semantic validator for reduced scheduled-due rationals, cadence context, and decoded_width * decoded_height <= 33177600. decoded_height decoded_width device_timestamp_ns frame_result_digest processing_completed_offset_ns scheduled_due_offset_den scheduled_due_offset_num_ns schema_version source_frame_index task task_results docs/schemas/frame_result.schema.json",
+    "summary": "Transport shape and scalar bounds. validate_frame_result is the normative semantic validator for reduced scheduled-due rationals, cadence context, and decoded_width * decoded_height <= 33177600.",
+    "title": "YOLOZU FrameResult v1"
+  },
+  {
     "href": "schemas.html#schema-image-job-spec-schema",
     "kind": "schema",
     "search_text": "YOLOZU ImageJobSpec v1 Typed request for future Experimental adaptive image routing. Paths are separate tool arguments. allowed_maturities batch_size compute_policy concurrency execution_mode fixed_classes input_mode job_timeout_seconds max_accelerator_process_tree_peak_bytes max_cold_start_ms max_images max_p95_latency_ms max_results_per_image max_runner_tree_peak_rss_bytes min_repeat_throughput_fps min_sustained_fps network_policy precision_allowlist prompt_mode provider_allowlist quality_requirement ranking_policy schema_version spdx_allowlist task text_prompts docs/schemas/image_job_spec.schema.json",
@@ -1358,6 +1365,41 @@
     "title": "YOLOZU SelectionDecision v1"
   },
   {
+    "href": "schemas.html#schema-stream-job-spec-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU StreamJobSpec v1 Checked-in YOLOZU JSON Schema. callback_max_bytes callback_max_items camera_eligibility_policy_id camera_first_frame_timeout_seconds camera_open_timeout_seconds camera_pool_bytes camera_pool_capacity_frames camera_pool_policy_id camera_pool_policy_version cancellation_grace_seconds close_timeout_seconds decoded_layout_id decoded_stride_max_bytes decoded_stride_min_bytes decoder_policy drop_policy frame_decode_timeout_seconds frame_predict_timeout_seconds job_timeout_seconds latency_interval_id mask_chunk_bytes mask_encoding_id mask_encoding_version max_accelerator_process_tree_peak_bytes max_consecutive_drops max_decoder_rss_bytes max_drop_den max_drop_num max_duration_seconds max_frames max_mask_artifacts max_mask_bytes max_output_bytes max_output_files max_p95_latency_ms max_queued_decoded_bytes max_results_per_frame max_stream_job_peak_rss_bytes max_total_results memory_collector min_sustained_fps network_policy output_cadence_id output_step_timeout_seconds quality_requirement queue_capacity_frames required_duration_seconds runner_load_timeout_seconds runner_probe_timeout_seconds schema_version source source_admission_policy_id source_admission_policy_version source_probe_timeout_seconds stride_policy_id task warmup_frame_count docs/schemas/stream_job_spec.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU StreamJobSpec v1"
+  },
+  {
+    "href": "schemas.html#schema-stream-qualification-report-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU StreamQualificationReport v1 Checked-in YOLOZU JSON Schema. artifact_set_digest artifact_state_fingerprint bundle_spec_digest completed_at environment_fingerprint failures limitations memory protocol_fingerprint quality report_digest report_id report_kind schema_version started_at status stream_workload_profile summary sustained_section valid_until docs/schemas/stream_qualification_report.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU StreamQualificationReport v1"
+  },
+  {
+    "href": "schemas.html#schema-stream-selection-decision-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU StreamSelectionDecision v1 Transport shape and scalar bounds. validate_stream_selection_decision is the normative semantic validator for selected-bundle/candidate identity and support-scope/evidence trust binding. artifact_resolver_state_digest candidate_evaluations decided_at decision_digest decision_id decision_kind environment_fingerprint local_job_digest protocol_fingerprint reason_codes schema_version selected_artifact_state_fingerprint selected_bundle selected_evidence status stream_job_spec stream_source_digest stream_source_preimage stream_workload_profile support_scope docs/schemas/stream_selection_decision.schema.json",
+    "summary": "Transport shape and scalar bounds. validate_stream_selection_decision is the normative semantic validator for selected-bundle/candidate identity and support-scope/evidence trust binding.",
+    "title": "YOLOZU StreamSelectionDecision v1"
+  },
+  {
+    "href": "schemas.html#schema-stream-summary-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU StreamSummary v1 Checked-in YOLOZU JSON Schema. bundle_spec_digest callback_bytes_high_watermark callback_item_high_watermark drop_fraction_display dropped_frame_count duration_ns evidence_report_digest failed_unaccounted_frame_count frame_queue_count_high_watermark frame_queue_decoded_bytes_high_watermark mask_artifact_count max_consecutive_drops output_bytes output_file_count p50_latency_ms p95_latency_ms p99_latency_ms processed_frame_count result_count scheduled_frame_count schema_version source_kind status summary_digest task termination_reason docs/schemas/stream_summary.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU StreamSummary v1"
+  },
+  {
+    "href": "schemas.html#schema-stream-workload-profile-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU StreamWorkloadProfile v1 Checked-in YOLOZU JSON Schema. collector_id collector_version schema_version stream_job workload_fingerprint docs/schemas/stream_workload_profile.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU StreamWorkloadProfile v1"
+  },
+  {
     "href": "schemas.html#schema-support-profile-eligibility-observation-schema",
     "kind": "schema",
     "search_text": "YOLOZU SupportProfileEligibilityObservation v1 Bounded support-profile projection input for one immutable bundle and lifecycle channel. The pure selector does not open support or lifecycle streams. advertised_gates_digest bundle_spec_digest channel environment_fingerprint family_id lifecycle_assignment_digest lifecycle_assignment_id observation_digest profile_digest profile_id profile_set_digest profile_set_record_digest profile_set_record_id protocol_fingerprint provider_id provider_version qualification_workload_fingerprint schema_version status support_profile_index_head_digest trust_domain docs/schemas/support_profile_eligibility_observation.schema.json",
@@ -1391,6 +1433,20 @@
     "search_text": "YOLOZU Tools Manifest Checked-in YOLOZU JSON Schema. ai_surfaces contracts generated_at_utc manifest_version repo tools docs/schemas/tools_manifest.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU Tools Manifest"
+  },
+  {
+    "href": "schemas.html#schema-tracking-output-interface-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU TrackingOutputInterface v1 Immutable tracker-free, session-scoped tracking output policy. Durable validation takes a validated StreamJobSpec, derives retained counts from an exact canonical StreamSummary, enforces its task, source, detector-result, 10000-mask, 10004-file, and 4-GiB ceilings independently, and binds both JSONL hashes through aggregate-only provenance plus exact checksums.json coverage. Person identification, face recognition, biometric inference, cross-camera or cross-session identity linking, and persistent identity databases are forbidden. biometric_inference cross_session_identity_linking detector_interval identity_scope kind max_active_tracks max_job_row_state_budget max_lost_frames max_prediction_frames max_results_per_frame max_session_unique_tracks persistent_identity_database schema_version task tracking_output_interface_digest docs/schemas/tracking_output_interface.schema.json",
+    "summary": "Immutable tracker-free, session-scoped tracking output policy. Durable validation takes a validated StreamJobSpec, derives retained counts from an exact canonical StreamSummary, enforces its task, source, detector-result, 10000-mask, 10004-file, and 4-GiB ceilings independently, and binds both JSONL hashes through aggregate-only provenance plus exact checksums.json coverage. Person identification, face recognition, biometric inference, cross-camera or cross-session identity linking, and persistent identity databases are forbidden.",
+    "title": "YOLOZU TrackingOutputInterface v1"
+  },
+  {
+    "href": "schemas.html#schema-tracking-output-record-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU TrackingOutputRecord v1 One canonical tracking_results.jsonl record. Post-stage aggregate validation derives counts from a canonical StreamSummary, binds a validated StreamJobSpec and aggregate-only provenance, verifies retained canonical detector FrameResult own digests and links, and checks exact checksums.json coverage plus independent configured mask/file/byte ceilings. IDs are session-local lifecycle handles only; biometric and cross-session identity fields are forbidden.  docs/schemas/tracking_output_record.schema.json",
+    "summary": "One canonical tracking_results.jsonl record. Post-stage aggregate validation derives counts from a canonical StreamSummary, binds a validated StreamJobSpec and aggregate-only provenance, verifies retained canonical detector FrameResult own digests and links, and checks exact checksums.json coverage plus independent configured mask/file/byte ceilings. IDs are session-local lifecycle handles only; biometric and cross-session identity fields are forbidden.",
+    "title": "YOLOZU TrackingOutputRecord v1"
   },
   {
     "href": "schemas.html#schema-training-handoff-schema",

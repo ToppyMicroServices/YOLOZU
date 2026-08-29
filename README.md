@@ -142,6 +142,12 @@ explicit site evidence root remains local-only and never uploads site facts.
 The contract-only [OCR result boundary](docs/ocr_interface_contract.md) keeps
 recognized text as inert untrusted user output, separate from detection labels.
 It ships no OCR model, adapter, document parser, remote service, or support claim.
+The contract-only [streaming boundary](docs/streaming_interface_contract.md)
+defines bounded per-frame results, privacy-safe summaries, unactivated
+qualification-report record shapes, and explicit selection or abstention. The separate
+[tracking boundary](docs/tracking_interface_contract.md) validates
+session-scoped state transitions against those frame results. This adds no
+decoder, live runner, tracker, model, or support claim.
 Candidate screening is implemented as a separate non-executing interface contract.
 It derives pass, hold, or reject from bounded provenance, integrity, license,
 local-availability, task/output, runtime, resource, maintenance, security, and

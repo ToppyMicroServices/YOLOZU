@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/tracking_output_interface.schema.json",
+  "title": "YOLOZU TrackingOutputInterface v1",
+  "description": "Immutable tracker-free, session-scoped tracking output policy. Durable validation takes a validated StreamJobSpec, derives retained counts from an exact canonical StreamSummary, enforces its task, source, detector-result, 10000-mask, 10004-file, and 4-GiB ceilings independently, and binds both JSONL hashes through aggregate-only provenance plus exact checksums.json coverage. Person identification, face recognition, biometric inference, cross-camera or cross-session identity linking, and persistent identity databases are forbidden.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "task",
+    "detector_interval",
+    "max_results_per_frame",
+    "max_prediction_frames",
+    "max_lost_frames",
+    "max_active_tracks",
+    "max_session_unique_tracks",
+    "max_job_row_state_budget",
+    "identity_scope",
+    "biometric_inference",
+    "cross_session_identity_linking",
+    "persistent_identity_database",
+    "tracking_output_interface_digest"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "tracking_output_interface" },
+    "task": { "enum": ["object_detection", "instance_segmentation"] },
+    "detector_interval": { "type": "integer", "minimum": 1, "maximum": 864000 },
+    "max_results_per_frame": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000,
+      "description": "Upstream-configured inclusive tracking-row cap for one processed frame; detector task-result accounting remains independent."
+    },
+    "max_prediction_frames": { "type": "integer", "minimum": 0, "maximum": 240 },
+    "max_lost_frames": { "type": "integer", "minimum": 0, "maximum": 240 },
+    "max_active_tracks": { "const": 1000 },
+    "max_session_unique_tracks": { "const": 1000000 },
+    "max_job_row_state_budget": { "const": 1000000 },
+    "identity_scope": { "const": "session_only" },
+    "biometric_inference": { "const": false },
+    "cross_session_identity_linking": { "const": false },
+    "persistent_identity_database": { "const": false },
+    "tracking_output_interface_digest": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

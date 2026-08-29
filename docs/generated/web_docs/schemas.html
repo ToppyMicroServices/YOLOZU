@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from docs/schemas/*.json</span>
   <h1 id="page-title">Schema browser</h1>
-  <p class="lead">55 checked-in JSON Schemas covering predictions,
+  <p class="lead">63 checked-in JSON Schemas covering predictions,
   evaluation reports, training handoff, registry records, and Research artifacts.
   Open the source schema for complete field constraints.</p>
 
@@ -356,6 +356,19 @@
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/finetune_lane_qualification.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
 </article>
 
+<article class="card" id="schema-frame-result-schema"
+  data-schema-path="docs/schemas/frame_result.schema.json" data-search-card
+  data-search-text="YOLOZU FrameResult v1 Transport shape and scalar bounds. validate_frame_result is the normative semantic validator for reduced scheduled-due rationals, cadence context, and decoded_width * decoded_height &lt;= 33177600. docs/schemas/frame_result.schema.json decoded_height, decoded_width, device_timestamp_ns, frame_result_digest, processing_completed_offset_ns, scheduled_due_offset_den, scheduled_due_offset_num_ns, schema_version, source_frame_index, task, task_results decoded_height, decoded_width, device_timestamp_ns, frame_result_digest, processing_completed_offset_ns, scheduled_due_offset_den, scheduled_due_offset_num_ns, schema_version, source_frame_index, task, task_results">
+  <h3>YOLOZU FrameResult v1</h3>
+  <p>Transport shape and scalar bounds. validate_frame_result is the normative semantic validator for reduced scheduled-due rationals, cadence context, and decoded_width * decoded_height &lt;= 33177600.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/frame_result.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>decoded_height, decoded_width, device_timestamp_ns, frame_result_digest, processing_completed_offset_ns, scheduled_due_offset_den, scheduled_due_offset_num_ns, schema_version, source_frame_index, task, task_results</code></dd>
+    <dt>Root required</dt><dd><code>decoded_height, decoded_width, device_timestamp_ns, frame_result_digest, processing_completed_offset_ns, scheduled_due_offset_den, scheduled_due_offset_num_ns, schema_version, source_frame_index, task, task_results</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/frame_result.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
 <article class="card" id="schema-image-job-spec-schema"
   data-schema-path="docs/schemas/image_job_spec.schema.json" data-search-card
   data-search-text="YOLOZU ImageJobSpec v1 Typed request for future Experimental adaptive image routing. Paths are separate tool arguments. docs/schemas/image_job_spec.schema.json allowed_maturities, batch_size, compute_policy, concurrency, execution_mode, fixed_classes, input_mode, job_timeout_seconds, max_accelerator_process_tree_peak_bytes, max_cold_start_ms, max_images, max_p95_latency_ms, max_results_per_image, max_runner_tree_peak_rss_bytes, min_repeat_throughput_fps, min_sustained_fps, network_policy, precision_allowlist, prompt_mode, provider_allowlist, quality_requirement, ranking_policy, schema_version, spdx_allowlist, task, text_prompts allowed_maturities, batch_size, compute_policy, concurrency, execution_mode, input_mode, job_timeout_seconds, max_images, max_results_per_image, network_policy, prompt_mode, ranking_policy, schema_version, task">
@@ -655,6 +668,71 @@
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/selection_decision.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
 </article>
 
+<article class="card" id="schema-stream-job-spec-schema"
+  data-schema-path="docs/schemas/stream_job_spec.schema.json" data-search-card
+  data-search-text="YOLOZU StreamJobSpec v1 Checked-in YOLOZU JSON Schema. docs/schemas/stream_job_spec.schema.json callback_max_bytes, callback_max_items, camera_eligibility_policy_id, camera_first_frame_timeout_seconds, camera_open_timeout_seconds, camera_pool_bytes, camera_pool_capacity_frames, camera_pool_policy_id, camera_pool_policy_version, cancellation_grace_seconds, close_timeout_seconds, decoded_layout_id, decoded_stride_max_bytes, decoded_stride_min_bytes, decoder_policy, drop_policy, frame_decode_timeout_seconds, frame_predict_timeout_seconds, job_timeout_seconds, latency_interval_id, mask_chunk_bytes, mask_encoding_id, mask_encoding_version, max_accelerator_process_tree_peak_bytes, max_consecutive_drops, max_decoder_rss_bytes, max_drop_den, max_drop_num, max_duration_seconds, max_frames, max_mask_artifacts, max_mask_bytes, max_output_bytes, max_output_files, max_p95_latency_ms, max_queued_decoded_bytes, max_results_per_frame, max_stream_job_peak_rss_bytes, max_total_results, memory_collector, min_sustained_fps, network_policy, output_cadence_id, output_step_timeout_seconds, quality_requirement, queue_capacity_frames, required_duration_seconds, runner_load_timeout_seconds, runner_probe_timeout_seconds, schema_version, source, source_admission_policy_id, source_admission_policy_version, source_probe_timeout_seconds, stride_policy_id, task, warmup_frame_count callback_max_bytes, callback_max_items, camera_eligibility_policy_id, camera_first_frame_timeout_seconds, camera_open_timeout_seconds, camera_pool_bytes, camera_pool_capacity_frames, camera_pool_policy_id, camera_pool_policy_version, cancellation_grace_seconds, close_timeout_seconds, decoded_layout_id, decoded_stride_max_bytes, decoded_stride_min_bytes, decoder_policy, drop_policy, frame_decode_timeout_seconds, frame_predict_timeout_seconds, job_timeout_seconds, latency_interval_id, mask_chunk_bytes, mask_encoding_id, mask_encoding_version, max_accelerator_process_tree_peak_bytes, max_consecutive_drops, max_decoder_rss_bytes, max_drop_den, max_drop_num, max_duration_seconds, max_frames, max_mask_artifacts, max_mask_bytes, max_output_bytes, max_output_files, max_p95_latency_ms, max_queued_decoded_bytes, max_results_per_frame, max_stream_job_peak_rss_bytes, max_total_results, memory_collector, min_sustained_fps, network_policy, output_cadence_id, output_step_timeout_seconds, quality_requirement, queue_capacity_frames, required_duration_seconds, runner_load_timeout_seconds, runner_probe_timeout_seconds, schema_version, source, source_admission_policy_id, source_admission_policy_version, source_probe_timeout_seconds, stride_policy_id, task, warmup_frame_count">
+  <h3>YOLOZU StreamJobSpec v1</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/stream_job_spec.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>callback_max_bytes, callback_max_items, camera_eligibility_policy_id, camera_first_frame_timeout_seconds, camera_open_timeout_seconds, camera_pool_bytes, camera_pool_capacity_frames, camera_pool_policy_id, camera_pool_policy_version, cancellation_grace_seconds, close_timeout_seconds, decoded_layout_id, decoded_stride_max_bytes, decoded_stride_min_bytes, decoder_policy, drop_policy, frame_decode_timeout_seconds, frame_predict_timeout_seconds, job_timeout_seconds, latency_interval_id, mask_chunk_bytes, mask_encoding_id, mask_encoding_version, max_accelerator_process_tree_peak_bytes, max_consecutive_drops, max_decoder_rss_bytes, max_drop_den, max_drop_num, max_duration_seconds, max_frames, max_mask_artifacts, max_mask_bytes, max_output_bytes, max_output_files, max_p95_latency_ms, max_queued_decoded_bytes, max_results_per_frame, max_stream_job_peak_rss_bytes, max_total_results, memory_collector, min_sustained_fps, network_policy, output_cadence_id, output_step_timeout_seconds, quality_requirement, queue_capacity_frames, required_duration_seconds, runner_load_timeout_seconds, runner_probe_timeout_seconds, schema_version, source, source_admission_policy_id, source_admission_policy_version, source_probe_timeout_seconds, stride_policy_id, task, warmup_frame_count</code></dd>
+    <dt>Root required</dt><dd><code>callback_max_bytes, callback_max_items, camera_eligibility_policy_id, camera_first_frame_timeout_seconds, camera_open_timeout_seconds, camera_pool_bytes, camera_pool_capacity_frames, camera_pool_policy_id, camera_pool_policy_version, cancellation_grace_seconds, close_timeout_seconds, decoded_layout_id, decoded_stride_max_bytes, decoded_stride_min_bytes, decoder_policy, drop_policy, frame_decode_timeout_seconds, frame_predict_timeout_seconds, job_timeout_seconds, latency_interval_id, mask_chunk_bytes, mask_encoding_id, mask_encoding_version, max_accelerator_process_tree_peak_bytes, max_consecutive_drops, max_decoder_rss_bytes, max_drop_den, max_drop_num, max_duration_seconds, max_frames, max_mask_artifacts, max_mask_bytes, max_output_bytes, max_output_files, max_p95_latency_ms, max_queued_decoded_bytes, max_results_per_frame, max_stream_job_peak_rss_bytes, max_total_results, memory_collector, min_sustained_fps, network_policy, output_cadence_id, output_step_timeout_seconds, quality_requirement, queue_capacity_frames, required_duration_seconds, runner_load_timeout_seconds, runner_probe_timeout_seconds, schema_version, source, source_admission_policy_id, source_admission_policy_version, source_probe_timeout_seconds, stride_policy_id, task, warmup_frame_count</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/stream_job_spec.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-stream-qualification-report-schema"
+  data-schema-path="docs/schemas/stream_qualification_report.schema.json" data-search-card
+  data-search-text="YOLOZU StreamQualificationReport v1 Checked-in YOLOZU JSON Schema. docs/schemas/stream_qualification_report.schema.json artifact_set_digest, artifact_state_fingerprint, bundle_spec_digest, completed_at, environment_fingerprint, failures, limitations, memory, protocol_fingerprint, quality, report_digest, report_id, report_kind, schema_version, started_at, status, stream_workload_profile, summary, sustained_section, valid_until artifact_set_digest, artifact_state_fingerprint, bundle_spec_digest, completed_at, environment_fingerprint, failures, limitations, memory, protocol_fingerprint, quality, report_digest, report_id, report_kind, schema_version, started_at, status, stream_workload_profile, summary, sustained_section, valid_until">
+  <h3>YOLOZU StreamQualificationReport v1</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/stream_qualification_report.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>artifact_set_digest, artifact_state_fingerprint, bundle_spec_digest, completed_at, environment_fingerprint, failures, limitations, memory, protocol_fingerprint, quality, report_digest, report_id, report_kind, schema_version, started_at, status, stream_workload_profile, summary, sustained_section, valid_until</code></dd>
+    <dt>Root required</dt><dd><code>artifact_set_digest, artifact_state_fingerprint, bundle_spec_digest, completed_at, environment_fingerprint, failures, limitations, memory, protocol_fingerprint, quality, report_digest, report_id, report_kind, schema_version, started_at, status, stream_workload_profile, summary, sustained_section, valid_until</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/stream_qualification_report.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-stream-selection-decision-schema"
+  data-schema-path="docs/schemas/stream_selection_decision.schema.json" data-search-card
+  data-search-text="YOLOZU StreamSelectionDecision v1 Transport shape and scalar bounds. validate_stream_selection_decision is the normative semantic validator for selected-bundle/candidate identity and support-scope/evidence trust binding. docs/schemas/stream_selection_decision.schema.json artifact_resolver_state_digest, candidate_evaluations, decided_at, decision_digest, decision_id, decision_kind, environment_fingerprint, local_job_digest, protocol_fingerprint, reason_codes, schema_version, selected_artifact_state_fingerprint, selected_bundle, selected_evidence, status, stream_job_spec, stream_source_digest, stream_source_preimage, stream_workload_profile, support_scope artifact_resolver_state_digest, candidate_evaluations, decided_at, decision_digest, decision_id, decision_kind, environment_fingerprint, local_job_digest, protocol_fingerprint, reason_codes, schema_version, selected_artifact_state_fingerprint, selected_bundle, selected_evidence, status, stream_job_spec, stream_source_digest, stream_source_preimage, stream_workload_profile, support_scope">
+  <h3>YOLOZU StreamSelectionDecision v1</h3>
+  <p>Transport shape and scalar bounds. validate_stream_selection_decision is the normative semantic validator for selected-bundle/candidate identity and support-scope/evidence trust binding.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/stream_selection_decision.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>artifact_resolver_state_digest, candidate_evaluations, decided_at, decision_digest, decision_id, decision_kind, environment_fingerprint, local_job_digest, protocol_fingerprint, reason_codes, schema_version, selected_artifact_state_fingerprint, selected_bundle, selected_evidence, status, stream_job_spec, stream_source_digest, stream_source_preimage, stream_workload_profile, support_scope</code></dd>
+    <dt>Root required</dt><dd><code>artifact_resolver_state_digest, candidate_evaluations, decided_at, decision_digest, decision_id, decision_kind, environment_fingerprint, local_job_digest, protocol_fingerprint, reason_codes, schema_version, selected_artifact_state_fingerprint, selected_bundle, selected_evidence, status, stream_job_spec, stream_source_digest, stream_source_preimage, stream_workload_profile, support_scope</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/stream_selection_decision.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-stream-summary-schema"
+  data-schema-path="docs/schemas/stream_summary.schema.json" data-search-card
+  data-search-text="YOLOZU StreamSummary v1 Checked-in YOLOZU JSON Schema. docs/schemas/stream_summary.schema.json bundle_spec_digest, callback_bytes_high_watermark, callback_item_high_watermark, drop_fraction_display, dropped_frame_count, duration_ns, evidence_report_digest, failed_unaccounted_frame_count, frame_queue_count_high_watermark, frame_queue_decoded_bytes_high_watermark, mask_artifact_count, max_consecutive_drops, output_bytes, output_file_count, p50_latency_ms, p95_latency_ms, p99_latency_ms, processed_frame_count, result_count, scheduled_frame_count, schema_version, source_kind, status, summary_digest, task, termination_reason bundle_spec_digest, callback_bytes_high_watermark, callback_item_high_watermark, drop_fraction_display, dropped_frame_count, duration_ns, evidence_report_digest, failed_unaccounted_frame_count, frame_queue_count_high_watermark, frame_queue_decoded_bytes_high_watermark, mask_artifact_count, max_consecutive_drops, output_bytes, output_file_count, p50_latency_ms, p95_latency_ms, p99_latency_ms, processed_frame_count, result_count, scheduled_frame_count, schema_version, source_kind, status, summary_digest, task, termination_reason">
+  <h3>YOLOZU StreamSummary v1</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/stream_summary.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>bundle_spec_digest, callback_bytes_high_watermark, callback_item_high_watermark, drop_fraction_display, dropped_frame_count, duration_ns, evidence_report_digest, failed_unaccounted_frame_count, frame_queue_count_high_watermark, frame_queue_decoded_bytes_high_watermark, mask_artifact_count, max_consecutive_drops, output_bytes, output_file_count, p50_latency_ms, p95_latency_ms, p99_latency_ms, processed_frame_count, result_count, scheduled_frame_count, schema_version, source_kind, status, summary_digest, task, termination_reason</code></dd>
+    <dt>Root required</dt><dd><code>bundle_spec_digest, callback_bytes_high_watermark, callback_item_high_watermark, drop_fraction_display, dropped_frame_count, duration_ns, evidence_report_digest, failed_unaccounted_frame_count, frame_queue_count_high_watermark, frame_queue_decoded_bytes_high_watermark, mask_artifact_count, max_consecutive_drops, output_bytes, output_file_count, p50_latency_ms, p95_latency_ms, p99_latency_ms, processed_frame_count, result_count, scheduled_frame_count, schema_version, source_kind, status, summary_digest, task, termination_reason</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/stream_summary.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-stream-workload-profile-schema"
+  data-schema-path="docs/schemas/stream_workload_profile.schema.json" data-search-card
+  data-search-text="YOLOZU StreamWorkloadProfile v1 Checked-in YOLOZU JSON Schema. docs/schemas/stream_workload_profile.schema.json collector_id, collector_version, schema_version, stream_job, workload_fingerprint collector_id, collector_version, schema_version, stream_job, workload_fingerprint">
+  <h3>YOLOZU StreamWorkloadProfile v1</h3>
+  <p>Checked-in YOLOZU JSON Schema.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/stream_workload_profile.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>collector_id, collector_version, schema_version, stream_job, workload_fingerprint</code></dd>
+    <dt>Root required</dt><dd><code>collector_id, collector_version, schema_version, stream_job, workload_fingerprint</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/stream_workload_profile.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
 <article class="card" id="schema-support-profile-eligibility-observation-schema"
   data-schema-path="docs/schemas/support_profile_eligibility_observation.schema.json" data-search-card
   data-search-text="YOLOZU SupportProfileEligibilityObservation v1 Bounded support-profile projection input for one immutable bundle and lifecycle channel. The pure selector does not open support or lifecycle streams. docs/schemas/support_profile_eligibility_observation.schema.json advertised_gates_digest, bundle_spec_digest, channel, environment_fingerprint, family_id, lifecycle_assignment_digest, lifecycle_assignment_id, observation_digest, profile_digest, profile_id, profile_set_digest, profile_set_record_digest, profile_set_record_id, protocol_fingerprint, provider_id, provider_version, qualification_workload_fingerprint, schema_version, status, support_profile_index_head_digest, trust_domain advertised_gates_digest, bundle_spec_digest, channel, environment_fingerprint, family_id, lifecycle_assignment_digest, lifecycle_assignment_id, observation_digest, profile_digest, profile_id, profile_set_digest, profile_set_record_digest, profile_set_record_id, protocol_fingerprint, provider_id, provider_version, qualification_workload_fingerprint, schema_version, status, support_profile_index_head_digest, trust_domain">
@@ -718,6 +796,32 @@
     <dt>Root required</dt><dd><code>ai_surfaces, manifest_version, tools</code></dd>
   </dl>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/tools_manifest.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-tracking-output-interface-schema"
+  data-schema-path="docs/schemas/tracking_output_interface.schema.json" data-search-card
+  data-search-text="YOLOZU TrackingOutputInterface v1 Immutable tracker-free, session-scoped tracking output policy. Durable validation takes a validated StreamJobSpec, derives retained counts from an exact canonical StreamSummary, enforces its task, source, detector-result, 10000-mask, 10004-file, and 4-GiB ceilings independently, and binds both JSONL hashes through aggregate-only provenance plus exact checksums.json coverage. Person identification, face recognition, biometric inference, cross-camera or cross-session identity linking, and persistent identity databases are forbidden. docs/schemas/tracking_output_interface.schema.json biometric_inference, cross_session_identity_linking, detector_interval, identity_scope, kind, max_active_tracks, max_job_row_state_budget, max_lost_frames, max_prediction_frames, max_results_per_frame, max_session_unique_tracks, persistent_identity_database, schema_version, task, tracking_output_interface_digest biometric_inference, cross_session_identity_linking, detector_interval, identity_scope, kind, max_active_tracks, max_job_row_state_budget, max_lost_frames, max_prediction_frames, max_results_per_frame, max_session_unique_tracks, persistent_identity_database, schema_version, task, tracking_output_interface_digest">
+  <h3>YOLOZU TrackingOutputInterface v1</h3>
+  <p>Immutable tracker-free, session-scoped tracking output policy. Durable validation takes a validated StreamJobSpec, derives retained counts from an exact canonical StreamSummary, enforces its task, source, detector-result, 10000-mask, 10004-file, and 4-GiB ceilings independently, and binds both JSONL hashes through aggregate-only provenance plus exact checksums.json coverage. Person identification, face recognition, biometric inference, cross-camera or cross-session identity linking, and persistent identity databases are forbidden.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/tracking_output_interface.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>biometric_inference, cross_session_identity_linking, detector_interval, identity_scope, kind, max_active_tracks, max_job_row_state_budget, max_lost_frames, max_prediction_frames, max_results_per_frame, max_session_unique_tracks, persistent_identity_database, schema_version, task, tracking_output_interface_digest</code></dd>
+    <dt>Root required</dt><dd><code>biometric_inference, cross_session_identity_linking, detector_interval, identity_scope, kind, max_active_tracks, max_job_row_state_budget, max_lost_frames, max_prediction_frames, max_results_per_frame, max_session_unique_tracks, persistent_identity_database, schema_version, task, tracking_output_interface_digest</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/tracking_output_interface.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
+</article>
+
+<article class="card" id="schema-tracking-output-record-schema"
+  data-schema-path="docs/schemas/tracking_output_record.schema.json" data-search-card
+  data-search-text="YOLOZU TrackingOutputRecord v1 One canonical tracking_results.jsonl record. Post-stage aggregate validation derives counts from a canonical StreamSummary, binds a validated StreamJobSpec and aggregate-only provenance, verifies retained canonical detector FrameResult own digests and links, and checks exact checksums.json coverage plus independent configured mask/file/byte ceilings. IDs are session-local lifecycle handles only; biometric and cross-session identity fields are forbidden. docs/schemas/tracking_output_record.schema.json No root properties declared No root required list">
+  <h3>YOLOZU TrackingOutputRecord v1</h3>
+  <p>One canonical tracking_results.jsonl record. Post-stage aggregate validation derives counts from a canonical StreamSummary, binds a validated StreamJobSpec and aggregate-only provenance, verifies retained canonical detector FrameResult own digests and links, and checks exact checksums.json coverage plus independent configured mask/file/byte ceilings. IDs are session-local lifecycle handles only; biometric and cross-session identity fields are forbidden.</p>
+  <dl class="kv">
+    <dt>Schema ID</dt><dd><code>https://www.toppymicros.com/yolozu/schemas/tracking_output_record.schema.json</code></dd>
+    <dt>Root properties</dt><dd><code>No root properties declared</code></dd>
+    <dt>Root required</dt><dd><code>No root required list</code></dd>
+  </dl>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/tracking_output_record.schema.json" target="_blank" rel="noopener noreferrer">Open the complete JSON Schema</a></p>
 </article>
 
 <article class="card" id="schema-training-handoff-schema"

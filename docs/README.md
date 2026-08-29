@@ -76,9 +76,22 @@ The environment-qualified local image-processing program targets an Experimental
 - Qualification freshness: [`qualification_freshness.md`](qualification_freshness.md).
   The weekly public monitor and explicit local-only site mode warn on expiry or
   governed drift without extending evidence or mutating Beads.
+- Third-party PyTorch runtime decisions:
+  [`adaptive_runtime_surface_decisions_2026-08-29.md`](adaptive_runtime_surface_decisions_2026-08-29.md).
+  Both reviewed candidate surfaces remain hold; no dependency, artifact, or
+  support claim was added.
 - OCR contract-only foundation: [`ocr_interface_contract.md`](ocr_interface_contract.md).
   Recognized text remains inert untrusted user output, separate from detection
   labels. No OCR model, adapter, document parser, or support claim is shipped.
+- Streaming contract-only foundation:
+  [`streaming_interface_contract.md`](streaming_interface_contract.md).
+  It defines bounded per-frame results, summaries, an unactivated
+  qualification-report record shape, and explicit selection or abstention
+  without shipping a decoder or live runner.
+- Tracking contract-only foundation:
+  [`tracking_interface_contract.md`](tracking_interface_contract.md).
+  Session-scoped state transitions bind to validated frame results; no tracker,
+  model, runner, or support claim is shipped.
 
 ## Primary Focus
 

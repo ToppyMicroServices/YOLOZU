@@ -108,7 +108,9 @@ class TestCandidateArtifactAiSurface(unittest.TestCase):
                     "yolozu/adaptive/algorithm_scout.py",
                     "yolozu/adaptive/freshness.py",
                     "yolozu/adaptive/screening.py",
+                    "yolozu/adaptive/streaming.py",
                     "yolozu/adaptive/support_profiles.py",
+                    "yolozu/contracts/tracking.py",
                     "yolozu/adaptive/control_stream.py",
                     "yolozu/adaptive/safe_https.py",
                     "yolozu/data/adaptive_routing/bundle_specs.json",
@@ -126,6 +128,14 @@ class TestCandidateArtifactAiSurface(unittest.TestCase):
                     "yolozu/data/schemas/candidate_screening_record.schema.json",
                     "yolozu/data/schemas/ocr_bundle_interface.schema.json",
                     "yolozu/data/schemas/ocr_result.schema.json",
+                    "yolozu/data/schemas/frame_result.schema.json",
+                    "yolozu/data/schemas/stream_job_spec.schema.json",
+                    "yolozu/data/schemas/stream_workload_profile.schema.json",
+                    "yolozu/data/schemas/stream_summary.schema.json",
+                    "yolozu/data/schemas/stream_qualification_report.schema.json",
+                    "yolozu/data/schemas/stream_selection_decision.schema.json",
+                    "yolozu/data/schemas/tracking_output_interface.schema.json",
+                    "yolozu/data/schemas/tracking_output_record.schema.json",
                     "yolozu/data/schemas/candidate_isolation_probe.schema.json",
                     "yolozu/data/schemas/support_profile_set_proposal.schema.json",
                     "yolozu/data/schemas/lifecycle_rollback_bindings.schema.json",
@@ -209,6 +219,7 @@ class TestCandidateArtifactAiSurface(unittest.TestCase):
                     str(venv_python),
                     "-c",
                     """
+import ast
 import importlib.util
 import json
 import sys
@@ -221,6 +232,26 @@ from yolozu.integrations.ai_surface import list_manifest_tools
 package = files("yolozu")
 data = files("yolozu.data")
 ids = list_manifest_tools(guaranteed=True, ids_only=True)
+
+def declares_exports(init_file, module, required):
+    tree = ast.parse(init_file.read_text(encoding="utf-8"))
+    imported = set()
+    exported = set()
+    for node in tree.body:
+        if isinstance(node, ast.ImportFrom) and node.level == 1 and node.module == module:
+            imported.update(alias.asname or alias.name for alias in node.names)
+        if (
+            isinstance(node, ast.Assign)
+            and any(isinstance(target, ast.Name) and target.id == "__all__" for target in node.targets)
+            and isinstance(node.value, (ast.List, ast.Tuple))
+        ):
+            exported.update(
+                item.value
+                for item in node.value.elts
+                if isinstance(item, ast.Constant) and isinstance(item.value, str)
+            )
+    return set(required) <= imported and set(required) <= exported
+
 print(json.dumps({
     "executable": sys.executable,
     "module": yolozu.__file__,
@@ -235,6 +266,27 @@ print(json.dumps({
     "adaptive_algorithm_scout": package.joinpath("adaptive").joinpath("algorithm_scout.py").is_file(),
     "adaptive_freshness": package.joinpath("adaptive").joinpath("freshness.py").is_file(),
     "adaptive_screening": package.joinpath("adaptive").joinpath("screening.py").is_file(),
+    "adaptive_streaming": package.joinpath("adaptive").joinpath("streaming.py").is_file(),
+    "adaptive_streaming_exports": declares_exports(
+        package.joinpath("adaptive").joinpath("__init__.py"),
+        "streaming",
+        (
+            "FrameResult",
+            "StreamJobSpec",
+            "compute_stream_source_digest",
+            "validate_stream_output_artifacts",
+        ),
+    ),
+    "tracking_contract": package.joinpath("contracts").joinpath("tracking.py").is_file(),
+    "tracking_contract_exports": declares_exports(
+        package.joinpath("contracts").joinpath("__init__.py"),
+        "tracking",
+        (
+            "TrackingOutputInterface",
+            "validate_tracking_output_artifacts",
+            "validate_tracking_output_provenance",
+        ),
+    ),
     "adaptive_safe_https": package.joinpath("adaptive").joinpath("safe_https.py").is_file(),
     "adaptive_registry": data.joinpath("adaptive_routing").joinpath("bundle_specs.json").is_file(),
     "adaptive_lifecycle": data.joinpath("adaptive_routing").joinpath("bundle_lifecycle.jsonl").is_file(),
@@ -251,6 +303,14 @@ print(json.dumps({
     "adaptive_screening_schema": data.joinpath("schemas").joinpath("candidate_screening_record.schema.json").is_file(),
     "ocr_bundle_schema": data.joinpath("schemas").joinpath("ocr_bundle_interface.schema.json").is_file(),
     "ocr_result_schema": data.joinpath("schemas").joinpath("ocr_result.schema.json").is_file(),
+    "frame_result_schema": data.joinpath("schemas").joinpath("frame_result.schema.json").is_file(),
+    "stream_job_schema": data.joinpath("schemas").joinpath("stream_job_spec.schema.json").is_file(),
+    "stream_workload_schema": data.joinpath("schemas").joinpath("stream_workload_profile.schema.json").is_file(),
+    "stream_summary_schema": data.joinpath("schemas").joinpath("stream_summary.schema.json").is_file(),
+    "stream_qualification_schema": data.joinpath("schemas").joinpath("stream_qualification_report.schema.json").is_file(),
+    "stream_selection_schema": data.joinpath("schemas").joinpath("stream_selection_decision.schema.json").is_file(),
+    "tracking_interface_schema": data.joinpath("schemas").joinpath("tracking_output_interface.schema.json").is_file(),
+    "tracking_record_schema": data.joinpath("schemas").joinpath("tracking_output_record.schema.json").is_file(),
     "adaptive_isolation_probe_schema": data.joinpath("schemas").joinpath("candidate_isolation_probe.schema.json").is_file(),
     "py_typed": package.joinpath("py.typed").is_file(),
     "numpy_available": importlib.util.find_spec("numpy") is not None,
@@ -313,12 +373,24 @@ print(json.dumps({
                 "adaptive_screening",
                 "adaptive_screening_schema",
                 "adaptive_screening_stream",
+                "adaptive_streaming",
+                "adaptive_streaming_exports",
                 "adaptive_support",
                 "adaptive_workload_schema",
+                "frame_result_schema",
                 "manifest",
                 "schema",
                 "mcp_reference",
                 "py_typed",
+                "stream_job_schema",
+                "stream_qualification_schema",
+                "stream_selection_schema",
+                "stream_summary_schema",
+                "stream_workload_schema",
+                "tracking_contract",
+                "tracking_contract_exports",
+                "tracking_interface_schema",
+                "tracking_record_schema",
             ):
                 self.assertTrue(payload[key], key)
             self.assertFalse(payload["numpy_available"])

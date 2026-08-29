@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/frame_result.schema.json",
+  "title": "YOLOZU FrameResult v1",
+  "description": "Transport shape and scalar bounds. validate_frame_result is the normative semantic validator for reduced scheduled-due rationals, cadence context, and decoded_width * decoded_height <= 33177600.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "source_frame_index", "scheduled_due_offset_num_ns", "scheduled_due_offset_den", "processing_completed_offset_ns", "device_timestamp_ns", "task", "decoded_width", "decoded_height", "task_results", "frame_result_digest"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "source_frame_index": {"type": "integer", "minimum": 0, "maximum": 863999},
+    "scheduled_due_offset_num_ns": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615},
+    "scheduled_due_offset_den": {"type": "integer", "minimum": 1, "maximum": 240000},
+    "processing_completed_offset_ns": {"type": "integer", "minimum": 0, "maximum": 18446744073709551615},
+    "device_timestamp_ns": {"type": ["integer", "null"], "minimum": 0, "maximum": 18446744073709551615},
+    "task": {"enum": ["object_detection", "instance_segmentation"]},
+    "decoded_width": {"type": "integer", "minimum": 1, "maximum": 8192},
+    "decoded_height": {"type": "integer", "minimum": 1, "maximum": 8192},
+    "task_results": {"type": "array", "maxItems": 1000, "items": {"$ref": "#/$defs/task_result"}},
+    "frame_result_digest": {"$ref": "#/$defs/sha256"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"task": {"const": "object_detection"}}, "required": ["task"]},
+      "then": {"properties": {"task_results": {"items": {"properties": {"mask": {"type": "null"}}}}}},
+      "else": {"properties": {"task_results": {"items": {"properties": {"mask": {"$ref": "#/$defs/mask"}}}}}}
+    }
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decimal_0_1": {"type": "string", "pattern": "^(?:0|1|0\\.[0-9]{0,8}[1-9])$", "maxLength": 11},
+    "bbox": {
+      "type": "object", "additionalProperties": false,
+      "required": ["x1", "y1", "x2", "y2"],
+      "properties": {"x1": {"$ref": "#/$defs/decimal_0_1"}, "y1": {"$ref": "#/$defs/decimal_0_1"}, "x2": {"$ref": "#/$defs/decimal_0_1"}, "y2": {"$ref": "#/$defs/decimal_0_1"}}
+    },
+    "mask": {
+      "type": "object", "additionalProperties": false,
+      "required": ["relative_path", "sha256", "size_bytes", "width", "height", "encoding_id"],
+      "properties": {
+        "relative_path": {"type": "string", "pattern": "^artifacts/masks/[A-Za-z0-9][A-Za-z0-9._-]{0,119}\\.png$"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 1, "maximum": 67108864},
+        "width": {"type": "integer", "minimum": 1, "maximum": 8192},
+        "height": {"type": "integer", "minimum": 1, "maximum": 8192},
+        "encoding_id": {"const": "png_binary_mask_v1"}
+      }
+    },
+    "task_result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["class_id", "score", "bbox", "mask"],
+      "properties": {
+        "class_id": {"type": "integer", "minimum": 0, "maximum": 2147483647},
+        "score": {"$ref": "#/$defs/decimal_0_1"},
+        "bbox": {"$ref": "#/$defs/bbox"},
+        "mask": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/mask"}]}
+      }
+    }
+  }
+}
