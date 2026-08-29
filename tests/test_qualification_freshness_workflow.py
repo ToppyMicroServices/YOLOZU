@@ -23,6 +23,10 @@ class TestQualificationFreshnessWorkflow(TestCase):
         self.assertIn("repository_owned_public_ids_only", self.text)
         self.assertIn("upload_eligible", self.text)
 
+    def test_checked_out_cli_installs_required_runtime_dependencies(self) -> None:
+        self.assertIn("run: python3 -m pip install .", self.text)
+        self.assertNotIn("pip install --no-deps .", self.text)
+
     def test_exit_artifact_retention_and_no_backfill_are_explicit(self) -> None:
         self.assertIn("yolozu check-qualification-freshness", self.text)
         self.assertIn('echo "exit_code=${code}" >> "${GITHUB_OUTPUT}"', self.text)
