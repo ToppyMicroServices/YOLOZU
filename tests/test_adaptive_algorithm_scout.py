@@ -1,6 +1,7 @@
 import gzip
 import inspect
 import json
+import shutil
 import ssl
 import subprocess
 import sys
@@ -419,6 +420,23 @@ class TestAlgorithmScout(TestCase):
             self.assertEqual(payload["selectability"], "inbox_only")
             self.assertEqual(_FixtureTransport.fetch_count, 0)
 
+    def test_default_source_root_is_the_declared_workspace(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            destination = workspace / SOURCES
+            destination.parent.mkdir(parents=True)
+            shutil.copyfile(REPO_ROOT / SOURCES, destination)
+
+            plan = build_scout_plan(
+                sources_path=SOURCES,
+                output_dir="reports/algorithm_scout",
+                collection_date="2026-08-26",
+                trigger="workflow_dispatch",
+                workspace_root=workspace,
+            )
+
+            self.assertEqual(len(plan.enabled_sources), 4)
+
     def test_missed_collection_dates_are_recorded_without_backfill(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
@@ -463,6 +481,9 @@ class TestAlgorithmScout(TestCase):
     def test_cli_plan_and_help_do_not_create_output(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
+            destination = workspace / SOURCES
+            destination.parent.mkdir(parents=True)
+            shutil.copyfile(REPO_ROOT / SOURCES, destination)
             help_run = subprocess.run(
                 [sys.executable, "-m", "yolozu", "scout-algorithms", "--help"],
                 cwd=REPO_ROOT,
