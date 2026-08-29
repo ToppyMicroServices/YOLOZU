@@ -294,6 +294,7 @@ def render_markdown(value: dict[str, Any], *, source_path: Path) -> str:
         f"YOLOZU's current Stable lane remains {boundary['current_stable_lane']}.",
         f"The target maturity for this future program is `{boundary['target_maturity']}`. Current availability is `{boundary['public_availability']}`.",
         "A successful import, smoke run, public model-card number, or candidate record does not change that boundary.",
+        "The phase table is a scope projection, not live task status or evidence that an optional outcome was achieved.",
         "",
         "## Target Behavior",
         "",

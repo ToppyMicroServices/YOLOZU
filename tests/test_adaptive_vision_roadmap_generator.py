@@ -58,6 +58,9 @@ class TestAdaptiveVisionRoadmapGenerator(unittest.TestCase):
         self.assertIn("otherwise abstain", boundary["recommendation_boundary"])
         self.assertIn("does not embed an LLM", boundary["natural_language_boundary"])
         self.assertIn("no implicit download", boundary["execution_boundary"])
+        self.assertIn("official hardware", payload["guardrails"][-1])
+        self.assertIn("renewed community demand", payload["phases"][4]["deliverable"])
+        self.assertIn("optional community evidence", payload["phases"][3]["deliverable"])
         self.assertEqual(payload["scope"]["initial_tasks"], ["object_detection", "instance_segmentation"])
         self.assertEqual([phase["issue_id"] for phase in payload["phases"]], [f"YOLOZU-ll2.81.{n}" for n in range(1, 6)])
         self.assertNotIn("owner", payload)
@@ -68,6 +71,8 @@ class TestAdaptiveVisionRoadmapGenerator(unittest.TestCase):
         self.assertIn("This is a roadmap projection, not qualification evidence.", report)
         self.assertIn("current Stable lane remains prediction validation and evaluation", report)
         self.assertIn("Discovery never changes the selectable channel by itself.", report)
+        self.assertIn("The phase table is a scope projection, not live task status", report)
+        self.assertIn("Retain contract-only streaming, tracking, and OCR lanes", report)
         self.assertNotIn("universally best", report.lower())
         self.assertNotIn("always latest", report.lower())
 
