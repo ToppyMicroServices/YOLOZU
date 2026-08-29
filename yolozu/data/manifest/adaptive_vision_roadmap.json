@@ -16,10 +16,11 @@
     "Images, prompts, filenames, host identifiers, raw event telemetry, private messages, and user datasets are not exported as roadmap or qualification evidence.",
     "Candidate discovery cannot promote or replace a bundle; promotion, revocation, and rollback require separate reviewed records.",
     "Research candidates, model-card metrics, imports, and smoke runs cannot establish a public support or performance claim.",
-    "A missing exact environment, workload, protocol, artifact, license, or quality match results in hold, blocked, or abstained rather than an inferred fallback."
+    "A missing exact environment, workload, protocol, artifact, license, or quality match results in hold, blocked, or abstained rather than an inferred fallback.",
+    "OSS completion requires truthful supported, unverified, or abstained results; it does not require official hardware, design-partner, on-prem, adoption, or commercial support evidence."
   ],
   "kind": "adaptive_vision_roadmap_projection",
-  "next_issue_id": "YOLOZU-ll2.81.1.9",
+  "next_issue_id": "YOLOZU-ll2.81.3.2",
   "out_of_scope": [
     "hosted image inference",
     "implicit model or dependency installation",
@@ -28,7 +29,13 @@
     "multiple concurrent streams",
     "image enhancement",
     "biometric or cross-stream identity",
-    "hard real-time guarantees"
+    "hard real-time guarantees",
+    "official CPU, Apple, or NVIDIA adaptive-bundle qualification",
+    "mandatory design-partner or on-prem adoption validation",
+    "commercial support matrices and quarterly product reviews",
+    "streaming, tracking, or OCR runtime work without renewed community demand",
+    "third-party isolated runner work without renewed community demand",
+    "high-cost real-image efficacy benchmarks outside opt-in research"
   ],
   "phases": [
     {
@@ -42,16 +49,16 @@
     },
     {
       "child_issue_count": 10,
-      "deliverable": "Honest baseline registration, governed screening of initial open-vocabulary and low-latency families, optional adapters only after approval, and real-host qualification when hardware is available.",
+      "deliverable": "Honest baseline registration and governed screening of initial open-vocabulary and low-latency families. Adapters require approval; exact-host qualification is optional community evidence and is never inferred.",
       "issue_id": "YOLOZU-ll2.81.2",
       "order": 2,
       "priority": "P1",
       "state": "roadmap",
-      "title": "Onboard and qualify initial algorithm bundles"
+      "title": "Register and screen initial algorithm bundles"
     },
     {
       "child_issue_count": 11,
-      "deliverable": "Monitored-source discovery, fail-closed screening, isolated acquisition and execution, evidence freshness monitoring, reviewed promotion, terminal revocation, rollback, and failure drills.",
+      "deliverable": "Monitored-source discovery, fail-closed screening, evidence freshness monitoring, reviewed promotion, terminal revocation, rollback, and failure drills. Third-party isolation remains none_supported unless renewed demand creates new work.",
       "issue_id": "YOLOZU-ll2.81.3",
       "order": 3,
       "priority": "P1",
@@ -60,21 +67,21 @@
     },
     {
       "child_issue_count": 3,
-      "deliverable": "Preregistered workload and SLO profiles, three consented on-prem workflows, and an exact measured-scope support decision without cross-environment extrapolation.",
+      "deliverable": "Published OSS boundary: design-partner and on-prem results are optional community evidence, never required completion or inferred adoption or support.",
       "issue_id": "YOLOZU-ll2.81.4",
       "order": 4,
       "priority": "P1",
       "state": "roadmap",
-      "title": "Prove adaptive routing in real on-prem workflows"
+      "title": "Document optional on-prem validation boundary"
     },
     {
       "child_issue_count": 13,
-      "deliverable": "Separate bounded local-stream, session-tracking, and static-image OCR interface contracts, qualification records, routing extensions, and Experimental implementations.",
+      "deliverable": "Retain bounded local-stream, session-tracking, and static-image OCR interface contracts. Runtime, routing, and qualification work is not planned until renewed community demand creates new Beads.",
       "issue_id": "YOLOZU-ll2.81.5",
       "order": 5,
       "priority": "P2",
       "state": "roadmap",
-      "title": "Add bounded streaming, tracking, and OCR lanes"
+      "title": "Retain contract-only streaming, tracking, and OCR lanes"
     }
   ],
   "product_boundary": {
@@ -111,8 +118,8 @@
     ]
   },
   "snapshot": {
-    "beads_export_commit": "063cfd217c55123bf0456c556927daa2e0b7a168",
-    "date": "2026-08-25",
+    "beads_export_commit": "5b2ba1c8b26565a10e50e748906db2ded27fb31f",
+    "date": "2026-08-29",
     "planning_source": "Beads",
     "planning_source_doc": "docs/roadmap.md",
     "root_issue_id": "YOLOZU-ll2.81",

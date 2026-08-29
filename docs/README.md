@@ -45,6 +45,9 @@ The environment-qualified local image-processing program targets an Experimental
 - Human-readable projection: [`../reports/adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md)
 - Packaged machine-readable projection: [`../yolozu/data/manifest/adaptive_vision_roadmap.json`](../yolozu/data/manifest/adaptive_vision_roadmap.json)
 - Live task source and refresh rule: [`roadmap.md`](roadmap.md)
+- OSS completion boundary: [`oss_support_scope.md`](oss_support_scope.md).
+  Official adaptive-bundle hardware qualification and commercial validation are
+  optional evidence; contract-only runtime work requires renewed community demand.
 - Candidate isolation decision and threat model:
   [`candidate_isolation_threat_model.md`](candidate_isolation_threat_model.md).
   The current decision is `none_supported`; the read-only capability probe cannot

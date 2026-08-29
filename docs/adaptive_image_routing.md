@@ -11,6 +11,14 @@ surfaces. It also registers three non-promoted Candidate baselines, but it does
 not add a model adapter or a runnable bundle.
 YOLOZU's current Stable predictions validation and evaluation lane remains unchanged.
 
+The [OSS support scope](oss_support_scope.md) requires this surface to remain
+fail closed and truthfully labelled. Official CPU, Apple Silicon, or NVIDIA
+adaptive-bundle qualification and design-partner/on-prem validation are optional
+evidence, not completion requirements. Streaming, tracking, OCR runtime, and a
+third-party isolated runner are not planned without renewed community demand and
+new Beads. Their missing evidence remains `unverified` or abstained and creates no
+support, performance, availability, or adoption claim.
+
 The source tree now includes strict Python validators and packaged schemas for
 the typed request, workload, environment, bundle, lifecycle, local artifact
 inventory, qualification report, evidence activation, candidate screening, screening/support eligibility
