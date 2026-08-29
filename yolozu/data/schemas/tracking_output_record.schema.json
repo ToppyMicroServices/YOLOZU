@@ -1,0 +1,282 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/tracking_output_record.schema.json",
+  "title": "YOLOZU TrackingOutputRecord v1",
+  "description": "One canonical tracking_results.jsonl record. Post-stage aggregate validation derives counts from a canonical StreamSummary, binds a validated StreamJobSpec and aggregate-only provenance, verifies retained canonical detector FrameResult own digests and links, and checks exact checksums.json coverage plus independent configured mask/file/byte ceilings. IDs are session-local lifecycle handles only; biometric and cross-session identity fields are forbidden.",
+  "oneOf": [
+    { "$ref": "#/$defs/trackingResult" },
+    { "$ref": "#/$defs/sessionTermination" }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "trackingProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "tracking_output_interface_digest",
+        "stream_job_digest",
+        "summary_digest",
+        "detector_frame_results_sha256",
+        "tracking_results_sha256",
+        "identity_scope",
+        "contains_frame_or_identity_data"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "kind": { "const": "tracking_output_provenance" },
+        "tracking_output_interface_digest": { "$ref": "#/$defs/sha256" },
+        "stream_job_digest": { "$ref": "#/$defs/sha256" },
+        "summary_digest": { "$ref": "#/$defs/sha256" },
+        "detector_frame_results_sha256": { "$ref": "#/$defs/sha256" },
+        "tracking_results_sha256": { "$ref": "#/$defs/sha256" },
+        "identity_scope": { "const": "session_only" },
+        "contains_frame_or_identity_data": { "const": false }
+      },
+      "description": "Canonical aggregate-only provenance.json shape. It contains no frame, track, person, device, biometric, or cross-session identity data."
+    },
+    "confidence": {
+      "type": "string",
+      "maxLength": 11,
+      "pattern": "^(?:0(?:\\.[0-9]{0,8}[1-9])?|1)$"
+    },
+    "coordinate": {
+      "type": "string",
+      "maxLength": 11,
+      "pattern": "^(?:0(?:\\.[0-9]{0,8}[1-9])?|1)$"
+    },
+    "bbox": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x1", "y1", "x2", "y2"],
+      "properties": {
+        "x1": { "$ref": "#/$defs/coordinate" },
+        "y1": { "$ref": "#/$defs/coordinate" },
+        "x2": { "$ref": "#/$defs/coordinate" },
+        "y2": { "$ref": "#/$defs/coordinate" }
+      },
+      "description": "Python validation additionally requires x1 < x2 and y1 < y2."
+    },
+    "mask": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "sha256", "size_bytes", "width", "height", "encoding_id"],
+      "properties": {
+        "relative_path": {
+          "type": "string",
+          "minLength": 21,
+          "maxLength": 140,
+          "pattern": "^artifacts/masks/[A-Za-z0-9][A-Za-z0-9._-]{0,119}\\.png$"
+        },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "size_bytes": { "type": "integer", "minimum": 1, "maximum": 67108864 },
+        "width": { "type": "integer", "minimum": 1, "maximum": 8192 },
+        "height": { "type": "integer", "minimum": 1, "maximum": 8192 },
+        "encoding_id": { "const": "png_binary_mask_v1" }
+      }
+    },
+    "taskResultCopy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class_id", "score", "bbox", "mask"],
+      "properties": {
+        "class_id": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+        "score": { "$ref": "#/$defs/confidence" },
+        "bbox": { "$ref": "#/$defs/bbox" },
+        "mask": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/mask" }] }
+      },
+      "description": "When present, Python validation requires exact equality with the referenced FrameResult task result."
+    },
+    "observationRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_frame_result_digest", "source_result_index"],
+      "properties": {
+        "source_frame_result_digest": { "$ref": "#/$defs/sha256" },
+        "source_result_index": { "type": "integer", "minimum": 0, "maximum": 999 }
+      }
+    },
+    "trackEstimate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_semantics", "confidence", "bbox", "mask"],
+      "properties": {
+        "source_semantics": { "enum": ["observation_adjusted", "tracker_prediction"] },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "bbox": { "$ref": "#/$defs/bbox" },
+        "mask": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/mask" }] }
+      }
+    },
+    "trackingResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "tracking_output_interface_digest",
+        "source_frame_index",
+        "session_index",
+        "session_frame_index",
+        "track_id",
+        "state",
+        "row_source",
+        "source_scheduled_due_offset_num_ns",
+        "source_scheduled_due_offset_den",
+        "tracking_completed_offset_ns",
+        "consecutive_prediction_frames",
+        "consecutive_lost_frames"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "kind": { "const": "tracking_result" },
+        "tracking_output_interface_digest": { "$ref": "#/$defs/sha256" },
+        "source_frame_index": { "type": "integer", "minimum": 0, "maximum": 863999 },
+        "session_index": { "type": "integer", "minimum": 0, "maximum": 863999 },
+        "session_frame_index": { "type": "integer", "minimum": 0, "maximum": 863999 },
+        "track_id": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        "state": { "enum": ["observed", "predicted", "lost", "ended"] },
+        "row_source": {
+          "enum": ["detector_observation_with_tracker_estimate", "tracker_prediction", "lifecycle_only"]
+        },
+        "source_scheduled_due_offset_num_ns": {
+          "type": "integer",
+          "minimum": 0,
+        "maximum": 18446744073709551615
+        },
+        "source_scheduled_due_offset_den": { "type": "integer", "minimum": 1, "maximum": 240000 },
+        "tracking_completed_offset_ns": {
+          "type": "integer",
+          "minimum": 0,
+        "maximum": 18446744073709551615
+        },
+        "consecutive_prediction_frames": { "type": "integer", "minimum": 0, "maximum": 240 },
+        "consecutive_lost_frames": { "type": "integer", "minimum": 0, "maximum": 240 },
+        "observation_ref": { "$ref": "#/$defs/observationRef" },
+        "observation_copy": { "$ref": "#/$defs/taskResultCopy" },
+        "track_estimate": { "$ref": "#/$defs/trackEstimate" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "state": { "const": "observed" } }, "required": ["state"] },
+          "then": {
+            "required": ["observation_ref", "track_estimate"],
+            "properties": {
+              "row_source": { "const": "detector_observation_with_tracker_estimate" },
+              "consecutive_prediction_frames": { "const": 0 },
+              "consecutive_lost_frames": { "const": 0 },
+              "track_estimate": {
+                "allOf": [
+                  { "$ref": "#/$defs/trackEstimate" },
+                  { "properties": { "source_semantics": { "const": "observation_adjusted" } } }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "state": { "const": "predicted" } }, "required": ["state"] },
+          "then": {
+            "required": ["track_estimate"],
+            "not": { "anyOf": [{ "required": ["observation_ref"] }, { "required": ["observation_copy"] }] },
+            "properties": {
+              "row_source": { "const": "tracker_prediction" },
+              "consecutive_prediction_frames": { "type": "integer", "minimum": 1, "maximum": 240 },
+              "consecutive_lost_frames": { "const": 0 },
+              "track_estimate": {
+                "allOf": [
+                  { "$ref": "#/$defs/trackEstimate" },
+                  { "properties": { "source_semantics": { "const": "tracker_prediction" } } }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "state": { "const": "lost" } }, "required": ["state"] },
+          "then": {
+            "not": {
+              "anyOf": [
+                { "required": ["observation_ref"] },
+                { "required": ["observation_copy"] },
+                { "required": ["track_estimate"] }
+              ]
+            },
+            "properties": {
+              "row_source": { "const": "lifecycle_only" },
+              "consecutive_prediction_frames": { "const": 0 },
+              "consecutive_lost_frames": { "type": "integer", "minimum": 1, "maximum": 240 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "state": { "const": "ended" } }, "required": ["state"] },
+          "then": {
+            "not": {
+              "anyOf": [
+                { "required": ["observation_ref"] },
+                { "required": ["observation_copy"] },
+                { "required": ["track_estimate"] }
+              ]
+            },
+            "properties": {
+              "row_source": { "const": "lifecycle_only" },
+              "consecutive_prediction_frames": { "const": 0 },
+              "consecutive_lost_frames": { "const": 0 }
+            }
+          }
+        }
+      ]
+    },
+    "sessionTermination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "tracking_output_interface_digest",
+        "session_index",
+        "last_source_frame_index",
+        "last_session_frame_index",
+        "termination_reason",
+        "termination_offset_ns",
+        "active_track_count",
+        "lost_track_count"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "kind": { "const": "tracking_session_termination" },
+        "tracking_output_interface_digest": { "$ref": "#/$defs/sha256" },
+        "session_index": { "type": "integer", "minimum": 0, "maximum": 863999 },
+        "last_source_frame_index": {
+          "oneOf": [{ "type": "null" }, { "type": "integer", "minimum": 0, "maximum": 863999 }]
+        },
+        "last_session_frame_index": {
+          "oneOf": [{ "type": "null" }, { "type": "integer", "minimum": 0, "maximum": 863999 }]
+        },
+        "termination_reason": { "enum": ["reset", "eof", "cancelled", "terminal_failure"] },
+        "termination_offset_ns": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 18446744073709551615
+        },
+        "active_track_count": { "type": "integer", "minimum": 0, "maximum": 1000 },
+        "lost_track_count": { "type": "integer", "minimum": 0, "maximum": 1000 }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "last_source_frame_index": { "type": "null" },
+            "last_session_frame_index": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "last_source_frame_index": { "type": "integer", "minimum": 0, "maximum": 863999 },
+            "last_session_frame_index": { "type": "integer", "minimum": 0, "maximum": 863999 }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -164,6 +164,10 @@
       "schema": "docs/schemas/finetune_lane_qualification.schema.json",
       "summary": "Execution, provenance, dependency, checkpoint-handoff, metric-scope, and hold decision for real-image and external fine-tuning lanes."
     },
+    "frame_result_json": {
+      "schema": "docs/schemas/frame_result.schema.json",
+      "summary": "Canonical bounded result for one processed stream frame, with source-frame, timing, task-result, and own-digest fields; dropped frames emit no row."
+    },
     "image_job_spec_json": {
       "schema": "docs/schemas/image_job_spec.schema.json",
       "summary": "Bounded typed image request for future Experimental adaptive routing; paths remain separate tool arguments."
@@ -268,6 +272,26 @@
       "schema": "docs/schemas/selection_decision.schema.json",
       "summary": "Complete bounded selected or abstained future adaptive-routing decision with sensitive local digests and explicit candidate reasons."
     },
+    "stream_job_spec_json": {
+      "schema": "docs/schemas/stream_job_spec.schema.json",
+      "summary": "Bounded stream request and decoder policy interface contract; input paths and media contents remain outside the record."
+    },
+    "stream_qualification_report_json": {
+      "schema": "docs/schemas/stream_qualification_report.schema.json",
+      "summary": "Unactivated exact-configuration stream qualification-report record shape with sustained-rate, drop, memory, quality, failure, and provenance observations."
+    },
+    "stream_selection_decision_json": {
+      "schema": "docs/schemas/stream_selection_decision.schema.json",
+      "summary": "Complete bounded selected or abstained stream-routing decision with explicit per-candidate reasons and exact qualification references."
+    },
+    "stream_summary_json": {
+      "schema": "docs/schemas/stream_summary.schema.json",
+      "summary": "Privacy-bounded aggregate stream outcome derived from the validated frame-result sequence without filenames, prompts, or media contents."
+    },
+    "stream_workload_profile_json": {
+      "schema": "docs/schemas/stream_workload_profile.schema.json",
+      "summary": "Shareable performance-relevant stream workload identity with exact source rate and bounded decoder and scheduling facts."
+    },
     "support_profile_eligibility_observation_json": {
       "schema": "docs/schemas/support_profile_eligibility_observation.schema.json",
       "summary": "Bounded support-profile projection input for one immutable bundle and lifecycle channel; the pure future selector opens no support or lifecycle stream."
@@ -289,6 +313,14 @@
       "spec": "docs/synthgen_contract.md",
       "summary": "SynthGen intake sample interface contract for external synthetic shard records (image/depth/inst/sem/kpts + schema metadata).",
       "validator": "python3 tools/validate_synthgen_contract.py --input <sample_or_jsonl> [--max-samples N]"
+    },
+    "tracking_output_interface_json": {
+      "schema": "docs/schemas/tracking_output_interface.schema.json",
+      "summary": "Immutable session-scoped tracking declaration with pinned task, state limits, privacy boundary, and no tracker availability claim."
+    },
+    "tracking_output_record_json": {
+      "schema": "docs/schemas/tracking_output_record.schema.json",
+      "summary": "Canonical bounded tracking JSONL row for observed, predicted, lost, or ended state linked to one validated FrameResult."
     },
     "training_orchestration_report_json": {
       "producer": "python3 tools/orchestrate_train.py --spec <spec.json> --output <path>",

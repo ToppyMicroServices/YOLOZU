@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/stream_qualification_report.schema.json",
+  "title": "YOLOZU StreamQualificationReport v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "report_kind", "report_id", "report_digest", "status", "started_at", "completed_at", "valid_until", "bundle_spec_digest", "artifact_set_digest", "artifact_state_fingerprint", "environment_fingerprint", "protocol_fingerprint", "stream_workload_profile", "summary", "sustained_section", "memory", "quality", "limitations", "failures"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "report_kind": {"const": "stream_qualification"},
+    "report_id": {"$ref": "#/$defs/id"},
+    "report_digest": {"$ref": "#/$defs/sha256"},
+    "status": {"enum": ["qualified", "failed", "fixture_only"]},
+    "started_at": {"$ref": "#/$defs/utc"},
+    "completed_at": {"$ref": "#/$defs/utc"},
+    "valid_until": {"$ref": "#/$defs/utc"},
+    "bundle_spec_digest": {"$ref": "#/$defs/sha256"},
+    "artifact_set_digest": {"$ref": "#/$defs/sha256"},
+    "artifact_state_fingerprint": {"$ref": "#/$defs/sha256"},
+    "environment_fingerprint": {"$ref": "#/$defs/sha256"},
+    "protocol_fingerprint": {"$ref": "#/$defs/sha256"},
+    "stream_workload_profile": {"$ref": "stream_workload_profile.schema.json"},
+    "summary": {"$ref": "stream_summary.schema.json"},
+    "sustained_section": {"$ref": "#/$defs/sustained"},
+    "memory": {"$ref": "#/$defs/memory"},
+    "quality": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/quality"}]},
+    "limitations": {"type": "array", "maxItems": 32, "items": {"type": "string", "minLength": 1, "maxLength": 512}},
+    "failures": {"type": "array", "maxItems": 32, "items": {"type": "string", "minLength": 1, "maxLength": 512}}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "utc": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
+    "canonical_decimal": {"type": "string", "pattern": "^(?:0|-?(?:(?:[1-9][0-9]{0,17})(?:\\.[0-9]{0,8}[1-9])?|0\\.[0-9]{0,8}[1-9]))$", "maxLength": 29},
+    "nonnegative_decimal": {"allOf": [{"$ref": "#/$defs/canonical_decimal"}, {"not": {"pattern": "^-"}}]},
+    "sustained": {
+      "type": "object", "additionalProperties": false,
+      "required": ["start_source_frame_index", "end_source_frame_index_exclusive", "scheduled_frame_count", "duration_ns", "processed_frame_count", "dropped_frame_count", "failed_unaccounted_frame_count", "p50_latency_ms", "p95_latency_ms", "p99_latency_ms", "sustained_fps_display"],
+      "properties": {
+        "start_source_frame_index": {"type": "integer", "minimum": 0, "maximum": 863999},
+        "end_source_frame_index_exclusive": {"type": "integer", "minimum": 1, "maximum": 864000},
+        "scheduled_frame_count": {"type": "integer", "minimum": 1, "maximum": 864000},
+        "duration_ns": {"type": "integer", "minimum": 1, "maximum": 18446744073709551615},
+        "processed_frame_count": {"type": "integer", "minimum": 1, "maximum": 864000},
+        "dropped_frame_count": {"type": "integer", "minimum": 0, "maximum": 864000},
+        "failed_unaccounted_frame_count": {"type": "integer", "minimum": 0, "maximum": 864000},
+        "p50_latency_ms": {"$ref": "#/$defs/nonnegative_decimal"},
+        "p95_latency_ms": {"$ref": "#/$defs/nonnegative_decimal"},
+        "p99_latency_ms": {"$ref": "#/$defs/nonnegative_decimal"},
+        "sustained_fps_display": {"$ref": "#/$defs/nonnegative_decimal"}
+      }
+    },
+    "collector": {
+      "type": "object", "additionalProperties": false,
+      "required": ["collector_id", "collector_version", "source", "scope"],
+      "properties": {
+        "collector_id": {"$ref": "#/$defs/id"}, "collector_version": {"$ref": "#/$defs/id"},
+        "source": {"$ref": "#/$defs/id"}, "scope": {"const": "whole_stream_job_process_tree_v1"}
+      }
+    },
+    "memory": {
+      "type": "object", "additionalProperties": false,
+      "required": ["collector", "coverage_complete", "stream_job_peak_rss_bytes", "accelerator_process_tree_peak_bytes", "thermal_status", "power_status"],
+      "properties": {
+        "collector": {"$ref": "#/$defs/collector"},
+        "coverage_complete": {"type": "boolean"},
+        "stream_job_peak_rss_bytes": {"type": ["integer", "null"], "minimum": 1, "maximum": 18446744073709551615},
+        "accelerator_process_tree_peak_bytes": {"type": ["integer", "null"], "minimum": 1, "maximum": 18446744073709551615},
+        "thermal_status": {"enum": ["nominal", "throttled", "unknown"]},
+        "power_status": {"enum": ["known", "unknown"]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"coverage_complete": {"const": false}}, "required": ["coverage_complete"]},
+          "then": {"properties": {"stream_job_peak_rss_bytes": {"type": "null"}, "accelerator_process_tree_peak_bytes": {"type": "null"}}}
+        }
+      ]
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metric_id", "direction", "threshold", "evaluation_dataset_id", "evaluation_dataset_sha256", "evaluation_protocol_sha256", "evaluation_vocabulary_id", "task", "status", "measured_value"],
+      "properties": {
+        "metric_id": {"$ref": "#/$defs/id"},
+        "direction": {"enum": ["higher_is_better", "lower_is_better"]},
+        "threshold": {"$ref": "#/$defs/canonical_decimal"},
+        "evaluation_dataset_id": {"$ref": "#/$defs/id"},
+        "evaluation_dataset_sha256": {"$ref": "#/$defs/sha256"},
+        "evaluation_protocol_sha256": {"$ref": "#/$defs/sha256"},
+        "evaluation_vocabulary_id": {"$ref": "#/$defs/id"},
+        "task": {"enum": ["object_detection", "instance_segmentation"]},
+        "status": {"enum": ["passed", "failed", "unknown"]},
+        "measured_value": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/canonical_decimal"}]}
+      }
+    }
+  }
+}

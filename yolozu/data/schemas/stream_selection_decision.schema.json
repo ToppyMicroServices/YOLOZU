@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/stream_selection_decision.schema.json",
+  "title": "YOLOZU StreamSelectionDecision v1",
+  "description": "Transport shape and scalar bounds. validate_stream_selection_decision is the normative semantic validator for selected-bundle/candidate identity and support-scope/evidence trust binding.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "decision_kind", "decision_id", "decision_digest", "status", "decided_at", "local_job_digest", "stream_source_preimage", "stream_source_digest", "artifact_resolver_state_digest", "environment_fingerprint", "protocol_fingerprint", "stream_job_spec", "stream_workload_profile", "selected_bundle", "selected_evidence", "selected_artifact_state_fingerprint", "support_scope", "reason_codes", "candidate_evaluations"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "decision_kind": {"const": "local_stream"},
+    "decision_id": {"$ref": "#/$defs/id"},
+    "decision_digest": {"$ref": "#/$defs/sha256"},
+    "status": {"enum": ["selected", "abstained"]},
+    "decided_at": {"$ref": "#/$defs/utc"},
+    "local_job_digest": {"$ref": "#/$defs/sha256"},
+    "stream_source_preimage": {"$ref": "#/$defs/stream_source_preimage"},
+    "stream_source_digest": {"$ref": "#/$defs/sha256"},
+    "artifact_resolver_state_digest": {"$ref": "#/$defs/sha256"},
+    "environment_fingerprint": {"$ref": "#/$defs/sha256"},
+    "protocol_fingerprint": {"$ref": "#/$defs/sha256"},
+    "stream_job_spec": {"$ref": "stream_job_spec.schema.json"},
+    "stream_workload_profile": {"$ref": "stream_workload_profile.schema.json"},
+    "selected_bundle": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/bundle"}]},
+    "selected_evidence": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/evidence"}]},
+    "selected_artifact_state_fingerprint": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/sha256"}]},
+    "support_scope": {"enum": ["none", "site_qualified", "public_qualified"]},
+    "reason_codes": {"type": "array", "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/$defs/reason"}},
+    "candidate_evaluations": {"type": "array", "maxItems": 128, "items": {"$ref": "#/$defs/candidate"}}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "selected"}}, "required": ["status"]},
+      "then": {"properties": {"support_scope": {"enum": ["site_qualified", "public_qualified"]}}}
+    },
+    {
+      "if": {"properties": {"support_scope": {"const": "public_qualified"}}, "required": ["support_scope"]},
+      "then": {"properties": {"selected_evidence": {"type": "object", "properties": {"trust_domain": {"const": "yolozu_managed"}}, "required": ["trust_domain"]}}}
+    }
+  ],
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "utc": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
+    "reason": {"enum": ["no_eligible_candidate", "catalog_only", "maturity_disallowed", "evidence_not_qualified", "evidence_untrusted", "source_rate_mismatch", "source_admission_mismatch", "decoder_policy_mismatch", "decoder_backend_unsupported", "decoder_memory_mismatch", "stream_memory_collector_mismatch", "stream_memory_unknown", "output_cadence_mismatch", "result_limit_mismatch", "mask_encoding_mismatch", "camera_pool_mismatch", "queue_byte_mismatch", "drop_metric_unknown", "drop_fraction_above_requirement", "sustained_fps_unknown", "sustained_fps_below_requirement", "consecutive_drops_above_requirement", "p95_latency_above_requirement", "quality_gate_failed", "runtime_unavailable", "hardware_unavailable", "camera_binding_ambiguous"]},
+    "stream_source_preimage": {
+      "description": "Transport shape and scalar bounds. validate_stream_selection_decision is the normative semantic validator for the camera rate reduction/quotient, pixel-product cap, capability binding, observed eligible count, and derived source digest.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source_kind", "byte_length", "source_sha256"],
+          "properties": {
+            "source_kind": {"const": "local_mp4"},
+            "byte_length": {"type": "integer", "minimum": 1, "maximum": 8589934592},
+            "source_sha256": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["source_kind", "provider_id", "capability_format", "width", "height", "source_rate_num", "source_rate_den", "eligible_device_count"],
+          "properties": {
+            "source_kind": {"const": "local_camera"},
+            "provider_id": {"const": "contract_fixture_camera_v1"},
+            "capability_format": {"enum": ["rgb24", "bgr24"]},
+            "width": {"type": "integer", "minimum": 1, "maximum": 8192},
+            "height": {"type": "integer", "minimum": 1, "maximum": 8192},
+            "source_rate_num": {"type": "integer", "minimum": 1, "maximum": 240000},
+            "source_rate_den": {"type": "integer", "minimum": 1, "maximum": 1001},
+            "eligible_device_count": {"const": 1}
+          }
+        }
+      ]
+    },
+    "bundle": {
+      "type": "object", "additionalProperties": false,
+      "required": ["bundle_id", "bundle_version", "bundle_spec_digest"],
+      "properties": {"bundle_id": {"$ref": "#/$defs/id"}, "bundle_version": {"$ref": "#/$defs/id"}, "bundle_spec_digest": {"$ref": "#/$defs/sha256"}}
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["report_id", "report_digest", "trust_domain"],
+      "properties": {"report_id": {"$ref": "#/$defs/id"}, "report_digest": {"$ref": "#/$defs/sha256"}, "trust_domain": {"enum": ["yolozu_managed", "site_managed"]}}
+    },
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["bundle_id", "bundle_version", "rank_state", "reason_codes"],
+      "properties": {
+        "bundle_id": {"$ref": "#/$defs/id"}, "bundle_version": {"$ref": "#/$defs/id"},
+        "rank_state": {"enum": ["selected", "eligible", "excluded"]},
+        "reason_codes": {"type": "array", "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/$defs/reason"}}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"rank_state": {"const": "selected"}}, "required": ["rank_state"]},
+          "then": {"properties": {"reason_codes": {"maxItems": 0}}}
+        }
+      ]
+    }
+  }
+}

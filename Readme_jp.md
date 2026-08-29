@@ -141,6 +141,11 @@ Experimental `yolozu check-qualification-freshness` は、activeなqualification
 contract-onlyの[OCR result boundary](docs/ocr_interface_contract.md)では、recognized textを
 detection labelと分離したinertかつuntrustedなuser outputとして扱います。OCR model、adapter、
 document parser、remote service、support claimは含みません。
+contract-onlyの[streaming boundary](docs/streaming_interface_contract.md)では、boundedな
+per-frame result、privacy-safeなsummary、未activationのqualification report record、明示的なselectionまたは
+abstentionを定義します。別の[tracking boundary](docs/tracking_interface_contract.md)は、その
+frame resultに対するsession単位のstate transitionを検証します。decoder、live runner、tracker、
+model、support claimは追加しません。
 candidate screeningは、実行を伴わない独立したinterface contractとして実装しました。
 provenance、integrity、code/weight/dataset license、local availability、task/output、
 runtime、resource、maintenance、security、human reviewを分離し、pass、hold、rejectを

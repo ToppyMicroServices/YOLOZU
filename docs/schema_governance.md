@@ -52,8 +52,25 @@ byte-identical pairs. They do not have a third copy under `schemas/`:
   `yolozu/data/schemas/support_profile_eligibility_observation.schema.json`
 - `docs/schemas/selection_decision.schema.json` and
   `yolozu/data/schemas/selection_decision.schema.json`
+- `docs/schemas/frame_result.schema.json` and
+  `yolozu/data/schemas/frame_result.schema.json`
+- `docs/schemas/stream_job_spec.schema.json` and
+  `yolozu/data/schemas/stream_job_spec.schema.json`
+- `docs/schemas/stream_workload_profile.schema.json` and
+  `yolozu/data/schemas/stream_workload_profile.schema.json`
+- `docs/schemas/stream_summary.schema.json` and
+  `yolozu/data/schemas/stream_summary.schema.json`
+- `docs/schemas/stream_qualification_report.schema.json` and
+  `yolozu/data/schemas/stream_qualification_report.schema.json`
+- `docs/schemas/stream_selection_decision.schema.json` and
+  `yolozu/data/schemas/stream_selection_decision.schema.json`
+- `docs/schemas/tracking_output_interface.schema.json` and
+  `yolozu/data/schemas/tracking_output_interface.schema.json`
+- `docs/schemas/tracking_output_record.schema.json` and
+  `yolozu/data/schemas/tracking_output_record.schema.json`
 
-Their standard-library Python validators live under `yolozu/adaptive/`. JSON Schema
+The adaptive and streaming standard-library Python validators live under
+`yolozu/adaptive/`; tracking validation lives under `yolozu/contracts/`. JSON Schema
 fixes the transport shape and bounds. Python validation additionally performs the
 normative semantic checks that JSON Schema cannot express directly, including NFKC
 prompt normalization, aggregate UTF-8 limits, canonical digest verification, ordered
@@ -262,6 +279,8 @@ schema surface for that artifact family.
 | Adaptive artifact and qualification evidence | `docs/schemas/local_artifact_inventory.schema.json`, `docs/schemas/qualification_report.schema.json`, `docs/schemas/evidence_activation_record.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | Inventory, measurement, and reviewed activation remain separate. The Experimental qualifier emits an unactivated report; the activation command defaults to dry-run and requires explicit review plus approval for an atomic append. The packaged Candidate baselines have unbound execution, and the runner map and public evidence storage remain empty, keeping the default nonselectable and non-executable. |
 | Adaptive selection observations and decisions | `docs/schemas/screening_eligibility_observation.schema.json`, `docs/schemas/support_profile_eligibility_observation.schema.json`, `docs/schemas/selection_decision.schema.json` | [`adaptive_image_routing.md`](adaptive_image_routing.md) | File-free typed observations and complete selected/abstained records expose every candidate reason. The pure selector consumes only validated in-memory values. An unpointed excluded catalog entry uses an empty pointed-channel set and a null support observation instead of invented evidence. MCP recommendation returns this interface contract; pinned processing accepts only a complete selected record and repeats current-state validation. |
 | OCR result boundary | `docs/schemas/ocr_bundle_interface.schema.json`, `docs/schemas/ocr_result.schema.json` | [`ocr_interface_contract.md`](ocr_interface_contract.md) | Contract-only model-free validation keeps recognized text out of detection labels, maps only bounded runner language/script indices, stamps pinned component provenance in core, and exposes no recognized content in summaries. No OCR adapter or support claim is included. |
+| Streaming result and qualification boundary | `docs/schemas/frame_result.schema.json`, `docs/schemas/stream_job_spec.schema.json`, `docs/schemas/stream_workload_profile.schema.json`, `docs/schemas/stream_summary.schema.json`, `docs/schemas/stream_qualification_report.schema.json`, `docs/schemas/stream_selection_decision.schema.json` | [`streaming_interface_contract.md`](streaming_interface_contract.md) | Contract-only validators fix canonical per-frame output, privacy-bounded summaries, exact source-rate and drop accounting, an unactivated qualification-report record shape, and explicit selection or abstention. No decoder, live runner, schedule result, or support claim is included. |
+| Tracking output boundary | `docs/schemas/tracking_output_interface.schema.json`, `docs/schemas/tracking_output_record.schema.json` | [`tracking_interface_contract.md`](tracking_interface_contract.md) | Contract-only state validation binds session-scoped track transitions to validated FrameResult records with explicit limits and canonical JSONL lockstep checks. No tracker, model, runner, or support claim is included. |
 | Detection / COCO eval reports | `docs/schemas/coco_eval_report.schema.json`, `docs/schemas/eval_suite_report.schema.json` | [`python_api.md`](python_api.md), [`yolo26_eval_protocol.md`](yolo26_eval_protocol.md), [`evaluation_protocol_template.md`](evaluation_protocol_template.md) | The COCO report schema is also packaged at `yolozu/data/schemas/coco_eval_report.schema.json`; protocol hash must be recorded before fair comparison. |
 | Segmentation dataset/eval | `docs/schemas/seg_dataset.schema.json`, `docs/schemas/seg_eval_report.schema.json` | [`predictions_schema.md`](predictions_schema.md) | Dataset and eval schemas are separate from predictions payloads. |
 | Training handoff | `docs/schemas/training_run_summary.schema.json`, `docs/schemas/training_handoff.schema.json` | [`training_orchestration.md`](training_orchestration.md) | Handoff JSON carries next steps for resume/export/eval/parity. |

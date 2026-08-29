@@ -94,6 +94,11 @@ and the generated public projection is
 [`adaptive_vision_roadmap.md`](../reports/adaptive_vision_roadmap.md). Live progress
 remains in Beads under `YOLOZU-ll2.81`.
 
+The contract-only [streaming](streaming_interface_contract.md) and
+[tracking](tracking_interface_contract.md) validators define bounded record
+shapes and state transitions. They add no decoder, tracker, emitted
+qualification report, runtime evidence, availability, or support claim.
+
 [`adaptive_image_routing.md`](adaptive_image_routing.md) is the normative v1 policy.
 Typed request, bundle/lifecycle, candidate-screening, artifact-inventory,
 qualification-report, evidence-activation, eligibility-observation, and SelectionDecision validators
