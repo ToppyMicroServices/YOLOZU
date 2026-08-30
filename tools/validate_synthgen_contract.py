@@ -39,15 +39,22 @@ def _load_records(path: Path) -> list[dict[str, Any]]:
     raise ValueError(f"{path}: expected object/list/jsonl")
 
 
+def _path_exists(path: Path) -> bool:
+    try:
+        return path.exists()
+    except (OSError, ValueError):
+        return False
+
+
 def _resolve_path(path_like: str, *, base_dir: Path, root_dir: Path) -> Path | None:
     p = Path(path_like)
-    if p.is_absolute() and p.exists():
+    if p.is_absolute() and _path_exists(p):
         return p
     cand1 = base_dir / p
-    if cand1.exists():
+    if _path_exists(cand1):
         return cand1
     cand2 = root_dir / p
-    if cand2.exists():
+    if _path_exists(cand2):
         return cand2
     return None
 

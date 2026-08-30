@@ -118,7 +118,7 @@ flowchart LR
 
 Environment-aware local image processing remains Experimental delivery work. It does not change the current Stable prediction validation/evaluation surface.
 
-The target design lets an AI client turn natural language into a typed request, then asks YOLOZU to select only among pipelines qualified for the matching task, hardware, runtime, workload, protocol, and license constraints. If the evidence is missing or mismatched, the result is abstention rather than an inferred “best” model. Recommendation and execution remain local and do not implicitly download assets.
+The target design lets an AI client turn natural language into a typed request, then asks YOLOZU to select only among pipelines qualified for the matching task, hardware, runtime, workload, protocol, and license constraints. If the evidence is missing or mismatched, the result is abstention rather than an inferred "best" model. Recommendation and execution remain local and do not implicitly download assets.
 
 Strict request, environment, evidence, eligibility-observation, and
 SelectionDecision interface contracts are packaged for integration work.
