@@ -9,10 +9,10 @@ training intake. A Stable parent command does not make every row Stable.
 | Source | Operation | Result | Preserved fields | Qualification |
 |---|---|---|---|---|
 | YOLO detection layout or `data.yaml` | `validate dataset`, `doctor train-dataset` | Direct reference-trainer input | image, class, bbox | Qualified on `data/coco128` and `data/smoke`; empty splits fail closed |
-| COCO instances root or explicit JSON/images paths | `doctor`, `migrate/import dataset` | Read-only YOLOZU wrapper | class mapping, bbox geometry, image references | Qualified on the tracked two-image COCO fixture |
+| COCO instances root or explicit JSON/images paths | `doctor`, `migrate/import dataset` | Read-only YOLOZU wrapper | class mapping, bbox geometry, image references | Qualified on the tracked two-image COCO fixture; generated conformance coverage includes crowd filtering and nested Unicode paths |
 | YOLOZU/YOLO detection wrapper | `export-dataset yolo|coco|kitti` | Materialized or symlink/copy export | image count, class mapping, bbox geometry | Qualified on the tracked two-image COCO fixture; KITTI is export-only |
 | COCO keypoints root | `import dataset`, then `export-dataset yolo|coco` | Read-only wrapper, then materialized export | bbox, keypoint coordinates/visibility, keypoint names, skeleton | Implemented and covered by deterministic fixtures; a tracked licensed real-keypoints qualification is not yet published |
-| VOC, Cityscapes, ADE20K, or YOLOZU segmentation descriptor | `import dataset`, `export-dataset segmentation` | Read-only descriptor or images/masks export | image/mask pairing, class metadata, ignore index where available | Implemented and fixture-tested; no bundled upstream real dataset is redistributed |
+| VOC, Cityscapes, ADE20K, or YOLOZU segmentation descriptor | `import dataset`, `export-dataset segmentation` | Read-only descriptor or images/masks export | image/mask pairing, class metadata, ignore index where available | Pixel-valid conformance fixtures cover all three upstream layouts; validation rejects unreadable assets and image/mask size mismatches; no bundled upstream real dataset is redistributed |
 | YOLO multi-task layout with sidecar JSON | `make_subset_dataset.py` | Owned symlink/copy subset | bbox, keypoints, masks, depth maps/units, intrinsics, object-pose sidecars, provenance metadata | Qualified on `data/real_multitask_fewshot`; bbox/masks are COCO-derived, while keypoints/depth/object pose are explicitly heuristic |
 | Classification folder or OBB labels | `doctor train-dataset` | Recognized external-lane intake | source metadata only | External-only; not a direct RT-DETR reference-trainer input |
 | SynthGen shard/stream | SynthGen loaders and validation tools | Experimental intake records | renderer-owned truth fields | See `synthgen_contract.md`; image generation remains outside YOLOZU |
@@ -84,6 +84,15 @@ run `--help`, and verify `subset.json.artifacts.sha256` after completion. Do not
 infer that an implemented or external-only row is production-qualified.
 
 ## Evidence and boundaries
+
+The adapter conformance lane uses generated, readable image and mask files to
+exercise COCO, Pascal VOC, Cityscapes, and ADE20K layout handling without a
+large download. It checks paths, class and bbox mapping, crowd/difficult
+policies, mask values, and paired dimensions. This is interface and parser
+regression evidence, not evidence of model quality or generalization across
+real-world dataset distributions. Registry fetch tests also reject malformed or
+mismatched declared SHA-256 values, including cached and multi-part assets;
+entries with no published checksum remain explicitly unpinned.
 
 The dated reproduction is
 [`reports/dataset_roundtrip_2026-07-27.md`](../reports/dataset_roundtrip_2026-07-27.md).

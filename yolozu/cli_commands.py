@@ -507,6 +507,42 @@ def _validate_segmentation_layout(
         dataset_root = (Path.cwd() / dataset_root).resolve()
     fmt = str(layout_info.get("format") or "")
 
+    def validate_pair(
+        idx: int,
+        image_path: Path,
+        mask_path: Path | None,
+        *,
+        require_mask: bool = True,
+    ) -> None:
+        from yolozu.core.image_size import get_image_size
+
+        image_size: tuple[int, int] | None = None
+        mask_size: tuple[int, int] | None = None
+        if not image_path.is_file():
+            errors.append(f"samples[{idx}]: image file does not exist: {image_path}")
+        else:
+            try:
+                image_size = get_image_size(image_path)
+            except Exception as exc:
+                errors.append(f"samples[{idx}]: failed to read image size: {image_path} ({exc})")
+
+        if mask_path is None and not require_mask:
+            pass
+        elif mask_path is None or not mask_path.is_file():
+            errors.append(f"samples[{idx}]: mask file does not exist: {mask_path}")
+        else:
+            try:
+                mask_size = get_image_size(mask_path)
+            except Exception as exc:
+                errors.append(f"samples[{idx}]: failed to read mask size: {mask_path} ({exc})")
+
+        if image_size is not None and mask_size is not None and image_size != mask_size:
+            errors.append(
+                f"samples[{idx}]: image/mask size mismatch: "
+                f"image={image_size[0]}x{image_size[1]}, "
+                f"mask={mask_size[0]}x{mask_size[1]}"
+            )
+
     if fmt == "yolozu_segmentation_descriptor":
         from yolozu.segmentation_dataset import load_seg_dataset_descriptor, resolve_dataset_path
 
@@ -519,12 +555,16 @@ def _validate_segmentation_layout(
             errors.append("dataset contains no segmentation samples")
         for idx, sample in enumerate(samples):
             image_path = resolve_dataset_path(sample.image, dataset_root=descriptor_path.parent, path_type=desc.path_type)
-            if not image_path.exists():
-                errors.append(f"samples[{idx}]: image file does not exist: {image_path}")
-            if sample.mask is not None:
-                mask_path = resolve_dataset_path(sample.mask, dataset_root=descriptor_path.parent, path_type=desc.path_type)
-                if not mask_path.exists():
-                    errors.append(f"samples[{idx}]: mask file does not exist: {mask_path}")
+            mask_path = (
+                None
+                if sample.mask is None
+                else resolve_dataset_path(
+                    sample.mask,
+                    dataset_root=descriptor_path.parent,
+                    path_type=desc.path_type,
+                )
+            )
+            validate_pair(idx, image_path, mask_path, require_mask=sample.mask is not None)
         return warnings, errors
 
     if fmt == "voc_segmentation_root":
@@ -536,10 +576,7 @@ def _validate_segmentation_layout(
         if not samples:
             errors.append("dataset contains no segmentation samples")
         for idx, sample in enumerate(samples):
-            if not sample.image_path.exists():
-                errors.append(f"samples[{idx}]: image file does not exist: {sample.image_path}")
-            if sample.mask_path is None or not sample.mask_path.exists():
-                errors.append(f"samples[{idx}]: mask file does not exist: {sample.mask_path}")
+            validate_pair(idx, sample.image_path, sample.mask_path)
         return warnings, errors
 
     if fmt == "cityscapes_segmentation_root":
@@ -551,10 +588,7 @@ def _validate_segmentation_layout(
         if not samples:
             errors.append("dataset contains no segmentation samples")
         for idx, sample in enumerate(samples):
-            if not sample.image_path.exists():
-                errors.append(f"samples[{idx}]: image file does not exist: {sample.image_path}")
-            if sample.mask_path is None or not sample.mask_path.exists():
-                errors.append(f"samples[{idx}]: mask file does not exist: {sample.mask_path}")
+            validate_pair(idx, sample.image_path, sample.mask_path)
         return warnings, errors
 
     if fmt == "ade20k_segmentation_root":
@@ -566,10 +600,7 @@ def _validate_segmentation_layout(
         if not samples:
             errors.append("dataset contains no segmentation samples")
         for idx, sample in enumerate(samples):
-            if not sample.image_path.exists():
-                errors.append(f"samples[{idx}]: image file does not exist: {sample.image_path}")
-            if sample.mask_path is None or not sample.mask_path.exists():
-                errors.append(f"samples[{idx}]: mask file does not exist: {sample.mask_path}")
+            validate_pair(idx, sample.image_path, sample.mask_path)
         return warnings, errors
 
     raise ValueError(f"unsupported segmentation layout: {fmt}")
