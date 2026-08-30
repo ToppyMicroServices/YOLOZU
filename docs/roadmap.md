@@ -44,6 +44,13 @@ evidence rather than mandatory OSS completion. Streaming, tracking, OCR runtime,
 and third-party isolated-runner implementation are not planned without renewed
 community demand and new Beads.
 
+The current open-vocabulary and low-latency candidate screenings are holds, so
+their adapters and exact-host qualification are also not planned without a new
+managed pass and concrete demand. The enabled weekly scout and freshness jobs
+have successful manual artifacts. Their first cron events remain operational
+observations and must not be reported as verified before they occur, but they do
+not block OSS roadmap completion.
+
 Regenerate or verify the report with:
 
 ```bash
