@@ -20,9 +20,11 @@ abstained. It must not become a support, performance, or availability claim.
 Privacy, provenance, license, checksum, explicit-download, and no-implicit-network
 boundaries remain mandatory.
 
-The already implemented low-cost weekly schedules still require their first real
-scheduled-run readbacks. A local or manually dispatched success is not a scheduled
-run.
+The low-cost weekly scout and freshness schedules are implemented, enabled, and
+have successful manually dispatched bounded artifacts. Their first real scheduled
+events are routine operational observations, not mandatory OSS completion. Until
+those events occur, YOLOZU must not claim that a scheduled run was verified.
+Failures remain visible through the bounded GitHub Actions issue paths.
 
 ## Optional evidence outside mandatory OSS completion
 
@@ -39,6 +41,12 @@ must not be extrapolated to another platform, workload, site, or user population
 
 ## Contract-only and not-planned work
 
+The currently screened Grounding DINO plus SAM and RF-DETR candidates remain
+holds. Their adapters and exact-host qualification are not planned without a new
+managed screening pass and concrete community demand that supplies legitimate
+runtime, license, asset, and host requirements. Renewed work must use new Beads;
+the current holds are not availability or support claims.
+
 Streaming, tracking, and OCR keep their versioned interface contracts. YOLOZU does
 not currently plan runtime, adapter, routing, or qualification implementations for
 those lanes. Renewed community demand must create new Beads with concrete inputs,
@@ -51,4 +59,3 @@ new Bead after one audited backend can satisfy the stated controls.
 The compatibility shim tracked by `YOLOZU-ll2.43` remains in place as an explicit
 maintenance decision. Removal can be reconsidered after an upstream or runtime
 change makes the shim unnecessary.
-
