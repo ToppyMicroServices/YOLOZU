@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.7.0] - 2026-08-30
+
+### Changed
+- Conclude OSS backlog scope.
+- Define OSS support scope.
+- Resolve sources from workspace.
+- Install scheduled workflow dependencies.
+- Add stream and tracking contract foundations.
+- Add evidence monitors and OCR contracts.
+- Add promotion failure drills.
+- Add reviewed promotion governance.
+- Adopt PEP 639 license metadata.
+- Add fail-closed isolation probe.
+- Add reviewed lifecycle rollback.
+- Add August 27 snapshot.
+- Govern dormant support profiles.
+- Add fail-closed candidate screening.
+- Add bounded algorithm scout.
+- Register baseline model bundles.
+- Verify installed routing boundaries.
+- Execute pinned image pipelines.
+- Expose read-only pipeline recommendation.
+- Select qualified image pipelines.
+- Activate reviewed qualification evidence.
+- Add bounded qualification workflow.
+- Add managed output transactions.
+- Load bounded bundle registry.
+- Add bounded environment profiling.
+- Add selection decision contracts.
+- Add qualification evidence contracts.
+- Add bundle lifecycle contracts.
+- Add adaptive image contracts.
+- Define adaptive image policy.
+- Publish adaptive vision projection.
+- Add 2026-08-20 snapshot.
+- Add August adoption snapshots.
+- Validate coordinate frame conventions.
+- Ingest complete renderer labels.
+- Add July feedback review.
+- Restore output preflight ordering.
+- Harden LoRA, TTT, and SDFT workflows.
+- Complete research qualifications.
+- Qualify training and adaptation lanes.
+- Add July 30 snapshot.
+- Record fine-tuning qualification closure.
+- Qualify fine-tuning execution lanes.
+- Qualify SDFT-style training evidence.
+- Harden BOP object pose workflow.
+- Add measured artifact qualification.
+- Add one-command handoff qualification.
+- Qualify round-trip preservation.
+- Unify preflight readiness checks.
+- Publish diagnostic evidence bundle.
+- Add multi-seed evidence suite.
+- Preserve issue audit log.
+- Restore complete release gates.
+
 ### Added
 - Expose Experimental read-only image-pipeline recommendation through MCP.
 - Add Experimental dry-run-by-default pinned local image processing through MCP.
@@ -18,6 +75,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add dry-run-first reviewed lifecycle maintenance and explicit same-family rollback.
 
 ### Fixed
+- Treat failed SynthGen path probes as unresolved inputs instead of crashing on inline JSON.
+- Keep public README examples ASCII-copyable.
 - Keep repository-wrapper prediction and TTA/TTT log paths anchored to the checkout when invoked from another working directory.
 
 ## [4.6.0] - 2026-07-26
