@@ -24,6 +24,18 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
         self.assertIn('https://pypi.org/pypi/yolozu/{version}/json', publish)
         self.assertIn('required_types = {"bdist_wheel", "sdist"}', publish)
 
+    def test_publish_workflow_installs_runtime_dependencies_before_adaptive_tests(self):
+        publish = (self.repo_root / ".github" / "workflows" / "publish.yml").read_text(encoding="utf-8")
+        macos_job = publish[publish.index("  macos_wheel_check:") : publish.index("\n  pypi:")]
+        pypi_job = publish[publish.index("\n  pypi:") :]
+        install = "Install hash-locked runtime dependencies"
+        validate = "Validate adaptive vision roadmap projection"
+
+        for job in (macos_job, pypi_job):
+            with self.subTest(job=job.splitlines()[0].strip()):
+                self.assertIn("requirements-locks/requirements-runtime.lock", job)
+                self.assertLess(job.index(install), job.index(validate))
+
     def test_manual_doi_uses_one_automatic_trigger_and_idempotency_guard(self):
         release_tool = (self.repo_root / "tools" / "release.py").read_text(encoding="utf-8")
         workflow = (self.repo_root / ".github" / "workflows" / "manual_doi.yml").read_text(
