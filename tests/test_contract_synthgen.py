@@ -1,9 +1,11 @@
+import errno
 import json
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import numpy as np
 from PIL import Image
@@ -15,6 +17,9 @@ from yolozu.contracts.synthgen import (
 )
 from yolozu.data.synthgen_shard_dataset import SynthGenShardDataset, collate_synthgen_batch
 from yolozu.data.synthgen_stream_dataset import SynthGenStreamDataset
+from yolozu.data import synthgen_shard_dataset
+
+from tools import validate_synthgen_contract
 
 
 def _canonical_scene_spec(object_count: int) -> dict:
@@ -106,6 +111,24 @@ def _write_sample_assets(root: Path, *, stem: str, schema_id: str) -> dict:
 
 
 class TestSynthGenContract(unittest.TestCase):
+    def test_path_probes_treat_enametoolong_as_unresolved(self):
+        error = OSError(errno.ENAMETOOLONG, "File name too long")
+        with mock.patch.object(Path, "exists", side_effect=error):
+            self.assertIsNone(
+                synthgen_shard_dataset._resolve_file_path(
+                    json.dumps(_canonical_scene_spec(2)),
+                    shard_dir=Path("shards"),
+                    root=Path("dataset"),
+                )
+            )
+            self.assertIsNone(
+                validate_synthgen_contract._resolve_path(
+                    json.dumps(_canonical_scene_spec(2)),
+                    base_dir=Path("shards"),
+                    root_dir=Path("dataset"),
+                )
+            )
+
     def test_validate_and_normalize_inline_sample(self):
         sample = _inline_3d_sample()
 

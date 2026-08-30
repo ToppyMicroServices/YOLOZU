@@ -23,15 +23,22 @@ _ARRAY_FIELDS = (
 )
 
 
+def _path_exists(path: Path) -> bool:
+    try:
+        return path.exists()
+    except (OSError, ValueError):
+        return False
+
+
 def _resolve_file_path(value: str, *, shard_dir: Path, root: Path) -> Path | None:
     p = Path(value)
-    if p.is_absolute() and p.exists():
+    if p.is_absolute() and _path_exists(p):
         return p
     cand1 = shard_dir / p
-    if cand1.exists():
+    if _path_exists(cand1):
         return cand1
     cand2 = root / p
-    if cand2.exists():
+    if _path_exists(cand2):
         return cand2
     return None
 

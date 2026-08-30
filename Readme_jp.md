@@ -118,7 +118,7 @@ flowchart LR
 
 環境に応じたlocal画像処理は、引き続きExperimental delivery workです。現在のStableなprediction validation/evaluationの提供範囲は変わりません。
 
-目標とする設計では、AI clientが自然言語をtyped requestへ変換し、YOLOZUはtask、hardware、runtime、workload、protocol、licenseの条件に一致するqualification済みpipelineだけを選択対象にします。証拠が不足または不一致なら、“best”を推測せずabstainします。recommendationとexecutionはlocalで動き、assetを暗黙にdownloadしません。
+目標とする設計では、AI clientが自然言語をtyped requestへ変換し、YOLOZUはtask、hardware、runtime、workload、protocol、licenseの条件に一致するqualification済みpipelineだけを選択対象にします。証拠が不足または不一致なら、"best"を推測せずabstainします。recommendationとexecutionはlocalで動き、assetを暗黙にdownloadしません。
 
 request、environment、evidence、eligibility observation、SelectionDecision の
 厳密な interface contract は packaged 済みです。`yolozu doctor --output -` は
