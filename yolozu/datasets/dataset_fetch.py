@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import ipaddress
 import json
+import re
 import shutil
 import tempfile
 import time
@@ -45,6 +46,35 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _normalize_sha256(value: Any, *, where: str) -> str | None:
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return None
+    if not isinstance(value, str):
+        raise ValueError(f"{where} must be a 64-character hexadecimal sha256")
+    digest = value.strip().lower()
+    if re.fullmatch(r"[0-9a-f]{64}", digest) is None:
+        raise ValueError(f"{where} must be a 64-character hexadecimal sha256")
+    return digest
+
+
+def _verify_sha256(
+    path: Path,
+    *,
+    expected: str | None,
+    dataset_id: str,
+    source_url: str,
+    cached: bool,
+) -> str:
+    actual = _sha256(path)
+    if expected is not None and actual != expected:
+        prefix = "cached sha256 mismatch" if cached else "sha256 mismatch"
+        raise RuntimeError(
+            f"{prefix} for {dataset_id} ({source_url}): "
+            f"expected {expected}, got {actual}"
+        )
+    return actual
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -132,6 +162,7 @@ class DatasetSpec:
     source_type: str
     urls: list[str]
     expected_sha256: str | None
+    expected_sha256_by_url: list[str | None]
     splits: list[str]
     tags: list[str]
     post_extract: dict[str, Any] = field(default_factory=dict)
@@ -207,11 +238,26 @@ def resolve_dataset_spec(dataset_id: str, registry_path: str | Path | None = Non
             continue
         source = dict(item.get("source") or {})
         source_type, urls = _extract_urls(source)
-        sha = item.get("sha256")
-        if isinstance(sha, str) and sha.strip():
-            sha = sha.strip().lower()
+        sha = _normalize_sha256(item.get("sha256"), where=f"datasets[{dataset_id}].sha256")
+        if source_type == "multi":
+            parts = source.get("parts") or []
+            sha_by_url = [
+                _normalize_sha256(
+                    part.get("sha256"),
+                    where=f"datasets[{dataset_id}].source.parts[{idx}].sha256",
+                )
+                for idx, part in enumerate(parts)
+                if part.get("url")
+            ]
+            if sha is not None and len(urls) > 1:
+                raise ValueError(
+                    f"datasets[{dataset_id}].sha256 is ambiguous for a multi-part source; "
+                    "set sha256 on each source part"
+                )
+            if len(urls) == 1 and sha_by_url == [None]:
+                sha_by_url = [sha]
         else:
-            sha = None
+            sha_by_url = [sha for _ in urls]
         return DatasetSpec(
             dataset_id=dataset_id,
             summary=str(item.get("summary") or ""),
@@ -222,6 +268,7 @@ def resolve_dataset_spec(dataset_id: str, registry_path: str | Path | None = Non
             source_type=source_type,
             urls=urls,
             expected_sha256=sha,
+            expected_sha256_by_url=sha_by_url,
             splits=list(item.get("splits") or []),
             tags=list(item.get("tags") or []),
             post_extract=dict(item.get("post_extract") or {}),
@@ -343,14 +390,16 @@ def fetch_dataset(
 
     # -- download each URL --------------------------------------------------
     archive_paths: list[Path] = []
-    urls_to_fetch = spec.urls
+    urls_to_fetch: list[str] = []
+    artifact_hashes: list[str] = []
+    artifact_expected_hashes: list[str | None] = []
     if spec.source_type == "mirror_urls":
-        urls_to_fetch = []
         last_exc: Exception | None = None
-        for candidate_url in spec.urls:
+        for candidate_idx, candidate_url in enumerate(spec.urls):
             file_name = Path(candidate_url.split("?")[0]).name or "dataset_asset"
             cached = cache_root / dataset_id / file_name
             cached.parent.mkdir(parents=True, exist_ok=True)
+            expected = spec.expected_sha256_by_url[candidate_idx]
             try:
                 if force or not cached.exists():
                     with tempfile.NamedTemporaryFile(
@@ -367,12 +416,29 @@ def fetch_dataset(
                             retries=retries,
                             allow_http=allow_http,
                         )
+                        actual = _verify_sha256(
+                            tmp_path,
+                            expected=expected,
+                            dataset_id=dataset_id,
+                            source_url=candidate_url,
+                            cached=False,
+                        )
                         tmp_path.replace(cached)
                     finally:
                         if tmp_path.exists():
                             tmp_path.unlink(missing_ok=True)
+                else:
+                    actual = _verify_sha256(
+                        cached,
+                        expected=expected,
+                        dataset_id=dataset_id,
+                        source_url=candidate_url,
+                        cached=True,
+                    )
                 urls_to_fetch = [candidate_url]
                 archive_paths.append(cached)
+                artifact_hashes.append(actual)
+                artifact_expected_hashes.append(expected)
                 last_exc = None
                 break
             except Exception as exc:
@@ -383,31 +449,51 @@ def fetch_dataset(
                 f"failed to fetch dataset `{dataset_id}` from all mirror_urls candidates"
             ) from last_exc
 
-    for idx, url in enumerate(urls_to_fetch):
-        file_name = Path(url.split("?")[0]).name
-        if not file_name:
-            file_name = f"part_{idx}"
-        cached = cache_root / dataset_id / file_name
-        cached.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        for idx, url in enumerate(spec.urls):
+            file_name = Path(url.split("?")[0]).name
+            if not file_name:
+                file_name = f"part_{idx}"
+            cached = cache_root / dataset_id / file_name
+            cached.parent.mkdir(parents=True, exist_ok=True)
+            expected = spec.expected_sha256_by_url[idx]
 
-        if force or not cached.exists():
-            with tempfile.NamedTemporaryFile(
-                prefix="yolozu_ds_", suffix=".tmp",
-                dir=str(cached.parent), delete=False,
-            ) as tmp:
-                tmp_path = Path(tmp.name)
-            try:
-                allow_http = _needs_http(url)
-                _download_with_retry(
-                    url=url, out_path=tmp_path,
-                    timeout=timeout, retries=retries,
-                    allow_http=allow_http,
+            if force or not cached.exists():
+                with tempfile.NamedTemporaryFile(
+                    prefix="yolozu_ds_", suffix=".tmp",
+                    dir=str(cached.parent), delete=False,
+                ) as tmp:
+                    tmp_path = Path(tmp.name)
+                try:
+                    allow_http = _needs_http(url)
+                    _download_with_retry(
+                        url=url, out_path=tmp_path,
+                        timeout=timeout, retries=retries,
+                        allow_http=allow_http,
+                    )
+                    actual = _verify_sha256(
+                        tmp_path,
+                        expected=expected,
+                        dataset_id=dataset_id,
+                        source_url=url,
+                        cached=False,
+                    )
+                    tmp_path.replace(cached)
+                finally:
+                    if tmp_path.exists():
+                        tmp_path.unlink(missing_ok=True)
+            else:
+                actual = _verify_sha256(
+                    cached,
+                    expected=expected,
+                    dataset_id=dataset_id,
+                    source_url=url,
+                    cached=True,
                 )
-                tmp_path.replace(cached)
-            finally:
-                if tmp_path.exists():
-                    tmp_path.unlink(missing_ok=True)
-        archive_paths.append(cached)
+            urls_to_fetch.append(url)
+            archive_paths.append(cached)
+            artifact_hashes.append(actual)
+            artifact_expected_hashes.append(expected)
 
     # -- extract archives ---------------------------------------------------
     for ap in archive_paths:
@@ -445,6 +531,18 @@ def fetch_dataset(
         "source_type": spec.source_type,
         "urls": urls_to_fetch,
         "sha256": spec.expected_sha256,
+        "artifacts": [
+            {
+                "url": url,
+                "sha256": actual,
+                "expected_sha256": expected,
+            }
+            for url, actual, expected in zip(
+                urls_to_fetch,
+                artifact_hashes,
+                artifact_expected_hashes,
+            )
+        ],
         "effective_root": str(effective_root),
         "created_at": _utc_now(),
     }

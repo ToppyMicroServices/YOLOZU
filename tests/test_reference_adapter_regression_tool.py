@@ -705,8 +705,16 @@ class TestReferenceAdapterRegressionTool(unittest.TestCase):
 
         repo_root = Path(__file__).resolve().parents[1]
         dataset_root = repo_root / "data" / "real_multitask_fewshot"
-        if not dataset_root.exists():
-            self.skipTest("real_multitask_fewshot dataset is not available")
+        required_paths = (
+            dataset_root / "dataset.json",
+            dataset_root / "images" / "val",
+            dataset_root / "labels" / "val",
+        )
+        val_images = dataset_root / "images" / "val"
+        if not all(path.exists() for path in required_paths) or not any(
+            path.is_file() for path in val_images.iterdir()
+        ):
+            self.skipTest("real_multitask_fewshot data assets are not available")
 
         script = repo_root / "tools" / "run_reference_adapter_regression.py"
         self.assertTrue(script.is_file())

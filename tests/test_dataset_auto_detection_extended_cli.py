@@ -32,7 +32,7 @@ class TestDatasetAutoDetectionExtendedCLI(unittest.TestCase):
             (root / "ImageSets" / "Segmentation").mkdir(parents=True, exist_ok=True)
 
             _write_tiny_png(root / "JPEGImages" / "0001.png")
-            (root / "SegmentationClass" / "0001.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+            _write_tiny_png(root / "SegmentationClass" / "0001.png")
             (root / "ImageSets" / "Segmentation" / "val.txt").write_text("0001\n", encoding="utf-8")
 
             proc_doctor = self._run(
@@ -368,7 +368,7 @@ class TestDatasetAutoDetectionExtendedCLI(unittest.TestCase):
             images_dir.mkdir(parents=True, exist_ok=True)
             masks_dir.mkdir(parents=True, exist_ok=True)
             _write_tiny_png(images_dir / "sample.png")
-            (masks_dir / "sample.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+            _write_tiny_png(masks_dir / "sample.png")
 
             descriptor_root = root / "seg_wrapper"
             descriptor_root.mkdir(parents=True, exist_ok=True)
