@@ -107,7 +107,7 @@ class TestRuntimeVersionQualification(unittest.TestCase):
             (
                 "requirements-locks/requirements-rtdetr-pose-image-extra.lock",
                 "onnxruntime-gpu",
-                "1.24.3",
+                "1.24.4",
             ),
         )
         for relative_path, package, version in expected:

@@ -1,5 +1,5 @@
 # Extra packages for YOLOZU ZISN-3 GPU validation.
 onnx==1.21.0
-onnxruntime-gpu==1.24.3
+onnxruntime-gpu==1.24.4
 nvidia-cudnn-cu12==9.20.0.48
 opencv-python-headless==4.13.0.92
