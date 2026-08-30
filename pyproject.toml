@@ -96,7 +96,7 @@ dev = [
   "onnx>=1.21.0",
   "onnxruntime>=1.17",
   "onnxscript>=0.1",
-  "ruff>=0.5",
+  "ruff>=0.16.0",
 ]
 
 # Everything in the docs install list (demo/onnxrt/train/coco/mcp/actions)
