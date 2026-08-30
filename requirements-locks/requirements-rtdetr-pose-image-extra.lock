@@ -1,6 +1,6 @@
 # Extra packages for the RT-DETR pose GPU backend container image.
 onnx==1.21.0
-onnxruntime-gpu==1.24.3
+onnxruntime-gpu==1.24.4
 onnxscript==0.6.2
 cuda-python==12.9.4
 torch==2.10.0

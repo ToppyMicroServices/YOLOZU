@@ -12,7 +12,7 @@ configured GPU container is not proof that a particular host completed a run.
 | PyTorch | `torch>=2.10.0` in the Torch-backed extras | `torch==2.10.0+cpu` in `requirements-locks/requirements-ci.lock`; `torch==2.10.0` in the demo and RT-DETR locks | The CI pin qualifies repository CPU tests. Device, accelerator, and custom-wheel behavior remain environment-specific. |
 | Torchvision | `torchvision>=0.25.0` in the Torch-backed extras | `torchvision==0.25.0` in `requirements-locks/requirements-demo-extra.lock` | Applies to the demo/runtime bundle, not the dependency-free validation/evaluation core. |
 | ONNX | `onnx>=1.21.0` in ONNX-backed extras | `onnx==1.21.0` in the CI, TensorRT-tool, and RT-DETR locks | Regenerate and recheck exported artifacts when the runtime or exporter changes. |
-| ONNX Runtime | `onnxruntime>=1.17` in ONNX-backed extras | CPU `onnxruntime==1.24.2` in the CI and TensorRT-tool locks; task-specific RT-DETR locks use `onnxruntime==1.24.3` or `onnxruntime-gpu==1.24.3` | The floor is packaging compatibility. Backend evidence must record the runtime actually used. |
+| ONNX Runtime | `onnxruntime>=1.17` in ONNX-backed extras | CPU `onnxruntime==1.24.2` in the CI and TensorRT-tool locks; task-specific RT-DETR locks use `onnxruntime==1.24.3` or `onnxruntime-gpu==1.24.4` | The floor is packaging compatibility. Backend evidence must record the runtime actually used. |
 
 The exact lock files, rather than this summary, remain the machine-consumed
 source for each test environment.
