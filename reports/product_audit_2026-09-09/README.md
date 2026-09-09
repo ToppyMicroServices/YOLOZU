@@ -91,6 +91,14 @@ re-entered test discovery and exceeded its time limit. The harness was corrected
 the product PDF parser did not require a change. The failed harness log and JSON
 are retained locally with `.harness-before-fix` suffixes.
 
+The first PR CodeQL run found a side effect inside an `assert` in the installed
+journey helper. Explicit checks now preserve both command handling and failure
+detection under Python `-O`. The helper passed all 13 commands in normal mode
+and in [optimized mode](installed-journey-ci-optimized/installed-journey.json);
+an [invalid guide command](installed-journey-ci-rejected/installed-journey.json)
+was rejected under `-O`. This correction only changes audit tooling, not the
+package bytes covered by the full regression run.
+
 ## Manual artifact
 
 The TeX source remains `manual/main.tex` plus `manual/chapters/*.tex`.
