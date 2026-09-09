@@ -183,7 +183,7 @@ Contact: develop@toppymicros.com
 | announce_release | stable | tools/announce_release.py | Generate (and optionally post) release announcement bundle for LinkedIn/X/Reddit from GitHub release event payload. |
 | audit_backend_support | experimental | tools/audit_backend_support.py | Audit YOLOX/YOLOv8/Detectron2/MMDetection exporters, with verified execution evidence for selected non-dry backends. |
 | audit_docs_examples_drift | stable | tools/audit_docs_examples_drift.py | Audit README/docs examples against yolozu help, manual CLI drift, and manifest help drift gates. |
-| audit_manual_cli_drift | stable | tools/audit_manual_cli_drift.py | Audit manual chapter 04 against canonical yolozu CLI help and the legacy wrapper passthrough help surface. |
+| audit_manual_cli_drift | stable | tools/audit_manual_cli_drift.py | Audit all manual chapters, including code listings, against canonical yolozu CLI help and legacy wrapper help. |
 | backend_parity_matrix | experimental | tools/backend_parity_matrix.py | Run one-command backend parity matrix checks across torch/onnxrt/trt/opencv_dnn/custom_cpp and export JSON+HTML reports. |
 | benchmark_eata_stability | research | tools/benchmark_eata_stability.py | Compare EATA stability/efficiency diagnostics with a baseline; efficacy remains not established and the report cannot promote defaults. |
 | benchmark_keypoints_eval | experimental | tools/benchmark_keypoints_eval.py | Benchmark keypoints evaluation runtime (PCK + optional OKS mAP) and write a stable JSON report. |
@@ -323,5 +323,5 @@ Contact: develop@toppymicros.com
 ## Smoke Coverage
 
 - `tests/test_docs_examples_drift.py` checks documented shell examples against help/manifest flags.
-- `tests/test_manual_cli_drift_audit.py` checks manual chapter 04 command references against top-level help.
+- `tests/test_manual_cli_drift_audit.py` checks command macros and code listings in all manual chapters against top-level help.
 - `tests/test_generated_cli_reference.py` fails when this generated reference drifts.

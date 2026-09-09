@@ -1,4 +1,5 @@
 \chapter{Tool Registry and Automation (Research Use)}
+\label{chap:tool-registry}
 
 \ChapterMeta{
 This chapter elucidates the machine-readable tool registry (comprising the manifest and schemas) and its role in facilitating safe discovery and execution for both human operators and autonomous agents.
@@ -12,7 +13,7 @@ This documentation assumes that tools are invoked exclusively via their declared
 \section{Boundary With the Maintenance Chapter}
 This chapter explains how to \emph{read and use} the tool registry: what the
 manifest contains, how to query it, and how automation should treat declared
-entrypoints. Chapter~18 owns the \emph{maintenance workflow}: changing tool
+entrypoints. Chapter~\ref{chap:manual-maintenance} owns the \emph{maintenance workflow}: changing tool
 behavior, updating \path{tools/manifest.json}, syncing packaged copies, and
 keeping docs/manual examples aligned.
 
@@ -39,7 +40,7 @@ When discovery surfaces disagree:
 \begin{itemize}
   \item \textbf{Behavioral Truth}: Resides in the code and the manifest.
   \item \textbf{Operator Action}: Prefer the declared manifest entry and verify the tool's \cmd{--help} output.
-  \item \textbf{Maintainer Action}: Use Chapter~18 to update the manifest, packaged copy, docs, and manual together.
+  \item \textbf{Maintainer Action}: Use Chapter~\ref{chap:manual-maintenance} to update the manifest, packaged copy, docs, and manual together.
   \item \textbf{Quality Gate}: Re-run the manifest validator prior to publishing any changes.
 \end{itemize}
 
@@ -123,7 +124,7 @@ This represents an explicit design objective of \yolozu{}: AI agents must be cap
 \section{When You Need to Change the Registry}
 Do not treat this chapter as the maintenance checklist. If you add a flag,
 change an output path, add a public tool, or alter manifest metadata, follow
-Chapter~18. That chapter is the canonical update procedure for:
+Chapter~\ref{chap:manual-maintenance}. That chapter is the canonical update procedure for:
 \begin{itemize}
   \item changing tool behavior and \cmd{--help} output,
   \item updating \path{tools/manifest.json} and the packaged manifest copy,

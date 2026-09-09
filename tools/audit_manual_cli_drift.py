@@ -10,19 +10,22 @@ from pathlib import Path
 from typing import Any
 
 repo_root = Path(__file__).resolve().parents[1]
-DEFAULT_MANUAL = repo_root / "manual" / "chapters" / "04_cli_reference.tex"
+DEFAULT_MANUAL = repo_root / "manual" / "chapters"
 DEFAULT_ALLOWLIST = repo_root / "docs" / "manual_cli_drift_allowlist.json"
 
 
 def _parse_args(argv: list[str]) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description=(
-            "Audit manual chapter 04 against the canonical yolozu CLI help surface. "
-            "The audit extracts documented top-level `yolozu <command>` references, "
+            "Audit manual chapters against the canonical yolozu CLI help surface. "
+            "The audit extracts top-level commands from cmd macros and lstlisting blocks, "
             "checks command availability/help, and optionally checks the legacy wrapper."
         )
     )
-    p.add_argument("--manual", default=str(DEFAULT_MANUAL), help="Manual chapter to audit.")
+    p.add_argument(
+        "--manual", default=str(DEFAULT_MANUAL),
+        help="TeX file or directory of chapters to audit (default: manual/chapters).",
+    )
     p.add_argument("--allowlist", default=str(DEFAULT_ALLOWLIST), help="JSON allowlist for intentional non-CLI tokens.")
     p.add_argument("--python", default=sys.executable, help="Python executable used for CLI probes.")
     p.add_argument("--skip-wrapper", action="store_true", help="Skip legacy tools/yolozu.py passthrough help checks.")
@@ -49,14 +52,40 @@ def _extract_manual_yolozu_commands(path: Path, *, allowlist: dict[str, Any]) ->
     text = _latex_text(path)
     ignored = set(str(x) for x in allowlist.get("ignored_manual_tokens", []))
     commands: set[str] = set()
-    for match in re.finditer(r"\\cmd\{yolozu\s+([^}\s]+)", text):
-        token = match.group(1).strip()
-        if not token or token.startswith("-") or token in ignored:
-            continue
-        if token.startswith("<") and token.endswith(">"):
-            continue
-        commands.add(token)
+
+    def collect(command: str) -> None:
+        match = re.match(r"(?:yolozu|python3?\s+-m\s+yolozu)\s+([^\s}]+)", command)
+        if match is None:
+            return
+        token = match.group(1)
+        # Ignore --help, options, placeholders, and illustrative wildcard tokens.
+        if token not in ignored and re.fullmatch(r"[a-z][a-z0-9-]*", token):
+            commands.add(token)
+
+    listing_pattern = r"\\begin\{lstlisting\}(?:\[[^\]]*\])?(.*?)\\end\{lstlisting\}"
+    for block in re.findall(listing_pattern, text, re.DOTALL):
+        block = re.sub(r"\\\r?\n[ \t]*", " ", block)
+        for line in block.splitlines():
+            command = line.strip()
+            if command.startswith("$ "):
+                command = command[2:].lstrip()
+            collect(command)
+
+    prose = re.sub(listing_pattern, "", text, flags=re.DOTALL)
+    prose = re.sub(r"(?m)(?<!\\)%.*$", "", prose)
+    for match in re.finditer(r"\\cmd\{([^}]*)\}", prose):
+        collect(match.group(1).strip())
     return sorted(commands)
+
+
+def _manual_files(path: Path) -> list[Path]:
+    if path.is_file():
+        return [path]
+    if path.is_dir():
+        files = sorted(path.rglob("*.tex"))
+        if files:
+            return files
+    raise SystemExit(f"manual must be a TeX file or a directory containing TeX chapters: {path}")
 
 
 def _run(cmd: list[str], *, timeout: float = 12.0) -> subprocess.CompletedProcess[str]:
@@ -122,7 +151,12 @@ def main(argv: list[str] | None = None) -> int:
         allowlist_path = (repo_root / allowlist_path).resolve()
     allowlist = _load_allowlist(allowlist_path)
 
-    documented = _extract_manual_yolozu_commands(manual, allowlist=allowlist)
+    manual_files = _manual_files(manual)
+    documented = sorted({
+        command
+        for path in manual_files
+        for command in _extract_manual_yolozu_commands(path, allowlist=allowlist)
+    })
     canonical, _help = _canonical_commands(str(args.python))
     missing = [cmd for cmd in documented if cmd not in canonical]
     help_checks = [_check_command_help(str(args.python), cmd) for cmd in documented if cmd in canonical]
@@ -134,6 +168,7 @@ def main(argv: list[str] | None = None) -> int:
         "schema_version": 1,
         "kind": "manual_cli_drift_audit",
         "manual": str(manual),
+        "manual_files": [str(path) for path in manual_files],
         "allowlist": str(allowlist_path),
         "documented_commands": documented,
         "canonical_commands": sorted(canonical),

@@ -7,8 +7,10 @@
 \usepackage{microtype}
 \usepackage{geometry}
 \geometry{margin=25mm}
+\setlength{\emergencystretch}{2em}
 
 % Links / URLs
+\PassOptionsToPackage{hyphens,spaces,obeyspaces}{url}
 \usepackage{hyperref}
 \hypersetup{
   colorlinks=true,
@@ -38,6 +40,7 @@
 
 % Code blocks (no shell-escape dependency)
 \usepackage{listings}
+\usepackage{textcomp}
 \usepackage{xcolor}
 \definecolor{codebg}{RGB}{248,248,248}
 \definecolor{codeframe}{RGB}{220,220,220}
@@ -50,6 +53,7 @@
   breakatwhitespace=false,
   columns=fullflexible,
   keepspaces=true,
+  upquote=true,
   showstringspaces=false
 }
 
@@ -63,7 +67,21 @@
 
 % Simple macros
 \newcommand{\yolozu}{\textsc{YOLOZU}}
-\newcommand{\cmd}[1]{\texttt{\detokenize{#1}}}
+% Preserve literal CLI characters and allow long commands to wrap at separators.
+% Older chapters escape underscores; normalize those before verbatim rendering.
+\ExplSyntaxOn
+\NewDocumentCommand{\cmd}{m}{
+  \group_begin:
+  \tl_set:Nn \l_tmpa_tl {#1}
+  \tl_replace_all:Nnn \l_tmpa_tl {\_} {_}
+  \tl_put_right:Nn \UrlSpecials {
+    \do\'{\mbox{\textquotesingle}}
+    \do\`{\mbox{\textasciigrave}}
+  }
+  \exp_args:NV \nolinkurl \l_tmpa_tl
+  \group_end:
+}
+\ExplSyntaxOff
 
 % Chapter intro summary (plain prose)
 % Keep it as a single paragraph to avoid awkward copy/paste line splitting.

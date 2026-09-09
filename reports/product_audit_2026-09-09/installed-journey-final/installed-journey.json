@@ -1,0 +1,188 @@
+{
+  "installed_version": "4.7.0",
+  "kind": "installed_candidate_journey",
+  "python": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "installed_outside_checkout": true,
+  "steps": [
+    {
+      "name": "evaluate-0",
+      "argv": [
+        "doctor",
+        "--proof"
+      ],
+      "exit_code": 0,
+      "seconds": 0.766972
+    },
+    {
+      "name": "evaluate-1",
+      "argv": [
+        "validate",
+        "dataset",
+        "reports/doctor_proof/toy_dataset",
+        "--split",
+        "val2017",
+        "--strict"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08512
+    },
+    {
+      "name": "evaluate-2",
+      "argv": [
+        "validate",
+        "predictions",
+        "reports/doctor_proof/known_predictions.json",
+        "--strict"
+      ],
+      "exit_code": 0,
+      "seconds": 0.087405
+    },
+    {
+      "name": "evaluate-3",
+      "argv": [
+        "eval-coco",
+        "--dataset",
+        "reports/doctor_proof/toy_dataset",
+        "--split",
+        "val2017",
+        "--predictions",
+        "reports/doctor_proof/known_predictions.json",
+        "--dry-run",
+        "--output",
+        "reports/eval.json"
+      ],
+      "exit_code": 0,
+      "seconds": 0.086918
+    },
+    {
+      "name": "export-0",
+      "argv": [
+        "doctor",
+        "--proof"
+      ],
+      "exit_code": 0,
+      "seconds": 0.550007
+    },
+    {
+      "name": "export-1",
+      "argv": [
+        "predict-images",
+        "--backend",
+        "dummy",
+        "--input-dir",
+        "reports/doctor_proof/toy_dataset/images/val2017",
+        "--output",
+        "reports/predictions.json",
+        "--overlays-dir",
+        "reports/predict_overlays",
+        "--html",
+        "reports/predict_images.html",
+        "--progress"
+      ],
+      "exit_code": 0,
+      "seconds": 0.254902
+    },
+    {
+      "name": "export-2",
+      "argv": [
+        "validate",
+        "predictions",
+        "reports/predictions.json",
+        "--strict"
+      ],
+      "exit_code": 0,
+      "seconds": 0.089571
+    },
+    {
+      "name": "debug-0",
+      "argv": [
+        "doctor",
+        "--explain"
+      ],
+      "exit_code": 0,
+      "seconds": 0.565794
+    },
+    {
+      "name": "debug-1",
+      "argv": [
+        "doctor",
+        "--proof"
+      ],
+      "exit_code": 0,
+      "seconds": 0.543667
+    },
+    {
+      "name": "debug-2",
+      "argv": [
+        "doctor",
+        "import",
+        "--dataset-from",
+        "auto",
+        "--dataset",
+        "reports/doctor_proof/toy_dataset",
+        "--output",
+        "-"
+      ],
+      "exit_code": 0,
+      "seconds": 0.086737
+    },
+    {
+      "name": "debug-3",
+      "argv": [
+        "validate",
+        "dataset",
+        "reports/doctor_proof/toy_dataset",
+        "--split",
+        "val2017",
+        "--mode",
+        "warn"
+      ],
+      "exit_code": 0,
+      "seconds": 0.083226
+    },
+    {
+      "name": "real-coco",
+      "argv": [
+        "eval-coco",
+        "--dataset",
+        "reports/doctor_proof/toy_dataset",
+        "--split",
+        "val2017",
+        "--predictions",
+        "reports/doctor_proof/known_predictions.json",
+        "--output",
+        "reports/official-coco.json"
+      ],
+      "exit_code": 0,
+      "seconds": 0.433931
+    },
+    {
+      "name": "synthetic-demo",
+      "argv": [
+        "demo",
+        "instance-seg",
+        "--background",
+        "synthetic",
+        "--inference",
+        "none",
+        "--run-dir",
+        "demo"
+      ],
+      "exit_code": 0,
+      "seconds": 1.535149
+    }
+  ],
+  "ok": true,
+  "official_coco_metrics": {
+    "ar100": 1.0,
+    "map50": 0.9999999999999999,
+    "map50_95": 0.9999999999999998,
+    "map75": 0.9999999999999999
+  },
+  "source_sha256": {
+    "cli_entry.py": "48df3fef394eab12e81e7e3f8cf946b0baa283f8132747ab6e62027685fe4b06",
+    "core/doctor.py": "f69d693185740b103583d64ec1254a8c8d5eeb047df176947cceb03d056d9d95",
+    "datasets/dataset_validator.py": "314535b2d361890956243f5d3ae9fc761d6d4ad8f71d7ec8c6a6d2956978f386",
+    "eval/simple_map.py": "bbf4964bfe52f8e286ae675ad5f1eb02ee9683e7c91d11953c4d2f59d312ee8d"
+  }
+}

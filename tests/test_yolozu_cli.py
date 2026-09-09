@@ -1,5 +1,7 @@
 import hashlib
 import json
+import os
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -121,6 +123,24 @@ class TestYOLOZUCLI(unittest.TestCase):
             self.fail(f"tools/yolozu.py guide failed:\n{proc.stdout}\n{proc.stderr}")
         self.assertIn("demo instance-seg", proc.stdout)
         self.assertIn("doctor --proof", proc.stdout)
+
+    def test_guide_evaluate_runs_without_checkout_assets(self):
+        from yolozu.cli_entry import GUIDE_ROUTES
+
+        repo_root = Path(__file__).resolve().parents[1]
+        env = dict(os.environ, PYTHONPATH=str(repo_root))
+        with tempfile.TemporaryDirectory() as tmp:
+            for command in GUIDE_ROUTES["evaluate"]["commands"]:
+                args = shlex.split(command)
+                self.assertEqual(args[0], "yolozu")
+                proc = subprocess.run(
+                    [sys.executable, "-m", "yolozu", *args[1:]],
+                    cwd=tmp, env=env, capture_output=True, text=True, timeout=90,
+                )
+                self.assertEqual(proc.returncode, 0, f"{command}\n{proc.stdout}\n{proc.stderr}")
+            result = json.loads((Path(tmp) / "reports/eval.json").read_text())
+            self.assertTrue(result["dry_run"])
+            self.assertEqual(result["counts"]["images"], 1)
 
     def test_doctor_proof_writes_artifacts_and_compares_metrics(self):
         repo_root = Path(__file__).resolve().parents[1]

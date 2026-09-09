@@ -1013,9 +1013,10 @@
       "id": "audit_manual_cli_drift",
       "inputs": [
         {
-          "default": "manual/chapters/04_cli_reference.tex",
+          "default": "manual/chapters",
+          "description": "A TeX chapter file or directory of chapters; checks command macros and code listings.",
           "flag": "--manual",
-          "kind": "file",
+          "kind": "string",
           "name": "manual",
           "required": false
         },
@@ -1064,7 +1065,7 @@
         "python_packages": []
       },
       "runner": "python3",
-      "summary": "Audit manual chapter 04 against canonical yolozu CLI help and the legacy wrapper passthrough help surface.",
+      "summary": "Audit all manual chapters, including code listings, against canonical yolozu CLI help and legacy wrapper help.",
       "tags": [
         "cli",
         "manual",
@@ -20476,7 +20477,7 @@
         },
         {
           "command": "python3 -m yolozu guide --goal evaluate",
-          "description": "Print beginner-friendly route guidance with copy-paste evaluation commands."
+          "description": "Print a self-contained evaluation route using doctor-generated toy artifacts, with explicit dry-run and real-COCO guidance. Printing the guide does not execute the commands."
         },
         {
           "command": "python3 -m yolozu guide --goal first-run",
@@ -20947,7 +20948,7 @@
           "required": false
         },
         {
-          "description": "Selects the beginner guide route for `yolozu guide` (`all`, `first-run`, `evaluate`, `export`, or `debug`).",
+          "description": "Selects the beginner guide route for `yolozu guide` (`all`, `first-run`, `evaluate`, `export`, or `debug`). Evaluation/export/debug examples generate their own toy inputs and need no checkout assets.",
           "flag": "--goal",
           "kind": "string",
           "name": "goal",

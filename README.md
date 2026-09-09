@@ -8,28 +8,58 @@ Company: [ToppyMicroServices OÜ](https://www.toppymicros.com/) | Official page:
 
 YOLOZU is a commercial product developed by ToppyMicroServices OÜ and provided free of charge. The repository code is licensed under Apache-2.0.
 
-Its stable product lane validates and fairly evaluates existing vision predictions through a stable predictions interface contract.
+Its stable product lane validates and evaluates existing vision predictions through a stable predictions interface contract. Use it to compare object-detection outputs from different frameworks on the same labelled dataset and evaluation settings.
 
-Give it a wrapped `predictions.json`, validate the predictions interface contract, and produce a comparable report.
+You keep your model and inference stack. YOLOZU reads a wrapped `predictions.json` and ground-truth labels, then writes a JSON evaluation report. It does not improve model accuracy by itself.
 
-The shortest core-install path is one strict dry-run command:
+### Install and evaluate your predictions
+
+Requires Python 3.10 or newer. On macOS/Linux, start in a virtual environment
+([Windows and other setup options](docs/install.md)):
 
 ```bash
-yolozu eval-coco -d /path/to/dataset -p /path/to/predictions.json --dry-run -o reports/coco_eval.json
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install 'yolozu[coco]'
+yolozu --help
 ```
 
-For real COCO metrics, install `yolozu[coco]` and omit `--dry-run`.
+Replace the two absolute paths below with your files. The dataset needs
+`images/val/` and `labels/val/` with YOLO-format ground truth. Predictions use
+normalized `cx, cy, w, h` boxes, matching zero-based class IDs, and image names
+that join to that split. See the [input format](docs/predictions_schema.md) or
+the [framework export quickstarts](docs/byop_quickstarts.md) if your output uses
+a different format.
 
-## 1-Minute Demo
+```bash
+yolozu validate predictions /absolute/path/to/predictions.json --strict
+yolozu validate dataset /absolute/path/to/yolo-dataset --split val --strict
+yolozu eval-coco \
+  --dataset /absolute/path/to/yolo-dataset --split val \
+  --predictions /absolute/path/to/predictions.json \
+  --bbox-format cxcywh_norm --output reports/coco_eval.json
+```
+
+Open `reports/coco_eval.json` and inspect `metrics.map50_95`, `metrics.map50`,
+and the evaluated image/detection counts. Compare models with the same dataset,
+class mapping, preprocessing, and export settings. Adding `--dry-run` checks
+input conversion without COCOeval; its `null` metrics are not measured accuracy.
+
+## Try without a model or dataset
+
+In an activated virtual environment, the core install can run this CPU demo.
+It creates synthetic shapes and predictions locally, with no model download.
 
 ```bash
 python3 -m pip install -U yolozu
 yolozu doctor --proof
-yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress
+yolozu demo instance-seg --background synthetic --inference none --run-dir reports/quickstart_instance_seg --progress
 ```
 
 Writes `reports/quickstart_instance_seg/instance_seg_demo_report.json` and visible PNG overlays under
 `reports/quickstart_instance_seg/overlays/`.
+These synthetic metrics and overlays check the workflow; they do not measure
+the accuracy or speed of a real vision model.
 The matching checklist lives at `configs/quickstart/instance_seg_demo.yaml`.
 For the full CPU-only DoD path (`doctor --proof -> demo -> validate -> eval`), see
 [`docs/cpu_only_dod.md`](docs/cpu_only_dod.md).
@@ -57,6 +87,9 @@ result = evaluate_coco(
 )
 print(result.to_dict())
 ```
+
+This API example is a dry run. With `yolozu[coco]` installed, use
+`dry_run=False` to compute metrics from your predictions and ground truth.
 
 Give an AI client the small guaranteed-tool list before exposing wider surfaces:
 
@@ -117,6 +150,13 @@ flowchart LR
 ## Adaptive Local Vision Roadmap
 
 Environment-aware local image processing remains Experimental delivery work. It does not change the current Stable prediction validation/evaluation surface.
+
+The packaged adaptive models cannot currently execute: their runner bindings and
+qualified support evidence are absent. See the [roadmap](reports/adaptive_vision_roadmap.md)
+and [OSS support scope](docs/oss_support_scope.md) for the current boundary.
+
+<details>
+<summary>Adaptive implementation details and evidence</summary>
 
 The target design lets an AI client turn natural language into a typed request, then asks YOLOZU to select only among pipelines qualified for the matching task, hardware, runtime, workload, protocol, and license constraints. If the evidence is missing or mismatched, the result is abstention rather than an inferred "best" model. Recommendation and execution remain local and do not implicitly download assets.
 
@@ -234,6 +274,8 @@ real bundle or demonstrate a selected public run.
 
 See the generated [roadmap report](reports/adaptive_vision_roadmap.md), the packaged [machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json), and the [Beads synchronization rule](docs/roadmap.md).
 
+</details>
+
 ## Capability Maturity
 
 - Stable: prediction validation/evaluation, wrapped `predictions.json`, repo smoke/demo path, install/doctor flow
@@ -243,6 +285,9 @@ See the generated [roadmap report](reports/adaptive_vision_roadmap.md), the pack
 These are capability-level boundaries. A Stable parent CLI or manifest entry does not
 promote opt-in subcommands or flags: `export_predictions` keeps baseline export Stable,
 TTA Experimental, and TTT Research.
+
+<details>
+<summary>Experimental and Research results and their limits</summary>
 
 The BOP lane means rigid-object `R,t` pose, not human 3D skeleton pose. Its
 real T-LESS diagnostic has strict GT, three-seed task-native before/after
@@ -317,9 +362,11 @@ configured minimum. On the fixed
 This is a positive bounded observation, not independent evidence or an efficacy
 claim. See the [detection-native report](reports/ttt_detection_native_evidence_2026-08-01.md).
 
+</details>
+
 ## Production Readiness
 
-- Production-ready today: prediction validation/evaluation and the predictions interface contract
+- Stable scope: prediction validation/evaluation and the predictions interface contract
 - Needs qualification in your environment: backend parity, benchmark orchestration, SynthGen handoff, macOS/MPS paths
 - Research-oriented: continual learning, self-distillation, TTT, Hessian refinement
 - Full details: [`docs/production_readiness.md`](docs/production_readiness.md)

@@ -1,4 +1,5 @@
 \chapter{Training and the Run Contract}
+\label{chap:training}
 
 \ChapterMeta{
 This chapter explains the training stack and the run interface contract: stable artifact layout, strict config resolution, and resumable runs.
@@ -482,7 +483,7 @@ Supported learning rate scheduler configurations include \texttt{none} (default)
 
 \section{LoRA / QLoRA parameters and defaults}
 Low-Rank Adaptation (LoRA) is activated when \texttt{lora\_r > 0}.
-For the plain-language intuition and the difference between LoRA and QLoRA, see Chapter~14 before tuning these knobs.
+For the plain-language intuition and the difference between LoRA and QLoRA, see Chapter~\ref{chap:continual-learning} before tuning these knobs.
 
 \paragraph{What these words mean in plain language.}
 \begin{itemize}
@@ -610,7 +611,7 @@ Supported backbone architectures in the current codebase include:
 While legacy compatibility fields (e.g., \texttt{backbone\_name}, \texttt{backbone\_channels}) remain functional, the strongly preferred convention is to use \path{model.backbone.*} together with \path{model.projector.d_model}.
 
 Optional query-level graph refinement is configured in the same model JSON with
-\texttt{model.graph\_refine}. The default is \texttt{\{"mode": "none"\}}. Set
+\cmd{model.graph_refine}. The default is \texttt{\{"mode": "none"\}}. Set
 \texttt{mode} to \texttt{gcnv2} or \texttt{gcnv3} to add a residual graph
 refinement stage after the RT-DETR decoder and before the prediction heads.
 Packaged examples are available as \path{rtdetr_pose/configs/gcnv2.json} and
@@ -688,7 +689,7 @@ The \texttt{yolozu.training.amp\_utils} module provides a thin wrapper around \t
 
 \begin{itemize}
   \item \texttt{amp\_available()} --- returns \texttt{True} when \texttt{torch.amp.autocast} is present (PyTorch 2.x).
-  \item \texttt{make\_amp\_context(device\_type, dtype, enabled)} --- creates a paired \texttt{(autocast\_factory, GradScaler|None)} tuple. A \texttt{GradScaler} is only returned for \texttt{float16} on CUDA; for \texttt{bfloat16}, MPS, or CPU the scaler is \texttt{None}.
+  \item \cmd{make_amp_context(device_type, dtype, enabled)} --- creates a paired \cmd{(autocast_factory, GradScaler|None)} tuple. A \texttt{GradScaler} is only returned for \texttt{float16} on CUDA; for \texttt{bfloat16}, MPS, or CPU the scaler is \texttt{None}.
 \end{itemize}
 
 \begin{lstlisting}[language=Python]

@@ -6,6 +6,7 @@ bbox ranges, and optional metadata sanity — used by ``yolozu validate dataset`
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -31,7 +32,11 @@ class DatasetValidationResult:
 
 
 def _is_number(value: Any) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool)
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and (not isinstance(value, float) or math.isfinite(value))
+    )
 
 
 def _as_float(value: Any) -> float | None:
@@ -66,18 +71,15 @@ def validate_dataset_records(
 
     warnings: list[str] = []
     errors: list[str] = []
-    records_list = list(records)
-
-    if not records_list:
-        errors.append("dataset contains no records")
-
     def add_error(msg: str) -> None:
         if mode == "warn":
             warnings.append(msg)
         else:
             errors.append(msg)
 
-    for idx, record in enumerate(records_list):
+    has_records = False
+    for idx, record in enumerate(records):
+        has_records = True
         where = f"records[{idx}]"
         if not isinstance(record, dict):
             add_error(f"{where}: record must be an object")
@@ -100,7 +102,7 @@ def validate_dataset_records(
                 except Exception as exc:
                     add_error(f"{where}: failed to read image size: {image} ({exc})")
 
-        labels = record.get("labels") or []
+        labels = record.get("labels")
         if labels is None:
             labels = []
         if not isinstance(labels, list):
@@ -123,7 +125,7 @@ def validate_dataset_records(
                     continue
                 val = _as_float(label.get(key))
                 if val is None:
-                    add_error(f"{lwhere}.{key}: must be a number")
+                    add_error(f"{lwhere}.{key}: must be a finite number")
                     continue
                 if strict:
                     if key in ("w", "h") and val <= 0.0:
@@ -155,5 +157,8 @@ def validate_dataset_records(
             w0 = _as_float(image_hw[1])
             if h0 is None or w0 is None or h0 <= 0 or w0 <= 0:
                 add_error(f"{where}: image_hw must be [h,w] positive numbers")
+
+    if not has_records:
+        errors.append("dataset contains no records")
 
     return DatasetValidationResult(warnings=warnings, errors=errors)

@@ -8,28 +8,57 @@ Company: [ToppyMicroServices OÜ](https://www.toppymicros.com/) | Official page:
 
 YOLOZU は ToppyMicroServices OÜ が開発する商用プロダクトで、無料で提供しています。リポジトリのコードは Apache-2.0 でライセンスされています。
 
-stable product lane では、stable predictions interface contract を通じて既存の vision predictions を検証し、公平に評価します。
+Stable な機能は、stable predictions interface contract による既存の予測結果の検証・評価です。同じ正解ラベル付き dataset と評価条件で、異なる framework の物体検出結果を比較できます。
 
-wrapped `predictions.json` を渡し、predictions interface contract を検証し、比較可能な report を作ります。
+既存のモデルと推論環境をそのまま使い、wrapped `predictions.json` と正解ラベルを YOLOZU に渡すと、JSON の評価 report を得られます。YOLOZU の導入自体でモデル精度が上がるわけではありません。
 
-標準 install での最短経路は、strict validation を内包する dry-run 1コマンドです。
+### インストールして既存の予測結果を評価する
+
+Python 3.10 以上が必要です。macOS/Linux では仮想環境から始めます。
+[Windows などのセットアップ手順](docs/install.md)も参照できます。
 
 ```bash
-yolozu eval-coco -d /path/to/dataset -p /path/to/predictions.json --dry-run -o reports/coco_eval.json
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install 'yolozu[coco]'
+yolozu --help
 ```
 
-実際の COCO metrics には `yolozu[coco]` を install し、`--dry-run` を外します。
+以下の2つの絶対パスを、自分のファイルに置き換えてください。dataset は
+`images/val/` と `labels/val/` に画像と YOLO 形式の正解ラベルを置きます。
+予測 box は正規化した `cx, cy, w, h`、class ID は正解ラベルと一致する0始まりの
+番号、画像名は対象 split の画像と対応させます。
+[入力形式](docs/predictions_schema.md)と
+[framework ごとの export 手順](docs/byop_quickstarts.md)に詳しい例があります。
 
-## 1分デモ
+```bash
+yolozu validate predictions /absolute/path/to/predictions.json --strict
+yolozu validate dataset /absolute/path/to/yolo-dataset --split val --strict
+yolozu eval-coco \
+  --dataset /absolute/path/to/yolo-dataset --split val \
+  --predictions /absolute/path/to/predictions.json \
+  --bbox-format cxcywh_norm --output reports/coco_eval.json
+```
+
+`reports/coco_eval.json` の `metrics.map50_95`、`metrics.map50` と評価対象の
+画像数・検出数を確認してください。モデル間の比較では dataset、class mapping、
+前処理、export 設定を揃えます。`--dry-run` を付けると入力変換の確認だけを行い、
+COCOeval は実行しません。その場合の `null` metrics は精度の測定値ではありません。
+
+## モデルや dataset なしで試す
+
+有効化した仮想環境で、標準 install だけで CPU デモを実行できます。
+合成図形と予測結果をローカルで生成し、モデルをダウンロードしません。
 
 ```bash
 python3 -m pip install -U yolozu
 yolozu doctor --proof
-yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress
+yolozu demo instance-seg --background synthetic --inference none --run-dir reports/quickstart_instance_seg --progress
 ```
 
 出力: `reports/quickstart_instance_seg/instance_seg_demo_report.json`
 可視化PNG: `reports/quickstart_instance_seg/overlays/`
+この合成データの metrics と画像は動作確認用です。実モデルの精度や速度を示すものではありません。
 対応するチェックリスト: `configs/quickstart/instance_seg_demo.yaml`
 CPU-only の完全な DoD path（`doctor --proof -> demo -> validate -> eval`）は
 [`docs/cpu_only_dod.md`](docs/cpu_only_dod.md) に固定しています。
@@ -57,6 +86,9 @@ result = evaluate_coco(
 )
 print(result.to_dict())
 ```
+
+この API 例は dry-run です。`yolozu[coco]` を install して `dry_run=False` にすると、
+持ち込んだ予測結果と正解ラベルから metrics を計算します。
 
 AI client には、まず小さな guaranteed tool list だけを渡せます。
 
@@ -95,7 +127,7 @@ flowchart LR
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![CI](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
 
-## 最初に読む3本
+## 最初に読むドキュメント
 
 - [`docs/README.md`](docs/README.md): docs 全体の入口と最短の使い方
 - [`docs/predictions_schema.md`](docs/predictions_schema.md): predictions interface contract
@@ -115,6 +147,14 @@ flowchart LR
 - Research lane: 評価済み artifact に対する opt-in workflow
 
 ## Adaptive local vision roadmap
+
+環境に応じた adaptive な画像処理は Experimental です。packaged model には
+実行用 runner と qualified support evidence が揃っておらず、現在は実行できません。
+[roadmap](reports/adaptive_vision_roadmap.md)と
+[OSS support scope](docs/oss_support_scope.md)で対応範囲を確認できます。
+
+<details>
+<summary>Adaptive 機能の実装状況と evidence</summary>
 
 環境に応じたlocal画像処理は、引き続きExperimental delivery workです。現在のStableなprediction validation/evaluationの提供範囲は変わりません。
 
@@ -227,6 +267,8 @@ public runを示すものではありません。
 
 生成した[roadmap report](reports/adaptive_vision_roadmap.md)、packagedされた[machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json)、[Beadsの同期規則](docs/roadmap.md)を参照してください。
 
+</details>
+
 ## Capability Maturity
 
 - Stable: prediction validation/evaluation、wrapped `predictions.json`、repo smoke/demo path、install/doctor
@@ -236,6 +278,9 @@ public runを示すものではありません。
 これは capability-level の境界です。Stable の親 CLI や manifest entry が opt-in の
 subcommand/flag を昇格させるわけではありません。`export_predictions` では baseline
 export は Stable、TTA は Experimental、TTT は Research のままです。
+
+<details>
+<summary>Experimental / Research の実験結果と限界</summary>
 
 BOP lane の pose は rigid-object の `R,t` を意味し、人の 3D skeleton pose
 には対応しません。実 T-LESS 診断について strict GT、3 seed の task-native
@@ -312,9 +357,11 @@ photometric view 間で同一 query の class/box consistency を取ります。
 詳細は [detection-native report](reports/ttt_detection_native_evidence_2026-08-01.md)
 を参照してください。
 
+</details>
+
 ## Production Readiness
 
-- いま production-ready と言いやすいもの: prediction validation/evaluation と predictions interface contract
+- Stable な対応範囲: prediction validation/evaluation と predictions interface contract
 - 環境ごとの検証が必要なもの: backend parity、benchmark orchestration、SynthGen handoff、macOS/MPS path
 - research-oriented なもの: continual learning、self-distillation、TTT、Hessian refinement
 - 詳細: [`docs/production_readiness.md`](docs/production_readiness.md)

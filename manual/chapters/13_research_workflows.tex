@@ -406,7 +406,7 @@ python3 tools/benchmark_latency.py   --iterations 200   --warmup 20   --output r
 This dual-output pattern (a single JSON report coupled with a JSONL history) is invaluable for systematically tracking performance regressions across successive commits and varying hardware configurations.
 
 \section{Run contract artifacts (Training research)}
-When utilizing the in-repository trainer, it is strongly recommended to employ the contracted run mode to ensure the generation of consistent artifacts. This methodology is comprehensively detailed in Chapter~7 (Training and the Run Contract).
+When using the in-repository trainer, use the contracted run mode to produce consistent artifacts. Chapter~\ref{chap:training} (Training and the Run Contract) describes this mode.
 
 Minimal example:
 \begin{lstlisting}[language=bash]
@@ -416,4 +416,4 @@ yolozu train configs/examples/train_contract.yaml --run-id exp01
 Contracted outputs are systematically organized under \path{runs/exp01/} and encompass checkpoints, metrics JSONL files, ONNX exports, and parity reports.
 
 \section{Notes on long-tail calibration experiments}
-Post-hoc calibration frequently serves as a primary research axis. Utilize \cmd{yolozu calibrate} to generate calibrated prediction artifacts, enabling rigorous side-by-side comparisons of different methodologies. This process is thoroughly summarized in Chapter~6 (Score Calibration and Long-tail Adjustments).
+Use \cmd{yolozu calibrate} to generate calibrated prediction artifacts for side-by-side comparisons. Chapter~\ref{chap:calibration} (Score Calibration and Long-tail Adjustments) describes this workflow.

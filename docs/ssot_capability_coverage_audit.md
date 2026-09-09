@@ -23,6 +23,7 @@ Adaptive monitored-source scout update: 2026-08-26
 Adaptive dormant support-profile governance update: 2026-08-26
 Adaptive lifecycle maintenance and rollback update: 2026-08-26
 Adaptive candidate isolation decision update: 2026-08-28
+Product usability and manual audit update: 2026-09-09
 
 The corresponding 30-run diagnostic artifacts and checkpoints are fixed in the
 [2026-07-27 prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/ttt-evidence-2026-07-27)
@@ -65,8 +66,8 @@ instead of promoting it by inference.
 - `tools/manifest.json` and `yolozu/data/manifest/tools_manifest.json` are byte-identical.
 - Strict manifest validation passes for all 141 entries.
 - Per-entrypoint help audit scans the current declared Python tool set with zero execution errors and zero missing flags.
-- Manual CLI drift audit passes for the current 34-command/alias top-level surface.
-- Public docs example audit passes 114 shell examples.
+- Manual CLI drift audit checks 26 documented command families across all 21 chapters against the current 35-command/alias top-level surface, including code listings.
+- Public docs example audit passes 123 shell examples.
 - The generated benchmark support matrix is current for 7 formats, 7 tasks, and 49 rows.
 - The generated web-docs bundle is current for 141 tools and 63 JSON Schemas.
 - Public PyPI `yolozu==4.5.1` completed the fresh-install stable lane in all 10

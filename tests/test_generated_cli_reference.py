@@ -99,7 +99,7 @@ def render_cli_reference(repo_root: Path) -> str:
     lines.extend(
         [
             "- `tests/test_docs_examples_drift.py` checks documented shell examples against help/manifest flags.",
-            "- `tests/test_manual_cli_drift_audit.py` checks manual chapter 04 command references against top-level help.",
+            "- `tests/test_manual_cli_drift_audit.py` checks command macros and code listings in all manual chapters against top-level help.",
             "- `tests/test_generated_cli_reference.py` fails when this generated reference drifts.",
         ]
     )

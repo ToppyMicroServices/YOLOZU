@@ -74,6 +74,31 @@ class TestDocsCopyability(unittest.TestCase):
                     hits.append(f"{rel_path}: {pattern}")
         self.assertEqual(hits, [], "visible LaTeX commands in Markdown:\n" + "\n".join(hits))
 
+    def test_public_markdown_code_fences_are_closed(self):
+        checked = [
+            path for path in PUBLIC_COPYABILITY_PATHS if path.endswith(".md")
+        ] + ["Readme_zh.md", "docs/byop_quickstarts.md"]
+        for rel_path in checked:
+            with self.subTest(path=rel_path):
+                opening = None
+                for number, line in enumerate(self._read(rel_path).splitlines(), 1):
+                    match = re.match(r"^ {0,3}(`{3,}|~{3,})(.*)$", line)
+                    if match is None:
+                        continue
+                    fence, trailing = match.groups()
+                    if opening is None:
+                        opening = (fence, number)
+                    elif (
+                        fence[0] == opening[0][0]
+                        and len(fence) >= len(opening[0])
+                        and not trailing.strip()
+                    ):
+                        opening = None
+                self.assertIsNone(
+                    opening,
+                    f"unclosed code fence in {rel_path}: {opening}",
+                )
+
     def test_manual_tables_stay_below_dense_column_threshold(self):
         hits = []
         table_re = re.compile(r"\\begin\{(?:tabular|longtable)\}\{([^}]*)\}")

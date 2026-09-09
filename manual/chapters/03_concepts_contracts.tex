@@ -143,12 +143,12 @@ same metrics};
 \subsection{YOLO-style data.yaml Datasets (YOLOv8/YOLO11)}
 If your dataset is already defined by a YOLO-style \path{data.yaml} (referencing \path{images/<split>/} and \path{labels/<split>/}), \yolozu{} can generate a lightweight \path{dataset.json} wrapper, leaving the original dataset entirely unmodified.
 
-For precise command syntax and validation procedures, refer to Chapter~5 (Workflow~D: Migrate Datasets and Predictions).
+For precise command syntax and validation procedures, refer to Chapter~\ref{chap:evaluation-workflows} (Workflow~D: Migrate Datasets and Predictions).
 
 \subsection{COCO JSON Datasets (Migration)}
 Numerous ecosystems rely on COCO-style \path{instances_*.json} files for object detection. \yolozu{} can read these through a \path{dataset.json} wrapper, keep dataset boxes as \cmd{xyxy_abs}, and derive YOLO or COCO adapter views when exporting or training.
 
-For the specific conversion command, consult Chapter~5 (Workflow~D: Migrate Datasets and Predictions).
+For the specific conversion command, consult Chapter~\ref{chap:evaluation-workflows} (Workflow~D: Migrate Datasets and Predictions).
 
 \subsection{Importing Predictions from External Ecosystems}
 Frameworks such as Detectron2, MMDetection, and YOLOX frequently export detection results in COCO format. Typical fields include:

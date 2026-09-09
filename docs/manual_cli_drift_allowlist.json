@@ -9,7 +9,7 @@
     "python3\\\\path{tools/"
   ],
   "notes": [
-    "Add a token here only when manual/chapters/04_cli_reference.tex intentionally documents prose placeholders or repo-only helpers rather than top-level yolozu commands.",
+    "Add a token here only when manual chapters intentionally document prose placeholders or repo-only helpers rather than top-level yolozu commands.",
     "Do not add real top-level CLI commands here. Update yolozu --help/manual together instead."
   ]
 }

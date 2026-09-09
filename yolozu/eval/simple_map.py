@@ -94,38 +94,45 @@ def _compute_ap(recalls: list[float], precisions: list[float]) -> float:
     return float(ap)
 
 
-def _ap_for_class(
+@dataclass(frozen=True)
+class _ClassMatches:
+    gt_count: int
+    gt_sizes: list[int]
+    # (image slot, ground-truth box index, IoU), in descending score order.
+    matches: list[tuple[int, int, float]]
+
+
+def _prepare_class_matches(
     *,
     preds: list[dict[str, Any]],
     gt_by_image: dict[str, dict[int, list[dict[str, Any]]]],
     images: list[str],
     class_id: int,
-    iou_thresh: float,
-) -> float:
+) -> _ClassMatches:
     gt_count = 0
-    gt_used: dict[str, list[bool]] = {}
+    gt_sizes: list[int] = []
+    image_slots: dict[str, int] = {}
     for image in images:
         image_gt = lookup_image_alias(gt_by_image, str(image)) or {}
         boxes = image_gt.get(class_id, [])
-        used = [False] * len(boxes)
+        slot = len(gt_sizes)
+        gt_sizes.append(len(boxes))
         for alias in image_key_aliases(str(image)):
-            gt_used.setdefault(alias, used)
+            image_slots.setdefault(alias, slot)
         gt_count += len(boxes)
 
     if gt_count == 0:
-        return 0.0
+        return _ClassMatches(gt_count=0, gt_sizes=[], matches=[])
 
-    class_preds = [p for p in preds if p["class_id"] == class_id]
-    class_preds.sort(key=lambda p: p["score"], reverse=True)
+    class_preds = sorted(preds, key=lambda p: p["score"], reverse=True)
 
-    tp: list[int] = []
-    fp: list[int] = []
+    matches: list[tuple[int, int, float]] = []
 
     for pred in class_preds:
         image = pred["image"]
         image_gt = lookup_image_alias(gt_by_image, image) or {}
         gt_boxes = image_gt.get(class_id, [])
-        used = lookup_image_alias(gt_used, image) or []
+        slot = lookup_image_alias(image_slots, image)
 
         best_iou = 0.0
         best_idx = -1
@@ -135,22 +142,30 @@ def _ap_for_class(
                 best_iou = iou
                 best_idx = idx
 
-        if best_iou >= iou_thresh and best_idx >= 0 and not used[best_idx]:
-            used[best_idx] = True
-            tp.append(1)
-            fp.append(0)
-        else:
-            tp.append(0)
-            fp.append(1)
+        matches.append((slot if slot is not None else -1, best_idx, best_iou))
+
+    return _ClassMatches(gt_count=gt_count, gt_sizes=gt_sizes, matches=matches)
+
+
+def _ap_for_class(prepared: _ClassMatches, *, iou_thresh: float) -> float:
+    if prepared.gt_count == 0:
+        return 0.0
+
+    # Matching occupancy is threshold-dependent; image aliases, score order,
+    # and best-overlap candidates are shared by every threshold.
+    gt_used = [[False] * size for size in prepared.gt_sizes]
 
     cum_tp = 0
     cum_fp = 0
     recalls: list[float] = []
     precisions: list[float] = []
-    for i in range(len(tp)):
-        cum_tp += tp[i]
-        cum_fp += fp[i]
-        recall = float(cum_tp) / float(max(1, gt_count))
+    for slot, best_idx, best_iou in prepared.matches:
+        if slot >= 0 and best_idx >= 0 and best_iou >= iou_thresh and not gt_used[slot][best_idx]:
+            gt_used[slot][best_idx] = True
+            cum_tp += 1
+        else:
+            cum_fp += 1
+        recall = float(cum_tp) / float(prepared.gt_count)
         precision = float(cum_tp) / float(max(1, cum_tp + cum_fp))
         recalls.append(recall)
         precisions.append(precision)
@@ -166,6 +181,9 @@ def evaluate_map(
 ) -> MapResult:
     gt_by_image, gt_classes = _group_ground_truth(records)
     preds, pred_classes = _group_predictions(predictions_entries)
+    preds_by_class: dict[int, list[dict[str, Any]]] = {}
+    for pred in preds:
+        preds_by_class.setdefault(pred["class_id"], []).append(pred)
     classes = sorted(gt_classes.union(pred_classes))
     images = [str(r.get("image", "")) for r in records if str(r.get("image", ""))]
 
@@ -174,9 +192,12 @@ def evaluate_map(
         thresholds = [0.5]
 
     per_class: dict[int, dict[str, float]] = {cid: {} for cid in classes}
-    for thresh in thresholds:
-        for cid in classes:
-            ap = _ap_for_class(preds=preds, gt_by_image=gt_by_image, images=images, class_id=cid, iou_thresh=float(thresh))
+    for cid in classes:
+        prepared = _prepare_class_matches(
+            preds=preds_by_class.get(cid, []), gt_by_image=gt_by_image, images=images, class_id=cid
+        )
+        for thresh in thresholds:
+            ap = _ap_for_class(prepared, iou_thresh=float(thresh))
             per_class[cid][f"ap@{thresh:.2f}"] = ap
 
     map50 = 0.0
