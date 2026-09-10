@@ -1,0 +1,4783 @@
+{
+  "source": "docs/yolozu_manual.pdf",
+  "sha256": "bdc64b35cd527b5d9e8f1caa7ea1d64a973cc1c83e19b6cac4f9b2a6ef0f579c",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "checks": {
+    "qpdf-version": {
+      "exit_code": 0,
+      "log": "qpdf-version.log"
+    },
+    "ghostscript-version": {
+      "exit_code": 0,
+      "log": "ghostscript-version.log"
+    },
+    "qpdf-check": {
+      "exit_code": 0,
+      "log": "qpdf-check.log"
+    },
+    "ghostscript-check": {
+      "exit_code": 0,
+      "log": "ghostscript-check.log"
+    },
+    "pdfinfo": {
+      "exit_code": 0,
+      "log": "pdfinfo.log"
+    },
+    "poppler-version": {
+      "exit_code": 0,
+      "log": "poppler-version.log"
+    },
+    "poppler-render": {
+      "exit_code": 0,
+      "log": "poppler-render.log"
+    },
+    "pdfkit-render": {
+      "exit_code": 0,
+      "log": "pdfkit-render.log"
+    }
+  },
+  "renderers": {
+    "poppler": "pdftoppm version 26.07.0\nCopyright 2005-2026 The Poppler Developers - http://poppler.freedesktop.org\nCopyright 1996-2011, 2022 Glyph & Cog, LLC",
+    "pdfium": "153.0.7999.0",
+    "pdfkit": "PDFKit 1.0 / Version 26.6.2 (Build 25G83); pages=175"
+  },
+  "visual_review": {
+    "status": "passed",
+    "evidence": "visual-review.json",
+    "scope": "All-page contact-sheet review of three renderers; changed pages 26-30 inspected at full size in all three; other 170 pages byte-identical to the reviewed predecessor."
+  },
+  "user_review": "not_performed",
+  "ok": true,
+  "structure_tools": {
+    "qpdf": "qpdf version 12.4.1",
+    "ghostscript": "10.07.1"
+  },
+  "pages": 175,
+  "page_checks": [
+    {
+      "renderer": "poppler",
+      "page": "page-001.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 7.9
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-002.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 19.791
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-003.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 10.673
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-004.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 28.083
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-005.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.341
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-006.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.073
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-007.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.568
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-008.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.959
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-009.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 30.76
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-010.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.423
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-011.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 24.382
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-012.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 11.512
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-013.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.62
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-014.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.165
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-015.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.166
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-016.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 38.612
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-017.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 28.054
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-018.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.079
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-019.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 38.836
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-020.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 38.391
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-021.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.769
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-022.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 56.445
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-023.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 22.266
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-024.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.567
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-025.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.352
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-026.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.625
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-027.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 23.856
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-028.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 25.796
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-029.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.521
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-030.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 19.902
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-031.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.126
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-032.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 30.371
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-033.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.949
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-034.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 94.34
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-035.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 73.666
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-036.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 70.526
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-037.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 65.783
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-038.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 39.571
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-039.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.401
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-040.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 11.803
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-041.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.931
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-042.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 39.72
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-043.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 15.243
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-044.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.437
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-045.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.061
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-046.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 40.093
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-047.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.815
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-048.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.579
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-049.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.866
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-050.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.735
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-051.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.316
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-052.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.331
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-053.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.526
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-054.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.745
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-055.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.366
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-056.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 25.37
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-057.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.066
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-058.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 91.063
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-059.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 24.339
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-060.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.783
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-061.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.931
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-062.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.486
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-063.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 39.468
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-064.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 42.862
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-065.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.823
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-066.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 38.137
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-067.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 17.759
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-068.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.229
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-069.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.532
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-070.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.121
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-071.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.183
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-072.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.928
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-073.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.485
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-074.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.025
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-075.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.927
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-076.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 25.927
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-077.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.642
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-078.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.545
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-079.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.02
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-080.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.097
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-081.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 38.264
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-082.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 20.712
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-083.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 15.956
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-084.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.601
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-085.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 40.773
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-086.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 27.036
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-087.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.262
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-088.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.133
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-089.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 29.28
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-090.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.876
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-091.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.422
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-092.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.964
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-093.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 38.265
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-094.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.283
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-095.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.35
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-096.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 39.295
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-097.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.684
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-098.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 24.493
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-099.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.412
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-100.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.499
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-101.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 30.877
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-102.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.443
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-103.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 18.139
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-104.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.85
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-105.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.305
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-106.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.064
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-107.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 22.794
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-108.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.99
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-109.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.122
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-110.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.407
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-111.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.307
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-112.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 20.525
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-113.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.583
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-114.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.878
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-115.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.603
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-116.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.649
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-117.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 28.564
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-118.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.64
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-119.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.079
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-120.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 30.934
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-121.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.195
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-122.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.891
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-123.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.165
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-124.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 15.6
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-125.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.77
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-126.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.695
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-127.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.118
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-128.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.039
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-129.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 28.677
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-130.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 26.741
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-131.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.309
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-132.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 38.726
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-133.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.086
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-134.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.093
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-135.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.886
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-136.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.113
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-137.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.79
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-138.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.338
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-139.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.366
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-140.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.161
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-141.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.129
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-142.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.678
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-143.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.886
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-144.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 30.93
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-145.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.879
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-146.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.906
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-147.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 27.983
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-148.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.15
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-149.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 10.855
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-150.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 18.843
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-151.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.74
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-152.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.5
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-153.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.826
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-154.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.073
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-155.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.296
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-156.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.375
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-157.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.091
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-158.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.594
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-159.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.673
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-160.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.399
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-161.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.563
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-162.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 29.413
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-163.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.384
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-164.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.422
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-165.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.576
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-166.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.789
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-167.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 27.741
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-168.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.994
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-169.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.595
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-170.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.016
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-171.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 13.219
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-172.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 30.018
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-173.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 23.589
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-174.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.397
+    },
+    {
+      "renderer": "poppler",
+      "page": "page-175.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.166
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-001.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 7.576
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-002.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 19.286
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-003.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 10.352
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-004.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 27.371
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-005.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 30.411
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-006.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.041
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-007.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.64
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-008.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.034
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-009.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 29.92
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-010.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.425
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-011.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 23.782
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-012.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 11.375
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-013.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.714
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-014.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.654
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-015.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.03
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-016.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.484
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-017.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 27.328
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-018.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.18
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-019.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.635
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-020.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.118
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-021.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.98
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-022.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 56.171
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-023.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 26.153
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-024.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.027
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-025.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.655
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-026.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.735
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-027.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 23.4
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-028.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 25.212
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-029.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.447
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-030.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 19.422
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-031.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.02
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-032.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 28.978
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-033.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.709
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-034.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 94.251
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-035.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 73.197
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-036.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 70.761
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-037.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 65.37
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-038.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 38.167
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-039.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.721
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-040.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 11.592
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-041.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.978
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-042.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 38.521
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-043.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 15.006
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-044.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.392
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-045.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.041
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-046.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 38.873
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-047.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.98
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-048.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.645
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-049.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.959
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-050.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 30.945
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-051.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.777
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-052.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.889
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-053.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.749
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-054.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.938
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-055.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.504
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-056.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 24.811
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-057.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.29
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-058.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 90.728
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-059.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 23.735
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-060.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.813
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-061.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.017
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-062.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.579
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-063.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 38.259
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-064.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 41.514
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-065.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.611
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-066.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.861
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-067.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 17.315
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-068.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.263
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-069.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.101
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-070.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.331
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-071.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.402
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-072.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.938
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-073.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.623
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-074.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.327
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-075.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.171
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-076.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 25.315
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-077.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.379
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-078.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.429
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-079.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.041
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-080.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.269
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-081.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.236
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-082.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 20.281
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-083.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 15.743
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-084.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.506
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-085.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 39.472
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-086.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 26.511
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-087.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.744
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-088.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.396
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-089.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.435
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-090.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.048
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-091.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.593
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-092.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.526
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-093.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.299
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-094.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.393
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-095.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.307
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-096.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.827
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-097.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.846
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-098.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 24.028
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-099.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.444
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-100.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.318
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-101.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.188
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-102.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.595
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-103.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 17.699
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-104.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.896
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-105.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.389
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-106.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.068
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-107.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 24.753
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-108.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.35
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-109.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.341
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-110.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.968
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-111.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.865
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-112.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 20.1
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-113.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.655
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-114.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.99
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-115.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.58
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-116.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 30.914
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-117.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 27.834
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-118.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.562
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-119.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.145
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-120.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 30.108
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-121.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.011
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-122.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.852
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-123.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.472
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-124.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 15.272
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-125.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.751
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-126.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.823
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-127.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.061
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-128.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.264
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-129.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 27.806
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-130.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 26.163
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-131.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.496
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-132.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 37.116
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-133.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.385
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-134.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.092
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-135.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.644
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-136.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.011
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-137.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.866
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-138.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.247
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-139.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.24
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-140.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.09
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-141.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.1
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-142.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.735
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-143.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.0
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-144.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 30.163
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-145.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.088
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-146.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.156
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-147.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 28.631
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-148.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.216
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-149.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 10.673
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-150.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 18.612
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-151.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.815
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-152.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.559
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-153.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.039
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-154.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 36.056
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-155.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.456
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-156.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.476
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-157.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 34.089
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-158.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.729
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-159.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.977
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-160.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 30.722
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-161.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.739
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-162.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 28.634
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-163.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 35.428
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-164.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.465
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-165.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.565
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-166.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.884
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-167.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 29.769
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-168.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 33.135
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-169.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.766
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-170.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 31.285
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-171.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 12.976
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-172.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.936
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-173.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 23.637
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-174.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.357
+    },
+    {
+      "renderer": "pdfium",
+      "page": "page-175.png",
+      "size": [
+        596,
+        842
+      ],
+      "stddev": 32.136
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-001.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 9.497
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-002.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 24.144
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-003.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 12.682
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-004.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 32.985
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-005.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 37.072
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-006.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.272
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-007.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 38.625
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-008.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 37.769
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-009.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 36.818
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-010.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.328
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-011.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 28.793
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-012.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 12.88
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-013.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.688
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-014.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 43.692
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-015.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 44.633
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-016.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 45.54
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-017.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 33.411
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-018.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.928
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-019.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 46.311
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-020.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 45.631
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-021.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 38.262
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-022.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 58.702
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-023.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 25.494
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-024.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 37.478
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-025.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.089
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-026.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.961
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-027.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 28.592
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-028.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 31.064
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-029.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.384
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-030.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 23.753
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-031.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 42.659
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-032.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 33.626
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-033.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.269
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-034.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 94.181
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-035.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 73.022
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-036.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 70.502
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-037.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 66.588
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-038.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 44.808
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-039.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.245
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-040.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 14.245
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-041.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.799
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-042.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 47.089
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-043.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 16.729
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-044.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.708
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-045.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 35.026
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-046.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 47.614
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-047.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 44.107
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-048.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.909
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-049.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 42.048
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-050.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 37.312
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-051.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.375
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-052.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.349
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-053.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 42.372
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-054.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.567
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-055.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 38.868
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-056.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 29.971
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-057.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 37.372
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-058.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 92.136
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-059.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 29.02
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-060.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.808
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-061.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.388
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-062.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.942
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-063.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 47.405
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-064.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 51.306
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-065.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 45.345
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-066.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 45.893
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-067.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 21.404
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-068.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 42.505
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-069.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 36.164
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-070.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.217
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-071.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.193
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-072.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 43.708
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-073.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.697
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-074.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 37.632
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-075.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 36.734
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-076.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 30.795
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-077.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.883
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-078.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 44.71
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-079.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.509
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-080.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.195
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-081.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 45.232
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-082.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 24.448
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-083.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 17.595
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-084.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 44.176
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-085.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 48.833
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-086.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 31.936
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-087.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 37.671
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-088.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.583
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-089.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 32.946
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-090.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.352
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-091.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.848
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-092.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 38.284
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-093.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 42.861
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-094.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.977
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-095.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 38.693
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-096.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 45.233
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-097.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.424
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-098.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 28.856
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-099.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.42
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-100.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.864
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-101.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 36.219
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-102.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.275
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-103.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 22.003
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-104.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.733
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-105.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 42.579
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-106.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.619
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-107.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 24.086
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-108.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.009
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-109.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 37.286
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-110.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 37.52
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-111.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.53
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-112.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 24.208
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-113.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.389
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-114.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.008
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-115.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.012
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-116.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 37.463
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-117.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 34.118
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-118.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 38.648
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-119.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.128
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-120.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 36.665
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-121.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 44.738
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-122.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 42.847
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-123.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 37.693
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-124.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 18.526
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-125.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.593
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-126.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.943
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-127.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 42.79
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-128.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 38.306
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-129.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 32.613
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-130.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 29.624
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-131.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.438
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-132.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 43.689
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-133.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.152
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-134.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.491
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-135.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.273
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-136.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.431
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-137.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.21
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-138.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 36.684
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-139.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 38.01
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-140.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.008
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-141.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 36.129
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-142.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.074
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-143.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.461
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-144.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 36.756
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-145.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.092
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-146.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.915
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-147.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 31.638
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-148.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.494
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-149.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 13.127
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-150.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 20.779
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-151.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 42.778
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-152.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 42.901
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-153.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.709
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-154.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 44.14
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-155.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.627
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-156.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 42.333
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-157.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.959
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-158.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 39.949
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-159.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 38.518
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-160.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 36.043
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-161.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.677
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-162.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 34.558
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-163.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 42.983
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-164.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.724
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-165.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.582
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-166.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 41.437
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-167.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 30.872
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-168.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.381
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-169.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.064
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-170.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 37.392
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-171.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 15.807
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-172.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 33.788
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-173.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 26.994
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-174.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.309
+    },
+    {
+      "renderer": "pdfkit",
+      "page": "page-175.png",
+      "size": [
+        595,
+        841
+      ],
+      "stddev": 40.138
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "scope": "Historical case-study provenance, not current runtime execution",
+  "recorded_timestamp": "2026-07-24T16:50:06Z",
+  "recorded_head": "2218b465fe2c6f8a0d2a541df293f198a9fe76c6",
+  "files": [
+    {
+      "path": "data/smoke/labels/val/classes.json",
+      "recorded_sha256": "85ee99dc69db3c9c3557acc3cd3db188dfde10586d8377e14603ae6fdaa0570b",
+      "current_sha256": "85ee99dc69db3c9c3557acc3cd3db188dfde10586d8377e14603ae6fdaa0570b",
+      "current_matches": true,
+      "recorded_commit_available": true,
+      "recorded_commit_matches": true
+    },
+    {
+      "path": "tools/check_predictions_parity.py",
+      "recorded_sha256": "821ca1627981ee6ac14d8a3ebc426c15d9c875038ce7e0aec5e07c7b404b02ae",
+      "current_sha256": "821ca1627981ee6ac14d8a3ebc426c15d9c875038ce7e0aec5e07c7b404b02ae",
+      "current_matches": true,
+      "recorded_commit_available": true,
+      "recorded_commit_matches": true
+    },
+    {
+      "path": "tools/eval_coco.py",
+      "recorded_sha256": "4e1c645bd871e99a23016d6fb528a214ef37d881318f945be0cef18035f430c4",
+      "current_sha256": "4e1c645bd871e99a23016d6fb528a214ef37d881318f945be0cef18035f430c4",
+      "current_matches": true,
+      "recorded_commit_available": true,
+      "recorded_commit_matches": true
+    },
+    {
+      "path": "tools/generate_runtime_parity_case_study.py",
+      "recorded_sha256": "6db77969ce6dd579ebc6f7b4122d644b06ac145502420b25b983b448518465c2",
+      "current_sha256": "6db77969ce6dd579ebc6f7b4122d644b06ac145502420b25b983b448518465c2",
+      "current_matches": true,
+      "recorded_commit_available": true,
+      "recorded_commit_matches": true
+    },
+    {
+      "path": "tools/generate_smoke_assets.py",
+      "recorded_sha256": "8797220871d66803d196a97037b938a9273b5a98524bb7209dfe83855614996d",
+      "current_sha256": "8797220871d66803d196a97037b938a9273b5a98524bb7209dfe83855614996d",
+      "current_matches": true,
+      "recorded_commit_available": true,
+      "recorded_commit_matches": true
+    },
+    {
+      "path": "yolozu/api.py",
+      "recorded_sha256": "4e847cb3b97c53feda93102e011602cb6e2a642d12f589c63e066ffb0b9d5054",
+      "current_sha256": "6663ecdc7c2b20fba20cc9ae6b3ff2553247cce4b9089c03ac34844c51e54ca7",
+      "current_matches": false,
+      "recorded_commit_available": true,
+      "recorded_commit_matches": true
+    },
+    {
+      "path": "yolozu/datasets/coco.py",
+      "recorded_sha256": "ed7651246e27518fdbf7d4a4fd377a3a254b5638fd23a12c31390c11f4d314ad",
+      "current_sha256": "ed7651246e27518fdbf7d4a4fd377a3a254b5638fd23a12c31390c11f4d314ad",
+      "current_matches": true,
+      "recorded_commit_available": true,
+      "recorded_commit_matches": true
+    },
+    {
+      "path": "yolozu/eval/coco_eval.py",
+      "recorded_sha256": "3698eb1606fd46f36b8ca0a50f5d12a3ddf201c2bc87a3f0d7dab7e78eb0ad71",
+      "current_sha256": "d7c5e1257768115a07ba5f963a8c7670f2a18dd74f845da48ae6152fa616cadd",
+      "current_matches": false,
+      "recorded_commit_available": true,
+      "recorded_commit_matches": true
+    },
+    {
+      "path": "yolozu/predictions/predictions_parity.py",
+      "recorded_sha256": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e",
+      "current_sha256": "643837bd9439f75a9dcf3b2e3543d354352da5d77f092b56047f9ad4182edb4e",
+      "current_matches": true,
+      "recorded_commit_available": true,
+      "recorded_commit_matches": true
+    }
+  ]
+}

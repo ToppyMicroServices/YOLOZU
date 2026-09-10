@@ -1,0 +1,273 @@
+{
+  "workflow_url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34489258251",
+  "pr_head": "689d682fc42a2272d052b901da9c0f128fa1561d",
+  "lanes": [
+    {
+      "lane": "sample-compatibility-macos-14-py3.14-latest",
+      "runtime": {
+        "python": "3.14.7",
+        "system": "Darwin",
+        "machine": "arm64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "2.5.3",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": null
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "bf5034959090c8114c30f580c4d0eac6ce92aec671e137bbc85cab57aaa60c3c",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "84f8cf2596b0537433175e6b807db6bef8d95c1395694071a0e411205910f9d4"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "tested_revision": "d6ccc93d33ae3c8e946a3a8866b26692d14bed53",
+      "ok": true,
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true
+    },
+    {
+      "lane": "sample-compatibility-ubuntu-latest-py3.10-latest",
+      "runtime": {
+        "python": "3.10.21",
+        "system": "Linux",
+        "machine": "x86_64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "2.2.6",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": "4.16.0"
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "a7af1ac427a4328c64d344c0345e1ef22d482accc8e9d86a47823985b1141bed",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "84f8cf2596b0537433175e6b807db6bef8d95c1395694071a0e411205910f9d4"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "tested_revision": "d6ccc93d33ae3c8e946a3a8866b26692d14bed53",
+      "ok": true,
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true
+    },
+    {
+      "lane": "sample-compatibility-ubuntu-latest-py3.10-minimum",
+      "runtime": {
+        "python": "3.10.21",
+        "system": "Linux",
+        "machine": "x86_64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "1.24.0",
+          "Pillow": "12.2.0",
+          "PyYAML": "6.0",
+          "pycocotools": "2.0.7",
+          "typing_extensions": "4.8.0"
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "dcec5e37687eeb8bcfdb9ebae6fb86ee17ac65802956c0cb1441c5e126e738de",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "84f8cf2596b0537433175e6b807db6bef8d95c1395694071a0e411205910f9d4"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "tested_revision": "d6ccc93d33ae3c8e946a3a8866b26692d14bed53",
+      "ok": true,
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true
+    },
+    {
+      "lane": "sample-compatibility-ubuntu-latest-py3.11-latest",
+      "runtime": {
+        "python": "3.11.16",
+        "system": "Linux",
+        "machine": "x86_64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "2.4.6",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": null
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "cffb6c1e6535fbbe7e5a03afb70ca4a4a2b0633be4e3c7c261d5c1072c358982",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "84f8cf2596b0537433175e6b807db6bef8d95c1395694071a0e411205910f9d4"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "tested_revision": "d6ccc93d33ae3c8e946a3a8866b26692d14bed53",
+      "ok": true,
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true
+    },
+    {
+      "lane": "sample-compatibility-ubuntu-latest-py3.12-latest",
+      "runtime": {
+        "python": "3.12.14",
+        "system": "Linux",
+        "machine": "x86_64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "2.5.3",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": null
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "1fae4e35d367fdcc236b7b1b3747618cc81a3346fb6f89fb1d3be42daea27dcc",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "84f8cf2596b0537433175e6b807db6bef8d95c1395694071a0e411205910f9d4"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "tested_revision": "d6ccc93d33ae3c8e946a3a8866b26692d14bed53",
+      "ok": true,
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true
+    },
+    {
+      "lane": "sample-compatibility-ubuntu-latest-py3.13-latest",
+      "runtime": {
+        "python": "3.13.15",
+        "system": "Linux",
+        "machine": "x86_64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "2.5.3",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": null
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "015ec2b7150935e80f64894c4c7ec1ea96a0583cc1e4a0b42cc1a4a172bfc6ab",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "84f8cf2596b0537433175e6b807db6bef8d95c1395694071a0e411205910f9d4"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "tested_revision": "d6ccc93d33ae3c8e946a3a8866b26692d14bed53",
+      "ok": true,
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true
+    },
+    {
+      "lane": "sample-compatibility-ubuntu-latest-py3.14-latest",
+      "runtime": {
+        "python": "3.14.7",
+        "system": "Linux",
+        "machine": "x86_64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "2.5.3",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": null
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "97b37bd4388bb686eee22c3c89d8ee7e4cab844bd14fd3fcf12813bec85c64c6",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "84f8cf2596b0537433175e6b807db6bef8d95c1395694071a0e411205910f9d4"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "tested_revision": "d6ccc93d33ae3c8e946a3a8866b26692d14bed53",
+      "ok": true,
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true
+    },
+    {
+      "lane": "sample-compatibility-windows-latest-py3.12-latest",
+      "runtime": {
+        "python": "3.12.10",
+        "system": "Windows",
+        "machine": "AMD64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "2.5.3",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": null
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "d6f70dc569e7c78c2d94368029da5ca1c75fc2a40800c98aba090dbc91ca4d01",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "18ea5da861e40f66eeb94066c62e81fa2195cb5735d671856c5fcf5c4b0a1308"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "tested_revision": "d6ccc93d33ae3c8e946a3a8866b26692d14bed53",
+      "ok": true,
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true
+    }
+  ],
+  "all_sample_semantics_identical": true,
+  "scope": "Candidate package CPU sample generation and bbox COCO evaluation; not universal or GPU qualification.",
+  "ok": true
+}

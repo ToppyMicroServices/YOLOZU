@@ -200,8 +200,11 @@ A predictions artifact typically manifests as a JSON array containing per-image 
 
 \subsection{Minimal task examples}
 Use these examples as shape checks, not as good predictions. They show the smallest artifact that a downstream evaluator can understand, plus the fields that actually affect scoring.
+The base prediction examples omit optional inference metadata. If you add
+\cmd{meta}, provide its complete fields as described in
+\path{docs/predictions_schema.md}; a partial metadata object fails strict validation.
 
-\paragraph{Detection}
+\paragraph{Detection}\mbox{}\par
 \begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
 {
   "schema_version": 1,
@@ -219,11 +222,7 @@ Use these examples as shape checks, not as good predictions. They show the small
         }
       ]
     }
-  ],
-  "meta": {
-    "task": "detect",
-    "export_settings": {"bbox_format": "cxcywh_norm"}
-  }
+  ]
 }
 \end{lstlisting}
 
@@ -235,7 +234,7 @@ Use these examples as shape checks, not as good predictions. They show the small
   \item Scoring uses: class ID, score order, box coordinates, dataset labels, and the chosen evaluation protocol.
 \end{itemize}
 
-\paragraph{Instance segmentation}
+\paragraph{Instance segmentation}\mbox{}\par
 \begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
 {
   "schema_version": 1,
@@ -261,9 +260,10 @@ Use these examples as shape checks, not as good predictions. They show the small
   \item Scoring uses: mask pixels, class ID, score order, GT masks, and the mask loading policy.
 \end{itemize}
 
-\paragraph{Keypoints}
+\paragraph{Keypoints}\mbox{}\par
 \begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
 {
+  "schema_version": 1,
   "predictions": [
     {
       "schema_version": 2,
@@ -282,8 +282,7 @@ Use these examples as shape checks, not as good predictions. They show the small
         }
       ]
     }
-  ],
-  "meta": {"task": "keypoints", "keypoints_format": "xy_norm"}
+  ]
 }
 \end{lstlisting}
 
@@ -316,9 +315,10 @@ Depth evaluation compares a predicted depth map with a GT depth map. In the benc
   \item Scoring uses: predicted depth pixels, GT depth pixels, optional valid-pixel mask, scale factors, and alignment policy.
 \end{itemize}
 
-\paragraph{6DoF pose}
+\paragraph{6DoF pose}\mbox{}\par
 \begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
 {
+  "schema_version": 1,
   "predictions": [
     {
       "schema_version": 2,
@@ -336,8 +336,7 @@ Depth evaluation compares a predicted depth map with a GT depth map. In the benc
         }
       ]
     }
-  ],
-  "meta": {"task": "pose6d", "depth_unit": "metric"}
+  ]
 }
 \end{lstlisting}
 

@@ -1,0 +1,73 @@
+{
+  "source": "docs/yolozu_manual.pdf",
+  "sha256": "bdc64b35cd527b5d9e8f1caa7ea1d64a973cc1c83e19b6cac4f9b2a6ef0f579c",
+  "status": "reviewed",
+  "pages": 175,
+  "page_numbering": "One-based physical PDF pages, not printed page labels",
+  "scope": "New full-size inspection of pages 26-30 in Poppler, PDFium, and PDFKit, plus each renderer's contact sheet for pages 21-40. The other 170 pages in each renderer are PNG-byte-identical to the previous reviewed rendering. This carries forward the previous contact-sheet review, not full-size review of every page.",
+  "previous_review": {
+    "path": "../manual-v4.8-qa/visual-review.json",
+    "pdf_sha256": "790fc63d05bc1f26766afaa57b25531baacb375f33fa135be120b4a48fee6bfd",
+    "scope": "All 27 contact sheets covering all 175 pages in all three renderers, plus selected full-size pages recorded in that review."
+  },
+  "png_comparison": {
+    "method": "Independently enumerated and SHA-256-hashed every page-*.png in the previous and corrected directories; compared corresponding filenames within each renderer.",
+    "previous_directory": "../manual-v4.8-qa",
+    "current_directory": ".",
+    "results": {
+      "poppler": {
+        "previous_count": 175,
+        "current_count": 175,
+        "missing": [],
+        "extra": [],
+        "byte_identical_count": 170,
+        "byte_identical_page_ranges_inclusive": [[1, 25], [31, 175]],
+        "changed_pages": [26, 27, 28, 29, 30]
+      },
+      "pdfium": {
+        "previous_count": 175,
+        "current_count": 175,
+        "missing": [],
+        "extra": [],
+        "byte_identical_count": 170,
+        "byte_identical_page_ranges_inclusive": [[1, 25], [31, 175]],
+        "changed_pages": [26, 27, 28, 29, 30]
+      },
+      "pdfkit": {
+        "previous_count": 175,
+        "current_count": 175,
+        "missing": [],
+        "extra": [],
+        "byte_identical_count": 170,
+        "byte_identical_page_ranges_inclusive": [[1, 25], [31, 175]],
+        "changed_pages": [26, 27, 28, 29, 30]
+      }
+    }
+  },
+  "contact_sheets_reviewed_this_pass": {
+    "poppler": ["poppler-contact-02.png"],
+    "pdfium": ["pdfium-contact-02.png"],
+    "pdfkit": ["pdfkit-contact-02.png"]
+  },
+  "full_size_pages_reviewed_this_pass": {
+    "poppler": [26, 27, 28, 29, 30],
+    "pdfium": [26, 27, 28, 29, 30],
+    "pdfkit": [26, 27, 28, 29, 30]
+  },
+  "blocking_findings": [],
+  "minor_observations": [],
+  "resolved_observations": [
+    "The previous page-27 code-listing top-rule overextension is no longer present in any of the three renderers. The headings sit above the rectangular listing frames."
+  ],
+  "observed": [
+    "The changed page images have readable text, contained listing frames, and no observed overlapping or clipped content.",
+    "Keypoints and 6DoF code listings continue onto the next pages; their visible continuations remain inside the text margins.",
+    "The new metadata caveat and versioned metadata-free base-prediction examples are visible in the corrected pages."
+  ],
+  "not_checked": [
+    "Full-size visual inspection of every page",
+    "Line-by-line technical proofreading of the entire manual",
+    "User review or approval"
+  ],
+  "user_review": "not_performed"
+}

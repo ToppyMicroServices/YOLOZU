@@ -1,0 +1,97 @@
+{
+  "command": [
+    "/Users/akira/YOLOZU/.venv/bin/python",
+    "reports/labeled_sample_compatibility_2026-09-10/full-suite/run_tests.py",
+    "--output-dir",
+    "reports/labeled_sample_compatibility_2026-09-10/full-suite/final-1"
+  ],
+  "scope": "Source-checkout regression tests. The existing .venv has stale distribution metadata; this run does not verify an installed candidate wheel or published package.",
+  "python_version": "3.14.6",
+  "source_module": "yolozu/api.py",
+  "environment_yolozu_distribution_version": "1.0.4",
+  "checkout_shadowed_distribution_version": "4.8.0",
+  "environment_metadata_note": "Corrected after the run using the isolated interpreter command recorded in environment.json; the runner originally looked up checkout egg-info instead of site-packages metadata. Test outcomes are unchanged.",
+  "environment_pillow_distribution_version": "12.1.1",
+  "suite": "tests",
+  "tests_run": 1734,
+  "failures": [
+    "test_committed_predictions_and_reports_are_real_and_consistent (test_runtime_parity_case_study.TestRuntimeParityCaseStudy.test_committed_predictions_and_reports_are_real_and_consistent)"
+  ],
+  "errors": [],
+  "skipped": [
+    {
+      "test": "test_adapter_predict_on_cuda (test_cuda_smoke_rtdetr_pose.TestCudaSmokeRTDETRPose.test_adapter_predict_on_cuda)",
+      "reason": "CUDA not available"
+    },
+    {
+      "test": "test_export_predictions_cli_rtdetr_pose_cuda_smoke (test_cuda_smoke_rtdetr_pose.TestCudaSmokeRTDETRPose.test_export_predictions_cli_rtdetr_pose_cuda_smoke)",
+      "reason": "CUDA not available"
+    },
+    {
+      "test": "test_export_predictions_cli_rtdetr_pose_cuda_smoke_with_lora (test_cuda_smoke_rtdetr_pose.TestCudaSmokeRTDETRPose.test_export_predictions_cli_rtdetr_pose_cuda_smoke_with_lora)",
+      "reason": "CUDA not available"
+    },
+    {
+      "test": "test_default_ir_version_is_11 (test_gen_dummy_dets_onnx_tool.TestGenDummyDetsOnnxTool.test_default_ir_version_is_11)",
+      "reason": "onnx not installed"
+    },
+    {
+      "test": "test_ir_version_flag_overrides_model_ir (test_gen_dummy_dets_onnx_tool.TestGenDummyDetsOnnxTool.test_ir_version_flag_overrides_model_ir)",
+      "reason": "onnx not installed"
+    },
+    {
+      "test": "test_actions_ttt_route_redacts_unexpected_submission_errors (test_integrations_mcp_actions_parity.TestIntegrationsMcpActionsParity.test_actions_ttt_route_redacts_unexpected_submission_errors)",
+      "reason": "Actions dependencies are not installed"
+    },
+    {
+      "test": "test_actions_runtime_schemas_match_generated_reference (test_mcp_live_surface.TestMcpLiveSurface.test_actions_runtime_schemas_match_generated_reference)",
+      "reason": "optional mcp dependency is not installed"
+    },
+    {
+      "test": "test_actions_shared_parameters_match_full_mcp_schemas (test_mcp_live_surface.TestMcpLiveSurface.test_actions_shared_parameters_match_full_mcp_schemas)",
+      "reason": "optional mcp dependency is not installed"
+    },
+    {
+      "test": "test_live_and_actions_surface_sets_are_explicit_and_distinct (test_mcp_live_surface.TestMcpLiveSurface.test_live_and_actions_surface_sets_are_explicit_and_distinct)",
+      "reason": "optional mcp dependency is not installed"
+    },
+    {
+      "test": "test_live_names_and_input_schemas_match_generated_reference (test_mcp_live_surface.TestMcpLiveSurface.test_live_names_and_input_schemas_match_generated_reference)",
+      "reason": "optional mcp dependency is not installed"
+    },
+    {
+      "test": "test_manifest_override_is_consistent_and_confined_to_workspace (test_mcp_live_surface.TestMcpLiveSurface.test_manifest_override_is_consistent_and_confined_to_workspace)",
+      "reason": "optional mcp dependency is not installed"
+    },
+    {
+      "test": "test_review_config_file_read_rejects_traversal_and_absolute_escape (test_mcp_live_surface.TestMcpLiveSurface.test_review_config_file_read_rejects_traversal_and_absolute_escape)",
+      "reason": "optional mcp dependency is not installed"
+    },
+    {
+      "test": "test_stdio_round_trip_lists_and_calls_live_tools (test_mcp_live_surface.TestMcpLiveSurface.test_stdio_round_trip_lists_and_calls_live_tools)",
+      "reason": "optional mcp dependency is not installed"
+    },
+    {
+      "test": "test_pytorch_vs_onnxruntime_outputs_close (test_onnx_parity_rtdetr_pose.TestOnnxParityRTDETRPose.test_pytorch_vs_onnxruntime_outputs_close)",
+      "reason": "onnxruntime not installed"
+    },
+    {
+      "test": "test_quantize_dynamic_writes_model (test_onnxrt_quantize.TestONNXRTQuantize.test_quantize_dynamic_writes_model)",
+      "reason": "onnx not installed"
+    },
+    {
+      "test": "test_export_simple_model (test_pytorch_api_integration.TestExportModelOnnx.test_export_simple_model)",
+      "reason": "torch or onnxscript not installed"
+    },
+    {
+      "test": "test_requires_torch_when_used (test_rtdetr_pose_adapter.TestRTDETRPoseAdapter.test_requires_torch_when_used)",
+      "reason": "torch is installed; this test covers the no-torch path"
+    },
+    {
+      "test": "test_torch_and_onnxrt_parity_passes (test_rtdetr_pose_backend_suite_tool.TestRTDETRPoseBackendSuiteTool.test_torch_and_onnxrt_parity_passes)",
+      "reason": "onnx/onnxruntime not installed"
+    }
+  ],
+  "seconds": 919.908,
+  "ok": false
+}
