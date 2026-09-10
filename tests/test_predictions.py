@@ -44,6 +44,27 @@ class TestPredictionsIO(unittest.TestCase):
             self.assertEqual(entries[0]["image"], "a.jpg")
             self.assertEqual(meta, {"timestamp": "x"})
 
+    def test_loaders_enforce_wrapper_schema_version(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "preds.json"
+            for version in (None, True, "1", 0, 2, 99):
+                payload = {"schema_version": version, "predictions": [{"image": "a.jpg", "detections": []}]}
+                path.write_text(json.dumps(payload))
+                for loader in (load_predictions_entries, load_predictions_payload, load_predictions_index):
+                    with self.subTest(version=version, loader=loader.__name__):
+                        with self.assertRaisesRegex(ValueError, "schema_version"):
+                            loader(path)
+            for payload in (
+                {"schema_version": 1, "predictions": [{"image": "a.jpg", "detections": []}]},
+                {"predictions": [{"image": "a.jpg", "detections": []}]},
+                [{"image": "a.jpg", "detections": []}],
+                {"a.jpg": []},
+            ):
+                path.write_text(json.dumps(payload))
+                self.assertEqual(load_predictions_entries(path)[0]["schema_version"], 2)
+                self.assertEqual(load_predictions_payload(path)[0][0]["image"], "a.jpg")
+                self.assertEqual(load_predictions_index(path)["a.jpg"], [])
+
     def test_validate_wrapped_meta_contract_ok(self):
         payload = {
             "predictions": [{"image": "a.jpg", "detections": []}],
@@ -137,6 +158,26 @@ class TestPredictionsIO(unittest.TestCase):
         entries = [{"image": "a.jpg", "detections": [{"class_id": 1, "score": "0.1", "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.2, "h": 0.2}}]}]
         with self.assertRaises(ValueError):
             validate_predictions_entries(entries, strict=True)
+
+    def test_strict_validation_rejects_boolean_class_ids(self):
+        for class_id in (True, False):
+            entries = [{"schema_version": 2, "image": "a.jpg", "detections": [
+                {"class_id": class_id, "score": 0.9, "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.2, "h": 0.2}}
+            ]}]
+            with self.subTest(class_id=class_id):
+                with self.assertRaisesRegex(ValueError, "class_id: must be int"):
+                    canonicalize_predictions(entries, strict=True, policy="error")
+                with self.assertRaisesRegex(ValueError, "class_id: must be int"):
+                    validate_predictions_payload(entries, strict=True)
+
+    def test_explicit_null_entry_version_is_not_legacy(self):
+        for strict in (False, True):
+            with self.subTest(strict=strict):
+                with self.assertRaisesRegex(ValueError, "schema_version: must be int"):
+                    validate_predictions_payload(
+                        [{"schema_version": None, "image": "a.jpg", "detections": []}],
+                        strict=strict,
+                    )
 
     def test_validator_requires_image_string(self):
         entries = [{"image": 123, "detections": []}]

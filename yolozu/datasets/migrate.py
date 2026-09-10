@@ -549,7 +549,9 @@ def migrate_predictions_entries_schema(
     is_wrapper = isinstance(payload, dict) and isinstance(payload.get("predictions"), list)
 
     from yolozu.predictions import canonicalize_predictions, normalize_predictions_payload
+    from yolozu.predictions.schema_governance import validate_payload_schema_version
 
+    validate_payload_schema_version(payload, artifact="predictions")
     entries, wrapped_meta = normalize_predictions_payload(payload)
 
     incompatible_indices: list[int] = []
@@ -557,10 +559,10 @@ def migrate_predictions_entries_schema(
     for idx, entry in enumerate(entries):
         if not isinstance(entry, dict):
             continue
-        raw = entry.get("schema_version")
-        if raw is None:
+        if "schema_version" not in entry:
             migrated_candidates += 1
             continue
+        raw = entry["schema_version"]
         if isinstance(raw, int) and not isinstance(raw, bool):
             if raw == 1:
                 migrated_candidates += 1
@@ -597,11 +599,12 @@ def migrate_predictions_entries_schema(
         out_payload = dict(payload)
         out_payload["predictions"] = canonical.entries
         if wrapped_meta is None:
-            meta: dict[str, Any] = {}
+            # Migration does not create exporter execution metadata.
+            out_payload["entry_schema_migration"] = migration_meta
         else:
             meta = dict(wrapped_meta)
-        meta["entry_schema_migration"] = migration_meta
-        out_payload["meta"] = meta
+            meta["entry_schema_migration"] = migration_meta
+            out_payload["meta"] = meta
     else:
         out_payload = canonical.entries
 

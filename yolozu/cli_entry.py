@@ -961,6 +961,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     demo_sub = demo.add_subparsers(dest="demo_command", required=False)
 
+    demo_dataset = demo_sub.add_parser(
+        "dataset", help="Create a portable synthetic dataset with YOLO bbox labels and known predictions.",
+    )
+    demo_dataset.add_argument(
+        "--run-dir", default="reports/labeled_sample",
+        help="New sample directory (default: reports/labeled_sample); existing paths are never overwritten.",
+    )
+    demo_dataset.add_argument("--seed", type=int, default=0, help="Deterministic sample seed (default: 0).")
+
     demo_ov = demo_sub.add_parser("overview", help="Write a demo coverage overview report (tasks/dependencies/commands).")
     demo_ov.add_argument(
         "--output",

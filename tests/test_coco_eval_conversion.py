@@ -2,6 +2,7 @@ import sys
 import tempfile
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -111,6 +112,23 @@ class TestCocoEvalConversion(unittest.TestCase):
             with self.assertRaises(ValueError) as ctx:
                 predictions_to_coco_detections(preds, coco_index=index, image_sizes=image_sizes, bbox_format="cxcywh_norm")
             self.assertIn("detections must be a list", str(ctx.exception))
+
+    def test_ambiguous_basename_cannot_select_a_different_image(self):
+        records = [
+            {"image": "/dataset/a/sample.jpg", "labels": []},
+            {"image": "/dataset/b/sample.jpg", "labels": []},
+        ]
+        with patch("yolozu.eval.coco_eval.get_image_size", return_value=(64, 32)):
+            _, index = build_coco_ground_truth(records)
+        sizes = {1: (64, 32), 2: (64, 32)}
+        prediction = {"image": "/relocated/b/sample.jpg", "detections": [
+            {"class_id": 0, "score": 0.9, "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.2, "h": 0.2}}
+        ]}
+        with self.assertRaisesRegex(ValueError, "ambiguous prediction image key"):
+            predictions_to_coco_detections([prediction], coco_index=index, image_sizes=sizes)
+        prediction["image"] = records[1]["image"]
+        detections = predictions_to_coco_detections([prediction], coco_index=index, image_sizes=sizes)
+        self.assertEqual(detections[0]["image_id"], 2)
 
 
 if __name__ == "__main__":

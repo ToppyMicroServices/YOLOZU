@@ -13,7 +13,8 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from yolozu.core.image_size import get_image_size
-from yolozu.core.image_keys import add_image_aliases, lookup_image_alias, require_image_key
+from yolozu.core.image_keys import lookup_image_alias, require_image_key
+from yolozu.eval.image_id_index import ImageIdIndex
 
 __all__ = [
     "CocoIndex",
@@ -27,6 +28,7 @@ __all__ = [
 class CocoIndex:
     image_key_to_id: dict[str, int]
     class_id_to_category_id: dict[int, int]
+    image_id_index: ImageIdIndex | None = None
 
 
 def build_coco_ground_truth(records: list[dict[str, Any]]) -> tuple[dict[str, Any], CocoIndex]:
@@ -45,7 +47,7 @@ def build_coco_ground_truth(records: list[dict[str, Any]]) -> tuple[dict[str, An
     class_id_to_category_id = {cid: cid + 1 for cid in range(max_class_id + 1)}
     categories = [{"id": cid + 1, "name": str(cid)} for cid in range(max_class_id + 1)]
 
-    image_key_to_id: dict[str, int] = {}
+    image_id_index = ImageIdIndex()
     ann_id = 1
     for idx, record in enumerate(records):
         image_id = int(idx + 1)
@@ -61,7 +63,7 @@ def build_coco_ground_truth(records: list[dict[str, Any]]) -> tuple[dict[str, An
                 "height": height,
             }
         )
-        add_image_aliases(image_key_to_id, image_key, image_id)
+        image_id_index.add(image_key, image_id)
 
         for label in record.get("labels", []) or []:
             class_id = int(label["class_id"])
@@ -86,7 +88,11 @@ def build_coco_ground_truth(records: list[dict[str, Any]]) -> tuple[dict[str, An
             ann_id += 1
 
     gt = {"images": images, "annotations": annotations, "categories": categories}
-    return gt, CocoIndex(image_key_to_id=image_key_to_id, class_id_to_category_id=class_id_to_category_id)
+    return gt, CocoIndex(
+        image_key_to_id=image_id_index.as_dict(),
+        class_id_to_category_id=class_id_to_category_id,
+        image_id_index=image_id_index,
+    )
 
 
 def predictions_to_coco_detections(
@@ -112,7 +118,11 @@ def predictions_to_coco_detections(
             raise ValueError(f"{where} must be an object")
 
         image_key = require_image_key(entry.get("image"), where=f"{where}.image")
-        image_id = lookup_image_alias(coco_index.image_key_to_id, image_key)
+        image_id = (
+            coco_index.image_id_index.lookup(image_key)
+            if coco_index.image_id_index is not None
+            else lookup_image_alias(coco_index.image_key_to_id, image_key)
+        )
         if image_id is None:
             raise ValueError(f"prediction refers to unknown image: {image_key}")
         if image_id not in image_sizes:

@@ -13,6 +13,13 @@ Python 3.10 or newer is mandatory. Optional extras vary based on the selected ba
 
 \section{Python Requirements}
 \yolozu{} targets Python 3.10 and newer.
+The candidate-wheel sample workflow checks Python 3.10--3.14 on Linux,
+Python 3.14 on macOS, and Python 3.12 on Windows. One Linux/Python 3.10 lane
+uses the declared core and COCO dependency floors. These are configured checks;
+read each run's report for the versions and outcomes actually observed.
+Wheel hashes distinguish a local candidate from published code with the same
+version string. See \path{docs/versions.md}; this matrix does not qualify GPU
+inference or external training runtimes.
 
 \section{Pip Installation (User Path)}
 \subsection{First successful run from the installed package}
@@ -48,6 +55,28 @@ Replace the placeholder with your artifact path. Chapter~\ref{chap:evaluation-wo
 explains evaluation; \path{docs/cpu_only_dod.md} gives the full proof-based sequence.
 Use \cmd{yolozu --help} to explore commands or \cmd{yolozu guide --goal first-run}
 for guided next steps.
+
+\subsection{Reusable labeled sample}
+The command below, available from version 4.8.0, creates eight synthetic images with YOLO
+bounding-box labels, two classes, and a deliberately empty validation image.
+In a virtual environment, install the package with the COCO extra before evaluating:
+\begin{lstlisting}[language=bash]
+python3 -m pip install 'yolozu[coco]==4.8.0'
+python3 -m yolozu demo dataset --run-dir reports/labeled_sample --seed 0
+python3 -m yolozu validate dataset reports/labeled_sample --split val --strict
+python3 -m yolozu validate predictions \
+  reports/labeled_sample/predictions.json --strict
+python3 -m yolozu eval-coco --dataset reports/labeled_sample --split val \
+  --predictions reports/labeled_sample/predictions.json \
+  --output reports/labeled_sample_coco.json
+\end{lstlisting}
+Open \path{labeled_preview.png} in the generated directory to inspect the labels.
+Copy the entire directory to reuse it: paths are relative, and the manifest
+records the seed, recipe, package versions, and file hashes. Existing output
+paths are refused. The known predictions come from the labels, so an AP near
+1.0 checks the workflow, not model accuracy. Replace them with model outputs
+before interpreting accuracy on your own data. See \path{docs/labeled_sample.md}
+for the layout and external-tool path caveat.
 
 \paragraph{Stable versus qualified paths.}
 The default stable path is CPU-first install plus predictions evaluation.

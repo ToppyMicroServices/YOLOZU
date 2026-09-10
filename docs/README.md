@@ -26,6 +26,9 @@ The proof also writes a toy dataset, known predictions, and check reports under
 `reports/quickstart/proof/`. Both examples use locally generated data without
 model downloads. Their metrics check the workflow, not a real model's accuracy
 or inference speed.
+For visible images with reusable YOLO labels, start with the
+[eight-image labeled sample](labeled_sample.md), available from version 4.8.0.
+
 Use `configs/quickstart/instance_seg_demo.yaml` as the checklist for expected files.
 For an interactive-feeling route map in the terminal:
 

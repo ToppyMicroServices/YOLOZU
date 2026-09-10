@@ -79,6 +79,10 @@ yolozu demo instance-seg --background synthetic --inference none --run-dir repor
 输出位置：`reports/quickstart_instance_seg/instance_seg_demo_report.json`
 可视化 PNG：`reports/quickstart_instance_seg/overlays/`
 这些合成 metrics 和图像用于检查流程，不表示真实模型的精度或速度。
+需要可复用的图像和 YOLO 标签时，可在 4.8.0 或更高版本中运行
+`yolozu demo dataset --run-dir reports/labeled_sample`，生成 8 张样本图像、
+标签预览和已知预测。参见[评估与复用步骤](docs/labeled_sample.md)。
+
 对应检查清单：`configs/quickstart/instance_seg_demo.yaml`
 如果不确定下一步该运行什么，可以先看内置路线图：
 

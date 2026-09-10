@@ -24,6 +24,7 @@ Adaptive dormant support-profile governance update: 2026-08-26
 Adaptive lifecycle maintenance and rollback update: 2026-08-26
 Adaptive candidate isolation decision update: 2026-08-28
 Product usability and manual audit update: 2026-09-09
+Labeled sample and compatibility update: 2026-09-10
 
 The corresponding 30-run diagnostic artifacts and checkpoints are fixed in the
 [2026-07-27 prerelease](https://github.com/ToppyMicroServices/YOLOZU/releases/tag/ttt-evidence-2026-07-27)
@@ -59,17 +60,17 @@ instead of promoting it by inference.
 | TTA and TTT | TTA is Experimental; TTT is Research | `yolozu/tta/`, `yolozu/response_selection.py`, `tools/export_predictions.py`, `tools/run_ttt_evidence_suite.py` | Opt-in `--tta` has default postprocess and `rtdetr_pose` model-branch modes; `--method detector_response` is the concise selected-foreground compare; opt-in `--ttt` updates parameters or explicitly abstains below the minimum selection count | `export_predictions` is stable at entrypoint level; optional TTA/TTT features retain narrower maturity | `tta_support_matrix.md`, `training_inference_export.md`, `ttt_protocol.md`, `research_lanes.md` | Independently reproduced zero-delta matrix plus a one-checkpoint 10-image detection-native diagnostic with non-zero clean/shifted deltas; abstention tests assert zero backward, optimizer steps, and parameter drift | Detection-native class/box consistency produced a bounded positive observation with no guard stops. Abstention is structurally verified, but neither efficacy nor an optimal threshold is established; maturity remains Research. |
 | Hessian refinement | Research | `yolozu/calibration/hessian_solver.py`, `tools/refine_predictions_hessian.py` | `refine_predictions_hessian`, `qualify_artifact_research` | Research manifest entries and schemas; packaged manifest matches | `hessian_solver.md`, `research_lanes.md`, `reports/artifact_research_evidence_2026-07-28.md` | `tests/test_hessian_solver.py`, `tests/test_refine_predictions_hessian_cli.py`, `tests/test_qualify_artifact_research_cli.py`; three deterministic COCO128 repetitions | Wrapped output now satisfies the predictions interface contract and reports measured latency/hashes. All 1,280 detections per repetition were `no_signal`, metrics were unchanged, and promotion remains `hold`. |
 | Searchable web onboarding | Stable generated documentation over per-capability maturity labels | `tools/generate_web_docs.py`, `docs/web_docs_content.json` | Self-contained strict CLI journey plus stable typed Python example | Stable `generate_web_docs` entry; source and packaged manifests match | `web_docs_plan.md`, generated `web_docs/start.html`, `python_api.md` | `tests/test_web_docs_generation.py`, `tests/test_web_docs_candidate_wheel.py`; adversarial path/URL/output checks plus candidate wheel outside checkout through the installed console script | Aligned. Sources are repository-confined, replacement requires owned provenance, all referenced SSOT files are hashed, and CI fails unless the canonical path completes real COCOeval. The dependency-free dry run remains an explicitly non-metric fallback outside that gate. |
-| Installed CLI and mixed-lane entrypoints | Mixed; maturity is per entrypoint, with narrower sub-lane rules | `yolozu/cli.py`, `cli_entry.py`, `cli_commands.py` | 35 canonical commands/aliases in current top-level help | 141 entries: 60 stable, 60 experimental, 21 research; source and packaged copies match | `generated/cli_reference.md`, `tools_index.md`, `manifest_declarative_spec.md` | Per-entrypoint help/manifest audit and manual audit are required quality gates | Stable parent maturity is explicitly non-transitive; generated reference and manifest descriptions repeat that boundary. |
+| Installed CLI and mixed-lane entrypoints | Mixed; maturity is per entrypoint, with narrower sub-lane rules | `yolozu/cli.py`, `cli_entry.py`, `cli_commands.py` | 35 canonical commands/aliases in current top-level help | 142 entries: 60 stable, 61 experimental, 21 research; source and packaged copies match | `generated/cli_reference.md`, `tools_index.md`, `manifest_declarative_spec.md` | Per-entrypoint help/manifest audit and manual audit are required quality gates | Stable parent maturity is explicitly non-transitive; generated reference and manifest descriptions repeat that boundary. |
 
 ## Confirmed checks
 
 - `tools/manifest.json` and `yolozu/data/manifest/tools_manifest.json` are byte-identical.
-- Strict manifest validation passes for all 141 entries.
+- Strict manifest validation passes for all 142 entries.
 - Per-entrypoint help audit scans the current declared Python tool set with zero execution errors and zero missing flags.
 - Manual CLI drift audit checks 26 documented command families across all 21 chapters against the current 35-command/alias top-level surface, including code listings.
 - Public docs example audit passes 123 shell examples.
 - The generated benchmark support matrix is current for 7 formats, 7 tasks, and 49 rows.
-- The generated web-docs bundle is current for 141 tools and 63 JSON Schemas.
+- The generated web-docs bundle is current for 142 tools and 63 JSON Schemas.
 - Public PyPI `yolozu==4.5.1` completed the fresh-install stable lane in all 10
   Linux/macOS jobs for Python 3.10 through 3.14 in
   [workflow run 29421807474](https://github.com/ToppyMicroServices/YOLOZU/actions/runs/29421807474).

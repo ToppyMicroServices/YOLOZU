@@ -263,6 +263,11 @@ yolozu validate predictions reports/predictions.json --strict
 Use this when old predictions entries are missing entry-level `schema_version`
 or explicitly use `schema_version: 1`.
 
+Wrapper and entry versions are separate: the wrapper stays at `1` while entries
+migrate to `2`. Explicit unsupported versions and explicit `null` are rejected
+before normalization. A metadata-free input remains metadata-free; migration
+diagnostics do not invent inference provenance or make strict validation fail.
+
 ```bash
 yolozu predictions migrate \
   --input reports/predictions_legacy.json \

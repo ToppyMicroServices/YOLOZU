@@ -59,6 +59,11 @@ yolozu demo instance-seg --background synthetic --inference none --run-dir repor
 出力: `reports/quickstart_instance_seg/instance_seg_demo_report.json`
 可視化PNG: `reports/quickstart_instance_seg/overlays/`
 この合成データの metrics と画像は動作確認用です。実モデルの精度や速度を示すものではありません。
+画像と YOLO ラベルを流用するには、バージョン 4.8.0 以降の
+`yolozu demo dataset --run-dir reports/labeled_sample` で、8 枚のサンプル、
+ラベル確認用画像、既知の予測を生成できます。
+[評価・流用の手順](docs/labeled_sample.md)を参照してください。
+
 対応するチェックリスト: `configs/quickstart/instance_seg_demo.yaml`
 CPU-only の完全な DoD path（`doctor --proof -> demo -> validate -> eval`）は
 [`docs/cpu_only_dod.md`](docs/cpu_only_dod.md) に固定しています。

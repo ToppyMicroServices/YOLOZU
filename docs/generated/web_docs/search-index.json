@@ -210,6 +210,13 @@
     "title": "check_repo_governance"
   },
   {
+    "href": "commands.html#tool-check-sample-compatibility",
+    "kind": "command",
+    "search_text": "check_sample_compatibility Verify installed candidate-wheel identity, dependency consistency, and labeled-sample evaluation before and after relocation. experimental tools/ci/check_sample_compatibility.py --wheel --output-dir --source-revision",
+    "summary": "Verify installed candidate-wheel identity, dependency consistency, and labeled-sample evaluation before and after relocation.",
+    "title": "check_sample_compatibility"
+  },
+  {
     "href": "commands.html#tool-check-segmentation-parity",
     "kind": "command",
     "search_text": "check_segmentation_parity Compare two segmentation predictions artifacts and report mask-level parity mismatches. experimental tools/check_segmentation_parity.py --reference --candidate --mismatch-atol --max-samples --output",

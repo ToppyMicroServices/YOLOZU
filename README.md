@@ -60,6 +60,11 @@ Writes `reports/quickstart_instance_seg/instance_seg_demo_report.json` and visib
 `reports/quickstart_instance_seg/overlays/`.
 These synthetic metrics and overlays check the workflow; they do not measure
 the accuracy or speed of a real vision model.
+Need reusable images and YOLO labels? From version 4.8.0,
+`yolozu demo dataset --run-dir reports/labeled_sample` creates an eight-image
+sample, a labeled preview, and known predictions. See the
+[labeled-sample walkthrough](docs/labeled_sample.md) for evaluation and reuse.
+
 The matching checklist lives at `configs/quickstart/instance_seg_demo.yaml`.
 For the full CPU-only DoD path (`doctor --proof -> demo -> validate -> eval`), see
 [`docs/cpu_only_dod.md`](docs/cpu_only_dod.md).

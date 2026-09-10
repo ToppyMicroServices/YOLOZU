@@ -201,6 +201,7 @@ Contact: develop@toppymicros.com
 | check_predictions_parity | experimental | tools/check_predictions_parity.py | Compare two prediction JSONs and report mismatches (IoU/tolerance-based). |
 | check_qualification_freshness | experimental | tools/check_qualification_freshness.py | Warn on active qualification expiry and governed drift without qualification, extension, activation, promotion, external notice, or Beads mutation. |
 | check_repo_governance | stable | tools/check_repo_governance.py | Audit repository governance posture from local workflow evidence and exported GitHub settings snapshots. |
+| check_sample_compatibility | experimental | tools/ci/check_sample_compatibility.py | Verify installed candidate-wheel identity, dependency consistency, and labeled-sample evaluation before and after relocation. |
 | check_segmentation_parity | experimental | tools/check_segmentation_parity.py | Compare two segmentation predictions artifacts and report mask-level parity mismatches. |
 | continual_decide | research | tools/continual_decide.py | Device-agnostic policy gate for continual-learning eval results that emits a promote/review/hold decision report with a research_report boundary. |
 | convert_coco_instance_seg_predictions | stable | tools/convert_coco_instance_seg_predictions.py | Convert COCO instance segmentation predictions (polygons/RLE) into the YOLOZU instance-seg PNG-mask interface contract. |

@@ -10,6 +10,29 @@ from pathlib import Path
 
 
 class TestYOLOZUCLI(unittest.TestCase):
+    def test_labeled_dataset_cli_help_and_no_overwrite(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        env = dict(os.environ, PYTHONPATH=str(repo_root))
+        help_result = subprocess.run(
+            [sys.executable, "-m", "yolozu", "demo", "dataset", "--help"],
+            cwd=repo_root, env=env, capture_output=True, text=True, timeout=30,
+        )
+        self.assertEqual(help_result.returncode, 0, help_result.stderr)
+        self.assertIn("--run-dir", help_result.stdout)
+        self.assertIn("--seed", help_result.stdout)
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "labeled sample"
+            command = [sys.executable, "-m", "yolozu", "demo", "dataset", "--run-dir", str(target)]
+            result = subprocess.run(command, cwd=tmp, env=env, capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue((target / "sample_manifest.json").is_file())
+            self.assertTrue((target / "predictions.json").is_file())
+            original = (target / "predictions.json").read_bytes()
+            repeated = subprocess.run(command, cwd=tmp, env=env, capture_output=True, text=True, timeout=30)
+            self.assertEqual(repeated.returncode, 2, repeated.stderr)
+            self.assertEqual((target / "predictions.json").read_bytes(), original)
+            self.assertNotIn("Traceback", repeated.stderr)
+
     def test_help_lists_continual_commands(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "yolozu.py"

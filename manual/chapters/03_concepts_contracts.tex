@@ -81,6 +81,14 @@ SynthGen intake};
 
 When links and prose disagree, treat these interface contract documents as canonical and re-verify against \path{tools/manifest.json} and tool \cmd{--help} output.
 
+\paragraph{Prediction versions and image identity.}
+The predictions wrapper uses version 1; individual entries use version 2.
+Missing legacy entry versions can be upgraded with
+\cmd{yolozu predictions migrate}. Explicit null or unsupported versions are
+rejected before normalization. Migration of a metadata-free artifact does not
+invent inference metadata. Bbox COCO evaluation rejects ambiguous basename
+fallbacks; provide the exact dataset image path when filenames repeat.
+
 \section{Datasets}
 Dataset intake uses Dataset Contract v1. Its preferred stored box form is absolute pixel \cmd{xyxy_abs}; YOLO \cmd{cxcywh_norm} and COCO \cmd{xywh_abs} are adapter views derived at backend boundaries when image size is available.
 Training data follows the same boundary: raw datasets pass through a

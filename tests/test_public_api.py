@@ -125,6 +125,49 @@ class TestPublicAPI(unittest.TestCase):
 
         self.assertEqual(ctx.exception.code, "E_PREDICTION_UNKNOWN_IMAGE")
 
+    def test_evaluate_coco_rejects_ambiguous_alias_before_subset_filtering(self):
+        records = [
+            {"image": "/dataset/a/sample.jpg", "labels": []},
+            {"image": "/dataset/b/sample.jpg", "labels": []},
+        ]
+        payload = [{"schema_version": 2, "image": "/relocated/b/sample.jpg", "detections": []}]
+        for max_images in (None, 1):
+            with self.subTest(max_images=max_images), patch(
+                "yolozu.api.build_manifest", return_value={"images": records, "split": "val"}
+            ):
+                with self.assertRaises(PredictionsValidationError) as ctx:
+                    evaluate_coco("/dataset", payload, max_images=max_images, dry_run=True)
+                self.assertEqual(ctx.exception.code, "E_PREDICTION_AMBIGUOUS_IMAGE")
+
+    def test_evaluate_coco_preserves_exact_identity_with_duplicate_basenames(self):
+        records = [
+            {"image": "/dataset/a/sample.jpg", "labels": []},
+            {"image": "/dataset/b/sample.jpg", "labels": []},
+        ]
+        payload = [{"schema_version": 2, "image": records[1]["image"], "detections": []}]
+        with patch("yolozu.api.build_manifest", return_value={"images": records, "split": "val"}), patch(
+            "yolozu.eval.coco_eval.get_image_size", return_value=(64, 32)
+        ):
+            full = evaluate_coco("/dataset", payload, dry_run=True)
+            subset = evaluate_coco("/dataset", payload, max_images=1, dry_run=True)
+        self.assertEqual(full.counts.prediction_images_evaluated, 1)
+        self.assertEqual(full.counts.selected_images_without_predictions, 1)
+        self.assertEqual(subset.counts.prediction_images_evaluated, 0)
+        self.assertEqual(subset.counts.prediction_images_excluded, 1)
+        self.assertEqual(subset.counts.selected_images_without_predictions, 1)
+
+    def test_validation_does_not_repair_boolean_class_ids_or_null_versions(self):
+        for repair in (False, True):
+            for payload in (
+                [{"schema_version": None, "image": "sample.jpg", "detections": []}],
+                [{"schema_version": 2, "image": "sample.jpg", "detections": [
+                    {"class_id": True, "score": 0.9, "bbox": {"cx": 0.5, "cy": 0.5, "w": 0.2, "h": 0.2}}
+                ]}],
+            ):
+                with self.subTest(repair=repair, payload=payload):
+                    with self.assertRaises(PredictionsValidationError):
+                        validate_predictions(payload, repair=repair)
+
     def test_class_normalization_does_not_hide_malformed_detections(self):
         payload = {
             "predictions": [
