@@ -57,7 +57,7 @@
     "docs/bop_tless_protocol.md": "f3e73aa37eec58e9459b8198a690e221ca05781ab01f4bd71e7f7fefa6d16122",
     "docs/byop_quickstarts.md": "285eb95d62847bb36248376a4dd4d779f93e0961100e511263192d1c60221387",
     "docs/candidate_isolation_threat_model.md": "89687fda3363038bc183bf49808c2cfdb7c91c9a816400b7285eb3981c438a66",
-    "docs/case_studies/maskrcnn_eager_torchscript.md": "1fa299db65952b694f245366c9bacc63b8e7fadada796bca0fad0552c24bc790",
+    "docs/case_studies/maskrcnn_eager_torchscript.md": "2ffeec01f0a68ea84b3b3bafc10cb4371ec7bb68fdedfe76322c405f2a8d24a2",
     "docs/checkpoint_compatibility.md": "8a66bf5fc87cecb8f560090357b0896d2b59b430fad6a69de30b6b265ce3fd8e",
     "docs/ci_incidents.md": "501386516b0b27ed918f4c2be278ef40b1821e5b2d3bfc1b87bf3a9f533f46e0",
     "docs/continual_learning.md": "cb28f36ca939da32de40aacb1487d17cca156a082361dffb2297dc49ea6e30b3",
