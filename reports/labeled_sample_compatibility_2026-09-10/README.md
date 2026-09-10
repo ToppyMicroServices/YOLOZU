@@ -86,6 +86,12 @@ checks were running and must not be used to rank runtimes. See
 rather than inventing a clean revision. A final full-suite rerun is recorded
 separately so the earlier failed run is not overwritten.
 
+The second full run executed 1,736 tests with one failure, no errors, and 18
+skips. Its only failure expected the removed incomplete `keypoints_format`
+metadata field in the manual. That text-presence check now looks for the actual
+`keypoints` payload; all 22 manual tests pass, including strict validation of
+the JSON examples. The second failure log is retained in `full-suite/final-2`.
+
 The legacy development `.venv` contains stale installed distribution metadata
 and Pillow below the current declared floor. Source-checkout unit tests in that
 environment are regression evidence, not proof that a fresh current package

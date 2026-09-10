@@ -18,7 +18,7 @@ class TestManualPredictionsExamples(unittest.TestCase):
             "6DoF pose",
             "benchmark_depth_predictions_artifact",
             "rot6d",
-            "keypoints_format",
+            '"keypoints"',
         ):
             self.assertIn(phrase, text)
 

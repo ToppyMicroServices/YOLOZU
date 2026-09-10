@@ -21,9 +21,14 @@ and prediction-file compatibility.
   sample validation, and official COCO evaluation before and after relocation.
 - Published 4.6.0 and 4.7.0 both read the same generated sample on macOS arm64 /
   Python 3.14.6 without changing files or evaluation results.
-- Candidate CI exercises multiple Python versions, operating systems, and the
-  declared core/COCO dependency floors; see the release verification evidence
-  for the completed run outcomes.
+- All eight candidate CI lanes passed: Linux Python 3.10–3.14, macOS Python
+  3.14, Windows Python 3.12, and Linux Python 3.10 with declared core/COCO
+  dependency floors.
+- A two-image CPU Mask R-CNN execution check passed eager/TorchScript parity
+  with identical COCO metrics. This is not a performance benchmark.
+- The 175-page local manual passed qpdf/Ghostscript structural checks and
+  all-page rendering with Poppler, PDFium, and PDFKit. The release rebuild is
+  verified separately after publication.
 
 ## Notes
 
