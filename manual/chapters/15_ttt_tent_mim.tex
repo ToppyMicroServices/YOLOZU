@@ -1,4 +1,5 @@
 \chapter{Test-Time Training (TTT): Tent, MIM, CoTTA, EATA, SAR}
+\label{chap:ttt}
 
 \ChapterMeta{
 This chapter explains controlled test-time adaptation (Tent/MIM/CoTTA/EATA/SAR), presets, guard rails, and reset policies for fair comparisons.
@@ -197,8 +198,10 @@ forward/backward/optimizer counts. The 2026-07-27 local diagnostic completed all
 \texttt{not\_established}. Its checkpoint and child-artifact bundle is
 release-addressable at
 \url{https://github.com/ToppyMicroServices/YOLOZU/releases/tag/ttt-evidence-2026-07-27}
-with archive SHA-256
-\texttt{bb200d0c0a36447f0b6ed262a56ee09bef44ded8f10c55673243080fe1054068}.
+with archive SHA-256:
+\begin{quote}
+\small\cmd{bb200d0c0a36447f0b6ed262a56ee09bef44ded8f10c55673243080fe1054068}
+\end{quote}
 On 2026-07-30, a clean Python 3.12 environment verified all 261 embedded
 hashes and reran all 30 method/domain/seed cells at the exact source commit.
 The 11-field child-result comparison and all aggregate rows had zero semantic
@@ -1068,7 +1071,7 @@ python3 -m yolozu export \
 \end{lstlisting}
 
 \textbf{Rule of thumb.}
-Start from the task-aware Tent preset, then escalate to MIM/CoTTA/EATA/SAR only when the shift evidence justifies the extra complexity and latency.
+Start from the task-aware Tent preset, then escalate to MIM/\allowbreak CoTTA/\allowbreak EATA/\allowbreak SAR only when the shift evidence justifies the extra complexity and latency.
 
 \section{Implementation Notes: YOLOZU rollout priority (high \texorpdfstring{$\to$}{->} low)}
 For \yolozu{} (detection/pose), the recommended operational rollout order is:

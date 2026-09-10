@@ -82,17 +82,18 @@ That makes it easier to distinguish a plain CPU install from a real MPS/CoreML-c
 
 Interpretation rule:
 
-- MPS is supported when `torch.backends.mps.is_available()` is `true`
+- `torch.backends.mps.is_available()` reports MPS visibility to this process; workload support needs a separate check
 - a tool marked `macos_ok: true` in the manifest only means the CLI can run on macOS
 - `macos_ok: true` does not imply that MPS is available on that machine
 
 Practical macOS triage:
 
 - if `mps_built=false`, your Torch build has no MPS backend
-- if `mps_built=true` but `mps_available=false`, the wheel/runtime combo is the likely blocker
-- Python itself can create the environment with `venv`/`pip`; on some Apple Silicon hosts, Miniforge/conda PyTorch may expose MPS correctly even when `pip` wheels do not
-- after switching environments, rerun `yolozu doctor --output -` and compare `runtime_capabilities.torch.*`
+- if `mps_built=true` but `mps_available=false`, inspect the runtime and execution context before changing packages
+- if the probe ran in a restricted runner, repeat it with the same interpreter in a normal terminal to check device access
+- after any environment change, rerun `yolozu doctor --output -` and compare `runtime_capabilities.torch.*`
 
-For a tested Miniforge setup path, see [`install.md`](install.md#macos--apple-silicon-miniforgemps-workflow).
+For current setup guidance and the historical pip/conda observation, see
+[`install.md`](install.md#macos--apple-silicon-mps-workflow).
 
 Use reported `guidance_links` to jump to remediation docs.

@@ -86,8 +86,8 @@
   {
     "href": "commands.html#tool-audit-manual-cli-drift",
     "kind": "command",
-    "search_text": "audit_manual_cli_drift Audit manual chapter 04 against canonical yolozu CLI help and the legacy wrapper passthrough help surface. stable tools/audit_manual_cli_drift.py --manual --allowlist --python --skip-wrapper --json",
-    "summary": "Audit manual chapter 04 against canonical yolozu CLI help and the legacy wrapper passthrough help surface.",
+    "search_text": "audit_manual_cli_drift Audit all manual chapters, including code listings, against canonical yolozu CLI help and legacy wrapper help. stable tools/audit_manual_cli_drift.py --manual --allowlist --python --skip-wrapper --json",
+    "summary": "Audit all manual chapters, including code listings, against canonical yolozu CLI help and legacy wrapper help.",
     "title": "audit_manual_cli_drift"
   },
   {
@@ -208,6 +208,13 @@
     "search_text": "check_repo_governance Audit repository governance posture from local workflow evidence and exported GitHub settings snapshots. stable tools/check_repo_governance.py --repo-root --repo-json --branch-protection-json --require-reviews --allow-missing-evidence --output",
     "summary": "Audit repository governance posture from local workflow evidence and exported GitHub settings snapshots.",
     "title": "check_repo_governance"
+  },
+  {
+    "href": "commands.html#tool-check-sample-compatibility",
+    "kind": "command",
+    "search_text": "check_sample_compatibility Verify installed candidate-wheel identity, dependency consistency, and labeled-sample evaluation before and after relocation. experimental tools/ci/check_sample_compatibility.py --wheel --output-dir --source-revision",
+    "summary": "Verify installed candidate-wheel identity, dependency consistency, and labeled-sample evaluation before and after relocation.",
+    "title": "check_sample_compatibility"
   },
   {
     "href": "commands.html#tool-check-segmentation-parity",

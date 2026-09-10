@@ -86,26 +86,25 @@ python3 tools/validate_predictions.py \
 
 ## Reproduce from a clean source tree
 
-Use Python 3.12 and a new virtual environment. The recorded separate clean run
-used Python 3.12.13, Torch 2.10.0, Torchvision 0.25.0, Pillow 12.2.0,
-NumPy 2.4.4, and pycocotools 2.0.11; the exact executed environment remains
-recorded in
+For exact reproduction, use a separate clean checkout at commit
+`2218b465fe2c6f8a0d2a541df293f198a9fe76c6`, whose source hashes are recorded in
+the published bundle. A newer checkout is not the same historical baseline.
+The recorded run used Python 3.14.6, Torch 2.12.0.dev20260330,
+Torchvision 0.27.0.dev20260330, Pillow 12.1.1, NumPy 2.4.2, and
+pycocotools 2.0.11 on macOS arm64. These are historical observations, not
+the current supported installation requirements. The environment is recorded in
 [`environment.json`](../assets/case_studies/maskrcnn_eager_torchscript/environment.json).
 The hard environment comparison uses the Python major/minor version, the
 public release versions of those dependencies (ignoring local suffixes such as
 `+cpu`), and the recorded Torch device, thread, and deterministic settings.
 OS release, machine, processor, and Python patch version remain provenance but
 are not hard equality conditions.
-The first install command pins the CPU runtime pair and the second installs the
-current source plus the COCO evaluator.
+Recreate that environment separately before running the command below, using
+`.venv-case-study/bin/python` for its interpreter. Availability of the archived
+nightly wheels has not been verified. A stable Torch 2.10 / Torchvision 0.25
+installation is not an exact reproduction of this recorded environment.
 
 ```bash
-python3.12 -m venv .venv-case-study
-.venv-case-study/bin/python -m pip install \
-  --index-url https://download.pytorch.org/whl/cpu \
-  torch==2.10.0 torchvision==0.25.0
-.venv-case-study/bin/python -m pip install ".[coco]"
-
 .venv-case-study/bin/python \
   tools/generate_runtime_parity_case_study.py \
   --dataset data/smoke \
@@ -133,6 +132,10 @@ result, or metrics do not reproduce. Its comparison is written to
 The checked-in
 [`reproduction_check.json`](../assets/case_studies/maskrcnn_eager_torchscript/reproduction_check.json)
 records the separate clean run performed for this publication.
+
+To check the current source instead, use a new, empty `--output-dir` and omit
+`--baseline-dir`. This produces a separate current-runtime comparison; it does
+not reproduce or replace the historical bundle.
 
 If `--output-dir` already contains a case-study bundle and `--baseline-dir` is
 omitted, the generator uses that existing bundle as an implicit baseline. It

@@ -1,0 +1,16 @@
+{
+  "installed_version": "4.7.0",
+  "kind": "installed_candidate_journey",
+  "python": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "verification_python_optimize": 1,
+  "installed_outside_checkout": true,
+  "steps": [],
+  "ok": false,
+  "error": "Unexpected guide command: invalid-command",
+  "source_sha256": {
+    "cli_entry.py": "48df3fef394eab12e81e7e3f8cf946b0baa283f8132747ab6e62027685fe4b06",
+    "core/doctor.py": "f69d693185740b103583d64ec1254a8c8d5eeb047df176947cceb03d056d9d95",
+    "datasets/dataset_validator.py": "314535b2d361890956243f5d3ae9fc761d6d4ad8f71d7ec8c6a6d2956978f386",
+    "eval/simple_map.py": "bbf4964bfe52f8e286ae675ad5f1eb02ee9683e7c91d11953c4d2f59d312ee8d"
+  }
+}

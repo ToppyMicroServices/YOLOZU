@@ -128,6 +128,19 @@ def _write_demo_overview_report(*, output: str | None) -> Path:
 
 
 def handle_demo_command(args: argparse.Namespace) -> int:
+    if args.demo_command == "dataset":
+        from yolozu.demos.labeled_dataset import generate_labeled_sample
+
+        try:
+            manifest = generate_labeled_sample(run_dir=args.run_dir, seed=args.seed)
+        except (OSError, ValueError) as exc:
+            print(f"Could not create labeled sample: {exc}", file=sys.stderr)
+            return 2
+        print(f"dataset: {manifest.parent}")
+        print(f"manifest: {manifest}")
+        print("Synthetic images and known predictions test data handling, not model accuracy.")
+        return 0
+
     def _print_instance_seg_report(*, out_path: Path, label: str | None = None) -> None:
         try:
             payload = json.loads(Path(out_path).read_text(encoding="utf-8"))

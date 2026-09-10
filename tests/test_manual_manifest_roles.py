@@ -17,14 +17,16 @@ class TestManualManifestRoles(unittest.TestCase):
         text = self._normalized_text(self.tool_registry)
         self.assertIn("Boundary With the Maintenance Chapter", text)
         self.assertIn("read and use", text)
-        self.assertIn("Chapter~18 owns the \\emph{maintenance workflow}", text)
+        self.assertIn(r"Chapter~\ref{chap:manual-maintenance} owns the \emph{maintenance workflow}", text)
+        self.assertIn(r"\label{chap:manual-maintenance}", self.manifest_docs.read_text())
         self.assertIn("When You Need to Change the Registry", text)
 
     def test_manifest_docs_chapter_is_maintenance_focused(self):
         text = self._normalized_text(self.manifest_docs)
         self.assertIn("Relationship to the Tool Registry Chapter", text)
         self.assertIn("maintainer checklist for changing", text)
-        self.assertIn("Chapter~12 covers day-to-day discovery", text)
+        self.assertIn(r"Chapter~\ref{chap:tool-registry} covers day-to-day discovery", text)
+        self.assertIn(r"\label{chap:tool-registry}", self.tool_registry.read_text())
 
 
 if __name__ == "__main__":

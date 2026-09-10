@@ -1,0 +1,60 @@
+{
+  "checked_at_utc": "2026-09-10T23:08:49.089515+00:00",
+  "scope": "Supplement to the current source-checkout CPU smoke run; not an installed-wheel or GPU performance claim.",
+  "recorded_git_head": "689d682fc42a2272d052b901da9c0f128fa1561d",
+  "runtime_diff_command": [
+    "git",
+    "diff",
+    "--exit-code",
+    "689d682fc42a2272d052b901da9c0f128fa1561d",
+    "--",
+    "yolozu",
+    "tools/generate_runtime_parity_case_study.py",
+    "tools/eval_coco.py",
+    "tools/check_predictions_parity.py",
+    "tools/generate_smoke_assets.py",
+    "data/smoke/labels/val/classes.json"
+  ],
+  "runtime_diff_exit_code": 0,
+  "runtime_diff_output": "",
+  "untracked_runtime_paths": [],
+  "uncommitted_paths_at_check": [
+    " M .github/workflows/build_and_test.yml",
+    " M docs/generated/web_docs/provenance.json",
+    " M docs/release_reliability_checklist.md",
+    " M docs/yolozu_manual.pdf",
+    " M manual/chapters/03_concepts_contracts.tex",
+    " M reports/labeled_sample_compatibility_2026-09-10/README.md",
+    " M tests/test_runtime_parity_case_study.py",
+    "?? tests/test_manual_prediction_examples.py"
+  ],
+  "supplemental_source_files": {
+    "yolozu/eval/image_id_index.py": {
+      "sha256": "beeaec53467fc1dd7dacd5ef1e0f0c30b3774762310df31cea2e1763c4e97a5b",
+      "matches_recorded_git_head": true
+    },
+    "yolozu/predictions/predictions.py": {
+      "sha256": "d9c38e16e18180c0095f032ff599cedea394baf7e2642b1d8fd6e4f217dfc588",
+      "matches_recorded_git_head": true
+    }
+  },
+  "artifact_checksum_checks": {
+    "historical": {
+      "command": "shasum -a 256 -c checksums.sha256",
+      "exit_code": 0,
+      "output": "commands.json: OK\ncomparison.svg: OK\nenvironment.json: OK\neval_eager.json: OK\neval_torchscript.json: OK\nparity.json: OK\npredictions_eager.json: OK\npredictions_torchscript.json: OK\nprotocol.json: OK\nreproduction_check.json: OK\nsummary.json: OK\n"
+    },
+    "candidate": {
+      "command": "shasum -a 256 -c checksums.sha256",
+      "exit_code": 0,
+      "output": "commands.json: OK\ncomparison.svg: OK\nenvironment.json: OK\neval_eager.json: OK\neval_torchscript.json: OK\nparity.json: OK\npredictions_eager.json: OK\npredictions_torchscript.json: OK\nprotocol.json: OK\nsummary.json: OK\n"
+    }
+  },
+  "historical_metrics_equal": {
+    "eager": true,
+    "torchscript": true
+  },
+  "timing_interpretation": "Concurrent-host single-run observations only; no runtime ranking or performance regression is established.",
+  "environment_note": "Existing .venv: isolated installed YOLOZU metadata is 1.0.4 and Pillow 12.1.1 is below the source requirement. The source checkout is used; separate clean-wheel evidence covers installation.",
+  "historical_artifacts_modified": false
+}

@@ -4,15 +4,31 @@ Evaluate existing predictions first.
 
 Use this page as the shortest route from a wrapped `predictions.json` to a validated, comparable report.
 
-## 1-Minute Demo
+Already have predictions and ground truth? Start with the
+[installed-CLI evaluation steps](../README.md#install-and-evaluate-your-predictions).
+They explain the required input format and produce measured COCO metrics.
+
+## Try without a model or dataset
+
+On macOS/Linux, create a Python 3.10+ virtual environment and run the explicit
+synthetic CPU demo. See [install.md](install.md) for Windows setup.
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 python3 -m pip install -U yolozu
-yolozu doctor --proof
-yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress
+yolozu doctor --proof --proof-dir reports/quickstart/proof --output reports/quickstart/doctor.json
+yolozu demo instance-seg --background synthetic --inference none --run-dir reports/quickstart_instance_seg --progress
 ```
 
 Writes a report plus visible PNG overlays under `reports/quickstart_instance_seg/`.
+The proof also writes a toy dataset, known predictions, and check reports under
+`reports/quickstart/proof/`. Both examples use locally generated data without
+model downloads. Their metrics check the workflow, not a real model's accuracy
+or inference speed.
+For visible images with reusable YOLO labels, start with the
+[eight-image labeled sample](labeled_sample.md), available from version 4.8.0.
+
 Use `configs/quickstart/instance_seg_demo.yaml` as the checklist for expected files.
 For an interactive-feeling route map in the terminal:
 
@@ -111,7 +127,7 @@ The environment-qualified local image-processing program targets an Experimental
 
 ## Production Readiness
 
-- Production-ready today: prediction validation/evaluation and the predictions interface contract
+- Stable scope: prediction validation/evaluation and the predictions interface contract
 - Needs qualification in your environment: backend parity, benchmark orchestration, SynthGen handoff, macOS/MPS paths
 - Research-oriented: continual learning, self-distillation, TTT, Hessian refinement
 - Details: [`production_readiness.md`](production_readiness.md)

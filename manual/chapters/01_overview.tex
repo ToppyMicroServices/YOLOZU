@@ -1,4 +1,5 @@
 \chapter{Overview}
+\label{chap:overview}
 
 \ChapterMeta{
 This chapter introduces \yolozu{}'s predictions-first evaluation paradigm, the primary repository entry points, and the manual's readiness labels.
@@ -74,7 +75,7 @@ operational choices:
   \item \textbf{Online learning}: live or near-live model updates; highest operational risk and not the default YOLOZU path.
   \item \textbf{TTT}: temporary inference-time adaptation for the current batch or stream; compare before/after artifacts and reset policy.
 \end{itemize}
-Read Chapter~14 for continual-learning governance and Chapter~15 for TTT method details.
+Read Chapter~\ref{chap:continual-learning} for continual-learning governance and Chapter~\ref{chap:ttt} for TTT method details.
 
 \paragraph{Where MCP and SynthGen fit.}
 MCP automation and SynthGen handoff are useful integration surfaces, but they
@@ -125,7 +126,7 @@ High-level objectives include:
   \item Supporting backend-agnostic workflows across PyTorch, ONNX Runtime, TensorRT, and custom C++/Rust implementations.
   \item Making migration easier by accepting common dataset ecosystems, such as YOLO-style data.yaml formats and COCO JSON, through lightweight wrapper artifacts that preserve original datasets.
   \item Enforcing a production-oriented run interface contract for training operations, with standard artifact paths, resume behavior, and model exports.
-  \item Maintaining a strict Apache-2.0 operational posture, ensuring no non-Apache dependencies are present in shipped code paths.
+  \item Keeping shipped repository code under Apache-2.0. Dependencies, model weights, datasets, and vendor runtimes retain their own licenses; see \path{docs/license_policy.md}.
   \item Avoiding built-in telemetry in shipped tooling; quality control is performed through explicit, reviewable checks instead.
 \end{itemize}
 
@@ -160,15 +161,15 @@ Different readers usually arrive with different first questions. A quick routing
 
 \paragraph{A good first reading order for most users.}
 \begin{enumerate}
-  \item Chapter~1: understand what kind of repository this is.
-  \item Chapter~2: get to a working environment.
-  \item Chapter~5: choose the right evaluate/export workflow.
+  \item Chapter~\ref{chap:overview}: understand what kind of repository this is.
+  \item Chapter~\ref{chap:installation}: get to a working environment.
+  \item Chapter~\ref{chap:evaluation-workflows}: choose the right evaluate/export workflow.
   \item Only then branch into the more specialized chapters.
 \end{enumerate}
 
 \section{What to learn before the advanced chapters}
-If Chapters~9--16 look heavy at first glance, that is normal. They assume that
-you already understand the distinction between:
+The advanced evaluation and research chapters assume that you already understand
+the distinction between:
 \begin{itemize}
   \item a \textbf{model artifact} (weights, runtime bundle, engine),
   \item a \textbf{predictions artifact} (what the model emitted),

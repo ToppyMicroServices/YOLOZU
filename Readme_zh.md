@@ -8,17 +8,40 @@ Company: [ToppyMicroServices OÜ](https://www.toppymicros.com/) | Official page:
 
 YOLOZU 是由 ToppyMicroServices OÜ 开发、免费提供的商业产品。仓库代码采用 Apache-2.0 许可证。
 
-其 stable product lane 通过 stable predictions interface contract，验证并公平评估已有 vision predictions。
+其 Stable 功能通过 stable predictions interface contract 验证并评估已有预测结果。可以在同一带有真实标签的 dataset 和相同评估设置下，比较不同 framework 的物体检测输出。
 
-传入 wrapped `predictions.json`，验证 predictions interface contract，即可生成可比较的 report。
+保留已有模型和推理环境，将 wrapped `predictions.json` 与真实标签交给 YOLOZU，即可生成 JSON 评估 report。安装 YOLOZU 本身不会提高模型精度。
 
-标准安装下的最短路径，是一条内置 strict validation 的 dry-run 命令：
+### 安装并评估已有预测结果
+
+需要 Python 3.10 或更新版本。macOS/Linux 用户可先创建虚拟环境；
+Windows 等环境见[安装说明](docs/install.md)。
 
 ```bash
-yolozu eval-coco -d /path/to/dataset -p /path/to/predictions.json --dry-run -o reports/coco_eval.json
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install 'yolozu[coco]'
+yolozu --help
 ```
 
-如需真实 COCO metrics，请安装 `yolozu[coco]` 并去掉 `--dry-run`。
+将以下两个绝对路径替换为自己的文件。dataset 的 `images/val/` 和
+`labels/val/` 分别保存图像与 YOLO 格式真实标签。预测框使用归一化的
+`cx, cy, w, h`，class ID 与标签的从0开始的编号一致，图像名与该 split 对应。
+详见[输入格式](docs/predictions_schema.md)和
+[各 framework 的导出步骤](docs/byop_quickstarts.md)。
+
+```bash
+yolozu validate predictions /absolute/path/to/predictions.json --strict
+yolozu validate dataset /absolute/path/to/yolo-dataset --split val --strict
+yolozu eval-coco \
+  --dataset /absolute/path/to/yolo-dataset --split val \
+  --predictions /absolute/path/to/predictions.json \
+  --bbox-format cxcywh_norm --output reports/coco_eval.json
+```
+
+检查 `reports/coco_eval.json` 中的 `metrics.map50_95`、`metrics.map50` 和评估的
+图像数、检测数。比较模型时保持 dataset、class mapping、预处理和 export 设置一致。
+加上 `--dry-run` 只检查输入转换，不执行 COCOeval；此时的 `null` metrics 不是精度测量值。
 
 ## 特别适合的三个场景
 
@@ -42,18 +65,24 @@ yolozu eval-coco -d /path/to/dataset -p /path/to/predictions.json --dry-run -o r
 [![PR Gate](https://img.shields.io/badge/PR%20gate-ci%20(required)-0A7A0A)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
 [![Publish](https://img.shields.io/badge/container-optional-9E9E9E)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/container.yml)
 
-## 30 秒快速上手（pip）
+## 没有模型或 dataset 时也可以试用
 
-**Predictions-first interface contract。** 先生成一次 `predictions.json`，之后就可以跨框架、跨后端执行一致的验证与评估。
+在已激活的虚拟环境中，标准安装即可运行 CPU demo。本例在本地生成合成图形和预测结果，
+不下载模型。
 
 ```bash
 python3 -m pip install -U yolozu
 yolozu doctor --proof
-yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress
+yolozu demo instance-seg --background synthetic --inference none --run-dir reports/quickstart_instance_seg --progress
 ```
 
 输出位置：`reports/quickstart_instance_seg/instance_seg_demo_report.json`
 可视化 PNG：`reports/quickstart_instance_seg/overlays/`
+这些合成 metrics 和图像用于检查流程，不表示真实模型的精度或速度。
+需要可复用的图像和 YOLO 标签时，可在 4.8.0 或更高版本中运行
+`yolozu demo dataset --run-dir reports/labeled_sample`，生成 8 张样本图像、
+标签预览和已知预测。参见[评估与复用步骤](docs/labeled_sample.md)。
+
 对应检查清单：`configs/quickstart/instance_seg_demo.yaml`
 如果不确定下一步该运行什么，可以先看内置路线图：
 
@@ -79,6 +108,9 @@ result = evaluate_coco(
 )
 print(result.to_dict())
 ```
+
+此 API 示例为 dry-run。安装 `yolozu[coco]` 并设置 `dry_run=False` 后，
+才会根据自己的预测结果和真实标签计算 metrics。
 
 向 AI client 暴露更大工具面之前，先提供小型 guaranteed tool list：
 

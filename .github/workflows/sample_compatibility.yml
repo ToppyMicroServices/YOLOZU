@@ -1,0 +1,100 @@
+name: Candidate labeled-sample compatibility
+
+on:
+  pull_request:
+    paths:
+      - "yolozu/**"
+      - "pyproject.toml"
+      - "MANIFEST.in"
+      - "tools/ci/check_sample_compatibility.py"
+      - "tests/test_sample_compatibility.py"
+      - ".github/workflows/sample_compatibility.yml"
+  push:
+    branches: [main]
+    paths:
+      - "yolozu/**"
+      - "pyproject.toml"
+      - "MANIFEST.in"
+      - "tools/ci/check_sample_compatibility.py"
+      - "tests/test_sample_compatibility.py"
+      - ".github/workflows/sample_compatibility.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sample-compatibility-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  candidate:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }} / ${{ matrix.dependencies }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-latest, python: "3.10", dependencies: latest}
+          - {os: ubuntu-latest, python: "3.11", dependencies: latest}
+          - {os: ubuntu-latest, python: "3.12", dependencies: latest}
+          - {os: ubuntu-latest, python: "3.13", dependencies: latest}
+          - {os: ubuntu-latest, python: "3.14", dependencies: latest}
+          - {os: ubuntu-latest, python: "3.10", dependencies: minimum}
+          - {os: macos-14, python: "3.14", dependencies: latest}
+          - {os: windows-latest, python: "3.12", dependencies: latest}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Build and install the exact candidate in a clean environment
+        id: install
+        env:
+          DEPENDENCY_MODE: ${{ matrix.dependencies }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import subprocess
+          import sys
+          import venv
+
+          wheel_dir = Path(os.environ["RUNNER_TEMP"]) / "sample-candidate-wheel"
+          wheel_dir.mkdir()
+          subprocess.run([sys.executable, "-m", "pip", "wheel", "--no-deps", "--wheel-dir", str(wheel_dir), "."], check=True)
+          wheels = list(wheel_dir.glob("yolozu-*.whl"))
+          if len(wheels) != 1:
+              raise RuntimeError("expected exactly one candidate wheel")
+          environment = Path(os.environ["RUNNER_TEMP"]) / "sample-compatibility-venv"
+          venv.EnvBuilder(with_pip=True).create(environment)
+          interpreter = environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+          subprocess.run([str(interpreter), "-m", "pip", "install", "--upgrade", "pip"], check=True)
+          requirements = [str(wheels[0]) + "[coco]"]
+          if os.environ["DEPENDENCY_MODE"] == "minimum":
+              requirements += ["numpy==1.24.0", "PyYAML==6.0", "Pillow==12.2.0", "typing_extensions==4.8.0", "pycocotools==2.0.7"]
+          subprocess.run([str(interpreter), "-m", "pip", "install", "--only-binary=:all:", "--upgrade", *requirements], check=True)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"python={interpreter}\nwheel={wheels[0]}\n")
+          PY
+      - name: Check labeled sample and relocation from the installed wheel
+        env:
+          CANDIDATE_PYTHON: ${{ steps.install.outputs.python }}
+          CANDIDATE_WHEEL: ${{ steps.install.outputs.wheel }}
+        run: |
+          "${CANDIDATE_PYTHON}" tools/ci/check_sample_compatibility.py \
+            --wheel "${CANDIDATE_WHEEL}" \
+            --source-revision "$(git rev-parse HEAD)" \
+            --output-dir "${RUNNER_TEMP}/sample-compatibility"
+      - name: Upload compatibility evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sample-compatibility-${{ matrix.os }}-py${{ matrix.python }}-${{ matrix.dependencies }}
+          path: ${{ runner.temp }}/sample-compatibility
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,4 +1,5 @@
 \chapter{Parity, Benchmarks, and Protocols}
+\label{chap:parity-benchmarks}
 
 \ChapterMeta{
 This chapter explains parity checks, protocol-pinned evaluation settings, and benchmark/sweep harnesses.
@@ -66,7 +67,7 @@ When exporting predictions across backends such as PyTorch, ONNX Runtime, and Te
 \end{figure}
 
 \textbf{Conceptual (not copy-paste as-is):} parity command shape.
-For a runnable shortest command, use Chapter~5 Workflow A with real artifact paths.
+For a runnable evaluation command, use Chapter~\ref{chap:evaluation-workflows} Workflow A with real artifact paths.
 \begin{lstlisting}[language=bash]
 yolozu parity \
   --reference reports/pred_torch.json \

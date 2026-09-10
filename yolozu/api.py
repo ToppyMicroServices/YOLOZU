@@ -15,9 +15,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal, Mapping, Sequence
 
-from yolozu.core.image_keys import add_image_aliases, lookup_image_alias, require_image_key
+from yolozu.core.image_keys import require_image_key
 from yolozu.datasets.dataset import build_manifest
 from yolozu.eval.coco_eval import build_coco_ground_truth, evaluate_coco_map, predictions_to_coco_detections
+from yolozu.eval.image_id_index import ImageIdIndex
 from yolozu.predictions.predictions import (
     canonicalize_predictions,
     normalize_predictions_payload,
@@ -371,11 +372,11 @@ def validate_predictions(
     return _canonicalize_payload(payload, repair=repair)
 
 
-def _dataset_aliases(records: Sequence[Mapping[str, Any]]) -> dict[str, int]:
-    aliases: dict[str, int] = {}
+def _dataset_aliases(records: Sequence[Mapping[str, Any]]) -> ImageIdIndex:
+    aliases = ImageIdIndex()
     for index, record in enumerate(records):
         image = require_image_key(record.get("image"), where=f"dataset.images[{index}].image")
-        add_image_aliases(aliases, image, index)
+        aliases.add(image, index)
     return aliases
 
 
@@ -509,8 +510,10 @@ def evaluate_coco(
     validated = _canonicalize_payload(wrapped_for_validation, repair=repair)
     validation_warnings = [*wrapper_warnings, *validated.warnings]
 
-    full_aliases = _dataset_aliases(full_records)
-    selected_aliases = _dataset_aliases(selected_records)
+    try:
+        full_aliases = _dataset_aliases(full_records)
+    except ValueError as exc:
+        raise DatasetError(str(exc), code="E_DATASET_IMAGE_KEYS") from exc
     selected_entries: list[JsonObject] = []
     selected_dataset_ids_with_predictions: set[int] = set()
     excluded_images = 0
@@ -518,14 +521,23 @@ def evaluate_coco(
 
     for index, entry in enumerate(validated.entries):
         image = require_image_key(entry.get("image"), where=f"predictions[{index}].image")
-        if lookup_image_alias(full_aliases, image) is None:
+        try:
+            selected_id = full_aliases.lookup(image)
+        except ValueError as exc:
+            raise PredictionsValidationError(
+                str(exc),
+                code="E_PREDICTION_AMBIGUOUS_IMAGE",
+                details={"image": image},
+            ) from exc
+        if selected_id is None:
             raise PredictionsValidationError(
                 f"prediction refers to image not present in the full dataset: {image}",
                 code="E_PREDICTION_UNKNOWN_IMAGE",
                 details={"image": image},
             )
-        selected_id = lookup_image_alias(selected_aliases, image)
-        if selected_id is None:
+        # max_images selects a prefix. Resolve identity against the full dataset
+        # before filtering so a subset cannot make an ambiguous alias look unique.
+        if selected_id >= len(selected_records):
             excluded_images += 1
             excluded_detections += _entry_detection_count(entry)
             continue

@@ -591,10 +591,47 @@ class TestRuntimeParityCaseStudy(TestCase):
         )
         self.assertGreater(summary["results"]["eager"]["detections"], 0)
         self.assertEqual(summary["weights"]["sha256"], self.tool.OFFICIAL_WEIGHTS_SHA256)
-        for relative, expected in summary["source"]["file_sha256"].items():
-            source_path = self.repo_root / relative
-            self.assertTrue(source_path.is_file(), relative)
-            self.assertEqual(hashlib.sha256(source_path.read_bytes()).hexdigest(), expected, relative)
+        environment = json.loads(
+            (self.artifact_root / "environment.json").read_text(encoding="utf-8")
+        )
+        source = summary["source"]
+        self.assertEqual(environment["source"], source)
+        self.assertTrue(source["available"])
+        self.assertTrue(source["clean_before_run"])
+        self.assertRegex(source["head"], r"^[0-9a-f]{40}$")
+        self.assertTrue(source["file_sha256"])
+        for relative, expected in source["file_sha256"].items():
+            self.assertFalse(Path(relative).is_absolute(), relative)
+            self.assertNotIn("..", Path(relative).parts, relative)
+            self.assertRegex(expected, r"^[0-9a-f]{64}$", relative)
+        self.assertEqual(protocol["id"], summary["case_study_id"])
+        for predictions in (eager, scripted):
+            self.assertEqual(
+                predictions["meta"]["extra"]["export_settings"],
+                protocol["fixed_conditions"],
+            )
+
+    def test_recorded_source_hashes_match_available_historical_commit(self):
+        # This bundle records a past run, not the current checkout's source bytes.
+        summary = json.loads((self.artifact_root / "summary.json").read_text(encoding="utf-8"))
+        source = summary["source"]
+        head = source["head"]
+        self.assertRegex(head, r"^[0-9a-f]{40}$")
+        if shutil.which("git") is None:
+            self.skipTest("Git is unavailable; bundle consistency is checked separately")
+        commit = subprocess.run(
+            ["git", "cat-file", "-e", f"{head}^{{commit}}"],
+            cwd=self.repo_root, capture_output=True, check=False, timeout=30,
+        )
+        if commit.returncode != 0:
+            self.skipTest("Recorded commit is unavailable in this checkout; no fetch is attempted")
+        for relative, expected in source["file_sha256"].items():
+            historical = subprocess.run(
+                ["git", "show", f"{head}:{relative}"],
+                cwd=self.repo_root, capture_output=True, check=False, timeout=30,
+            )
+            self.assertEqual(historical.returncode, 0, relative)
+            self.assertEqual(hashlib.sha256(historical.stdout).hexdigest(), expected, relative)
 
     def test_public_counts_and_metrics_match_committed_evidence(self):
         summary = json.loads((self.artifact_root / "summary.json").read_text(encoding="utf-8"))

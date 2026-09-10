@@ -1,4 +1,5 @@
 \chapter{Manifest-Driven Operations and Manual Synchronization}
+\label{chap:manual-maintenance}
 
 \ChapterMeta{
 This chapter establishes \path{tools/manifest.json} as the canonical operational source for commands, input/output (I/O) interface contracts, and write-side effects.
@@ -11,7 +12,7 @@ Consult this chapter when introducing new tools, modifying CLI flags, or revisin
 
 
 \section{Relationship to the Tool Registry Chapter}
-Chapter~12 explains how users and automation discover declared tools from the
+Chapter~\ref{chap:tool-registry} explains how users and automation discover declared tools from the
 registry. This chapter is different: it is the maintainer checklist for changing
 that registry. Use it when a code, CLI, manifest, docs, or manual change must
 land together in the same pull request.
@@ -55,7 +56,7 @@ python3 tools/validate_tool_manifest.py --manifest tools/manifest.json --require
 python3 -m unittest tests.test_generated_cli_reference tests.test_ssot_capability_coverage
 \end{lstlisting}
   \item Revise the impacted manual chapters located under \path{manual/chapters/}.
-  \item Cross-reference and verify all documentation examples against the manifest's \texttt{examples[].command} fields.
+  \item Cross-reference and verify all documentation examples against the manifest's \cmd{examples[].command} fields.
 \end{enumerate}
 
 \begin{figure}[h]
@@ -92,11 +93,11 @@ For each affected command family, rigorously verify the following:
   \item The referenced command exists within the manifest under \texttt{id} and \texttt{entrypoint}.
   \item All required input flags accurately reflect the manifest's \texttt{inputs[]} array.
   \item Output declarations and write-path statements align with the \texttt{outputs[]} and \texttt{effects} definitions.
-  \item Interface contract claims strictly match the \texttt{contracts.consumes} and \texttt{contracts.produces} specifications.
+  \item Interface contract claims strictly match the \cmd{contracts.consumes} and \cmd{contracts.produces} specifications.
 \end{itemize}
 
 \section{Understanding Manifest Capabilities}
-The manifest is not merely a list of scripts; it is a declarative governance tool. Chapter~12 covers day-to-day discovery. In this chapter, inspect \path{tools/manifest.json} to decide what must be updated when behavior changes:
+The manifest records tool interfaces and side effects. Chapter~\ref{chap:tool-registry} covers day-to-day discovery. In this chapter, inspect \path{tools/manifest.json} to decide what must be updated when behavior changes:
 \begin{itemize}
   \item \textbf{Platform Compatibility}: The \texttt{platform} object indicates whether a tool requires a GPU (\texttt{gpu\_required}) or supports macOS/Linux.
   \item \textbf{Dependencies}: The \texttt{requires} object lists necessary Python packages and system-level dependencies (e.g., TensorRT).
@@ -152,11 +153,11 @@ PY
 \section{Chapter Ownership and Routing}
 Utilize this heuristic mapping to determine which chapters require updates following a tool modification:
 \begin{itemize}
-  \item General CLI changes: Chapter 4
-  \item Training, backbone, or run-contract modifications: Chapter 7
-  \item Evaluation protocols and benchmark adjustments: Chapter 9
-  \item Test-Time Training (TTT) methods and benchmarks: Chapter 15
-  \item Registry, interface contract metadata, and governance changes: Chapter 12 and this chapter
+  \item General CLI changes: Chapter~\ref{chap:cli-reference}
+  \item Training, backbone, or run-contract modifications: Chapter~\ref{chap:training}
+  \item Evaluation protocols and benchmark adjustments: Chapter~\ref{chap:parity-benchmarks}
+  \item Test-Time Training (TTT) methods and benchmarks: Chapter~\ref{chap:ttt}
+  \item Registry, interface contract metadata, and governance changes: Chapter~\ref{chap:tool-registry} and this chapter
 \end{itemize}
 
 This mapping is intentionally lightweight. If a tool modification spans multiple domains, update all affected chapters within the same pull request to maintain documentation coherence.

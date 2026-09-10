@@ -1,4 +1,5 @@
 \chapter{Installation and Setup}
+\label{chap:installation}
 
 \ChapterMeta{
 This chapter guides you through establishing a functional \yolozu{} environment and validating it via preliminary sanity checks.
@@ -12,24 +13,86 @@ Python 3.10 or newer is mandatory. Optional extras vary based on the selected ba
 
 \section{Python Requirements}
 \yolozu{} targets Python 3.10 and newer.
+The candidate-wheel sample workflow checks Python 3.10--3.14 on Linux,
+Python 3.14 on macOS, and Python 3.12 on Windows. One Linux/Python 3.10 lane
+uses the declared core and COCO dependency floors. These are configured checks;
+read each run's report for the versions and outcomes actually observed.
+Wheel hashes distinguish a local candidate from published code with the same
+version string. See \path{docs/versions.md}; this matrix does not qualify GPU
+inference or external training runtimes.
 
 \section{Pip Installation (User Path)}
-For standard usage, the recommended installation procedure is:
+\subsection{First successful run from the installed package}
+On macOS/Linux, run these commands in a writable directory. A virtual environment
+keeps this installation separate from system-managed Python. No source checkout
+or model download is needed for this CPU-only path:
 \begin{lstlisting}[language=bash]
+python3 -m venv .venv
+source .venv/bin/activate
 python3 -m pip install yolozu
-yolozu --help
-yolozu doctor --output -
+yolozu doctor --proof \
+  --output reports/first_run/doctor.json \
+  --proof-dir reports/first_run/proof
+yolozu demo instance-seg --background synthetic --inference none \
+  --run-dir reports/first_run/demo
 \end{lstlisting}
+For Windows PowerShell commands, see \path{docs/install.md}. If \cmd{yolozu}
+is not found, use \cmd{python3 -m yolozu} from the same environment.
+
+The doctor proof writes \path{proof_report.json}, \path{eval_report.json}, and
+\path{known_predictions.json} under \path{reports/first_run/proof}. Check
+\cmd{status=pass} in the proof report. The demo writes a report and PNG overlays under
+\path{reports/first_run/demo}.
+
+These are deterministic installation and evaluation checks. They use known or
+synthetic predictions, so their scores and overlays do not measure trained-model
+accuracy. Use your own predictions and dataset for that next step:
+\begin{lstlisting}[language=bash]
+yolozu validate predictions /path/to/predictions.json --strict
+yolozu eval-coco --help
+\end{lstlisting}
+Replace the placeholder with your artifact path. Chapter~\ref{chap:evaluation-workflows}
+explains evaluation; \path{docs/cpu_only_dod.md} gives the full proof-based sequence.
+Use \cmd{yolozu --help} to explore commands or \cmd{yolozu guide --goal first-run}
+for guided next steps.
+
+\subsection{Reusable labeled sample}
+The command below, available from version 4.8.0, creates eight synthetic images with YOLO
+bounding-box labels, two classes, and a deliberately empty validation image.
+In a virtual environment, install the package with the COCO extra before evaluating:
+\begin{lstlisting}[language=bash]
+python3 -m pip install 'yolozu[coco]==4.8.0'
+python3 -m yolozu demo dataset --run-dir reports/labeled_sample --seed 0
+python3 -m yolozu validate dataset reports/labeled_sample --split val --strict
+python3 -m yolozu validate predictions \
+  reports/labeled_sample/predictions.json --strict
+python3 -m yolozu eval-coco --dataset reports/labeled_sample --split val \
+  --predictions reports/labeled_sample/predictions.json \
+  --output reports/labeled_sample_coco.json
+\end{lstlisting}
+Open \path{labeled_preview.png} in the generated directory to inspect the labels.
+Copy the entire directory to reuse it: paths are relative, and the manifest
+records the seed, recipe, package versions, and file hashes. Existing output
+paths are refused. The known predictions come from the labels, so an AP near
+1.0 checks the workflow, not model accuracy. Replace them with model outputs
+before interpreting accuracy on your own data. See \path{docs/labeled_sample.md}
+for the layout and external-tool path caveat.
 
 \paragraph{Stable versus qualified paths.}
 The default stable path is CPU-first install plus predictions evaluation.
-macOS/MPS should be treated as a \textbf{qualification path}: it is supported when \cmd{torch.backends.mps.is_available()} returns true, but it is not implied merely because a tool can run on macOS.
+macOS/MPS is a \textbf{qualification path}.
+\cmd{torch.backends.mps.is_available()} reports whether this process can use MPS.
+A true result does not qualify every model, operator, precision, or workload.
 
-The doctor report additively includes a validated \cmd{environment_profile}.
+The doctor report includes a validated \cmd{environment_profile}.
 Its bounded probes omit host identifiers and keep failed or unsupported facts
 unknown. This EnvironmentProfile interface contract records the observed
 configuration; it is not model qualification evidence and does not make an
 Experimental adaptive pipeline available.
+
+\subsection{Optional adaptive interfaces}
+This subsection is for callers integrating adaptive image pipelines. It is not
+needed for the first-run or predictions-evaluation path above.
 
 The installed package also contains three non-promoted adaptive Candidate bundle
 records matching the existing model zoo. Their weight metadata is pinned, but their
@@ -37,7 +100,8 @@ execution binding is unbound. The bounded loader validates this registry and lif
 SSOT without importing a model runtime or downloading assets. A caller-supplied workspace catalog remains
 \cmd{operator\_asserted} and nonselectable; registry integrity alone is not
 qualification evidence. A non-executing candidate-screening provider is packaged,
-but its repository-managed stream is empty. Workspace screening input remains
+and the repository-managed stream currently contains two \cmd{hold} records.
+Workspace screening input remains
 \cmd{operator\_asserted}, and a pass record alone cannot register or execute a
 bundle. The Experimental \cmd{yolozu qualify-image-pipeline}
 command is installed, but the unbound Candidate records and empty runner map make the default
@@ -59,39 +123,13 @@ repository-owned qualification and processing outputs. It uses bounded manifests
 directory-relative no-follow mutation, and fail-closed recovery on POSIX. It does
 not make a model adapter or runnable model bundle available. The installed
 recommendation, selector, and pinned-processing interface contracts are verified,
-but the Candidate-only registry, empty screening/public evidence streams, and empty runner maps
+but the Candidate-only registry, held screenings, empty public evidence stream, and empty runner maps
 make the default recommendation abstain with \cmd{maturity\_disallowed} and processing
 reject with \cmd{selection\_required}.
 Positive selector and executor tests use internal fixtures rather than public
 qualification evidence. The managed output path does not silently weaken its guarantee
 on platforms without the required primitives. Atomic visibility is scoped to a
 successful same-filesystem rename probe; power-loss durability remains best-effort.
-
-\subsection{First successful run from the installed package}
-For the shortest public-package path with a proof report and PNG evidence:
-\begin{lstlisting}[language=bash]
-python3 -m pip install yolozu
-yolozu doctor --proof --output reports/first_run/doctor.json --proof-dir reports/first_run/proof
-yolozu demo instance-seg --inference none --run-dir reports/first_run/demo
-\end{lstlisting}
-
-The proof run writes a known predictions artifact and pinned evaluation result under
-\path{reports/first_run/proof}. The instance-seg demo writes its report and visible overlays under
-\path{reports/first_run/demo}. The full validation and evaluation sequence is documented in
-\path{docs/cpu_only_dod.md}.
-
-The repository-only smoke and fresh-install evidence harnesses require a source checkout:
-\begin{lstlisting}[language=bash]
-bash scripts/smoke.sh
-bash scripts/fresh_install_journey.sh --run-dir /tmp/yolozu_fresh_install
-\end{lstlisting}
-The fresh-install harness creates a new virtual environment, installs from public PyPI, and records
-the resolved version, exact commands, exit codes, elapsed times, logs, and stable-lane reports.
-
-If your predictions come from another backend, validate first:
-\begin{lstlisting}[language=bash]
-yolozu validate predictions data/smoke/predictions/predictions_dummy.json --strict
-\end{lstlisting}
 
 \subsection{First-failure checklist}
 If the first run fails, do not jump straight into backend debugging. Check the
@@ -134,7 +172,7 @@ python3 -c "import onnxruntime as ort; print(ort.__version__)"
 \end{lstlisting}
 
   \item[Symptom: TensorRT command fails locally.] Likely cause: TensorRT needs a
-  compatible Linux/NVIDIA/CUDA stack. Verification command:
+  compatible Linux/NVIDIA/CUDA stack. In a source checkout, inspect the preflight options:
 \begin{lstlisting}[language=bash]
 python3 tools/gpu_validation_preflight.py --help
 \end{lstlisting}
@@ -143,9 +181,9 @@ python3 tools/gpu_validation_preflight.py --help
   thresholds, class order, score filtering, NMS, or protocol pins changed.
   Verification command:
 \begin{lstlisting}[language=bash]
-yolozu eval-suite --help
+yolozu eval-coco --help
 \end{lstlisting}
-  Then inspect the saved suite/report protocol fields.
+  Then inspect the saved evaluation report and the protocol used by both runs.
 \end{description}
 
 Optional extras let you install only the dependencies you need for a given workflow:
@@ -235,6 +273,15 @@ python3 -m pip install -r requirements-test.txt
 python3 -m pip install -e .
 python3 -m pytest -q
 \end{lstlisting}
+
+The repository-only smoke and fresh-install evidence harnesses require this checkout:
+\begin{lstlisting}[language=bash]
+bash scripts/smoke.sh
+bash scripts/fresh_install_journey.sh --run-dir /tmp/yolozu_fresh_install
+\end{lstlisting}
+The fresh-install harness creates a new virtual environment, installs from public PyPI, and records
+the resolved version, exact commands, exit codes, elapsed times, logs, and stable-lane reports.
+Use a new run directory for each invocation.
 
 
 \section{Recommended Deployment Flow}

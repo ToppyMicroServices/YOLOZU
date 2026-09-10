@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.8.0] - 2026-09-10
+
+### Added
+- Add an offline eight-image labeled dataset with a preview, known predictions,
+  relative paths, and a versioned manifest for inspection and reuse.
+- Check installed candidate wheels across Python versions, operating systems,
+  and minimum core/COCO dependencies, including evaluation after relocation.
+
+### Fixed
+- Repair the doctor proof image and first-run instructions; clarify dependency
+  and runtime qualification limits in the manual.
+- Reduce repeated image lookup work during COCO evaluation and reject ambiguous
+  image aliases without confusing basenames with stems.
+- Reject unsupported prediction wrapper versions, explicit null entry versions,
+  and boolean class IDs in strict validation.
+- Keep metadata-free prediction migration outputs valid without inventing
+  inference provenance.
+- Synchronize the CLI manifests, generated references, and TeX/PDF manual.
+
 ## [4.7.0] - 2026-08-30
 
 ### Changed

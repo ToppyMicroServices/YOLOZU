@@ -7,6 +7,36 @@ configured GPU container is not proof that a particular host completed a run.
 
 ## Package and CPU validation envelope
 
+The candidate labeled-sample workflow builds a wheel from the tested revision,
+installs it non-editably into a clean environment, and checks its installed file
+hashes against that exact wheel. Version strings alone are insufficient: a local
+candidate and a published package may both report `4.7.0` but contain different
+code. `pip check` is run against the installed distribution, not stale editable
+metadata from a development environment.
+
+The configured matrix in `.github/workflows/sample_compatibility.yml` covers:
+
+| Environment | Dependencies | Check |
+|---|---|---|
+| Linux, Python 3.10–3.14 | Latest resolvable core + `coco` | Generate labels, strict validation, official COCO evaluation, then repeat after relocation |
+| Linux, Python 3.10 | NumPy 1.24.0, PyYAML 6.0, Pillow 12.2.0, typing_extensions 4.8.0, pycocotools 2.0.7 | Same check at the declared core/COCO floors |
+| macOS, Python 3.14; Windows, Python 3.12 | Latest resolvable core + `coco` | Same installed-wheel check |
+
+Configuration is not a test result. Each run uploads `compatibility-report.json`
+with the wheel hash, source revision, actual runtime/dependency versions, metrics,
+and sample hashes. Re-run it for a new wheel or environment:
+
+```bash
+python3 tools/ci/check_sample_compatibility.py \
+  --wheel /path/to/yolozu-candidate.whl \
+  --output-dir reports/sample_compatibility
+```
+
+Run the helper with the Python interpreter where that wheel and its `coco` extra
+are already installed. It refuses an existing output directory. See the
+[labeled sample](labeled_sample.md) for user-facing commands. These checks do not
+exercise Torch, ONNX, GPU inference, or external training runtimes.
+
 | Component | Declared install floor | Current repository-pinned evidence | Scope |
 |---|---|---|---|
 | PyTorch | `torch>=2.10.0` in the Torch-backed extras | `torch==2.10.0+cpu` in `requirements-locks/requirements-ci.lock`; `torch==2.10.0` in the demo and RT-DETR locks | The CI pin qualifies repository CPU tests. Device, accelerator, and custom-wheel behavior remain environment-specific. |

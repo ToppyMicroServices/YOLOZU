@@ -81,26 +81,36 @@ GUIDE_ROUTES: dict[str, dict[str, object]] = {
             "reports/quickstart_instance_seg/overlays/overlay_img_0000.png",
         ],
         "docs": ["docs/install.md", "docs/README.md", "configs/quickstart/instance_seg_demo.yaml"],
+        "notes": ["The default demo uses synthetic data and known predictions, not model inference. Its scores check the workflow, not model quality."],
     },
     "evaluate": {
         "title": "Evaluate existing predictions",
-        "use_when": "You already have a predictions.json artifact and a YOLO-style dataset.",
+        "use_when": "You want a runnable evaluation example before substituting your own dataset and predictions.",
         "commands": [
-            "yolozu validate predictions reports/predictions.json --strict",
-            "yolozu eval-coco --dataset data/smoke --predictions reports/predictions.json --dry-run --output reports/eval.json",
+            "yolozu doctor --proof",
+            "yolozu validate dataset reports/doctor_proof/toy_dataset --split val2017 --strict",
+            "yolozu validate predictions reports/doctor_proof/known_predictions.json --strict",
+            "yolozu eval-coco --dataset reports/doctor_proof/toy_dataset --split val2017 --predictions reports/doctor_proof/known_predictions.json --dry-run --output reports/eval.json",
         ],
         "outputs": ["reports/eval.json"],
         "docs": ["docs/predictions_schema.md", "docs/external_inference.md"],
+        "notes": [
+            "These commands work outside a repository checkout using generated toy artifacts.",
+            "--dry-run checks conversion and report wiring; it does not compute official COCO metrics.",
+            "For your model, substitute your dataset, split, and wrapped predictions. Install 'yolozu[coco]' and omit --dry-run to compute COCO metrics.",
+        ],
     },
     "export": {
         "title": "Export predictions from images or a runtime",
         "use_when": "You need YOLOZU predictions.json before evaluation.",
         "commands": [
-            "yolozu predict-images --backend dummy --input-dir data/smoke/images/val --output reports/predictions.json --overlays-dir reports/predict_overlays --html reports/predict_images.html --progress",
+            "yolozu doctor --proof",
+            "yolozu predict-images --backend dummy --input-dir reports/doctor_proof/toy_dataset/images/val2017 --output reports/predictions.json --overlays-dir reports/predict_overlays --html reports/predict_images.html --progress",
             "yolozu validate predictions reports/predictions.json --strict",
         ],
-        "outputs": ["reports/predictions.json", "reports/predict_images.html", "reports/predict_overlays/000000_<image>.png"],
+        "outputs": ["reports/predictions.json", "reports/predict_images.html", "reports/predict_overlays/000000_proof_0001.png"],
         "docs": ["docs/training_inference_export.md", "docs/predictions_schema.md", "configs/quickstart/predict_images_dummy.yaml"],
+        "notes": ["The dummy backend checks export wiring only and emits no detections; its PNG shows the toy image without boxes. Use the documented adapter for predictions from a real model."],
     },
     "debug": {
         "title": "Debug environment or dataset issues",
@@ -108,8 +118,8 @@ GUIDE_ROUTES: dict[str, dict[str, object]] = {
         "commands": [
             "yolozu doctor --explain",
             "yolozu doctor --proof",
-            "yolozu doctor import --dataset-from auto --dataset data/smoke --output -",
-            "yolozu validate dataset data/smoke --mode warn",
+            "yolozu doctor import --dataset-from auto --dataset reports/doctor_proof/toy_dataset --output -",
+            "yolozu validate dataset reports/doctor_proof/toy_dataset --split val2017 --mode warn",
         ],
         "outputs": ["stdout diagnostics", "reports/doctor.json when --output is a path"],
         "docs": ["docs/install.md", "docs/support.md"],
@@ -147,6 +157,8 @@ def _render_guide_text(goal: str) -> str:
         lines.append("Expected output:")
         for output in route["outputs"]:
             lines.append(f"  {output}")
+        for note in route.get("notes", []):
+            lines.append(f"Note: {note}")
         lines.append("Read next:")
         for doc in route["docs"]:
             lines.append(f"  {doc}")
@@ -948,6 +960,15 @@ def main(argv: list[str] | None = None) -> int:
         help="(demo suite) COCO images dir (joined with image.file_name) for the polygon-mask instance-seg demo.",
     )
     demo_sub = demo.add_subparsers(dest="demo_command", required=False)
+
+    demo_dataset = demo_sub.add_parser(
+        "dataset", help="Create a portable synthetic dataset with YOLO bbox labels and known predictions.",
+    )
+    demo_dataset.add_argument(
+        "--run-dir", default="reports/labeled_sample",
+        help="New sample directory (default: reports/labeled_sample); existing paths are never overwritten.",
+    )
+    demo_dataset.add_argument("--seed", type=int, default=0, help="Deterministic sample seed (default: 0).")
 
     demo_ov = demo_sub.add_parser("overview", help="Write a demo coverage overview report (tasks/dependencies/commands).")
     demo_ov.add_argument(

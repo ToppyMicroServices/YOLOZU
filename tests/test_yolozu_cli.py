@@ -1,5 +1,7 @@
 import hashlib
 import json
+import os
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -8,6 +10,29 @@ from pathlib import Path
 
 
 class TestYOLOZUCLI(unittest.TestCase):
+    def test_labeled_dataset_cli_help_and_no_overwrite(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        env = dict(os.environ, PYTHONPATH=str(repo_root))
+        help_result = subprocess.run(
+            [sys.executable, "-m", "yolozu", "demo", "dataset", "--help"],
+            cwd=repo_root, env=env, capture_output=True, text=True, timeout=30,
+        )
+        self.assertEqual(help_result.returncode, 0, help_result.stderr)
+        self.assertIn("--run-dir", help_result.stdout)
+        self.assertIn("--seed", help_result.stdout)
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "labeled sample"
+            command = [sys.executable, "-m", "yolozu", "demo", "dataset", "--run-dir", str(target)]
+            result = subprocess.run(command, cwd=tmp, env=env, capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue((target / "sample_manifest.json").is_file())
+            self.assertTrue((target / "predictions.json").is_file())
+            original = (target / "predictions.json").read_bytes()
+            repeated = subprocess.run(command, cwd=tmp, env=env, capture_output=True, text=True, timeout=30)
+            self.assertEqual(repeated.returncode, 2, repeated.stderr)
+            self.assertEqual((target / "predictions.json").read_bytes(), original)
+            self.assertNotIn("Traceback", repeated.stderr)
+
     def test_help_lists_continual_commands(self):
         repo_root = Path(__file__).resolve().parents[1]
         script = repo_root / "tools" / "yolozu.py"
@@ -121,6 +146,24 @@ class TestYOLOZUCLI(unittest.TestCase):
             self.fail(f"tools/yolozu.py guide failed:\n{proc.stdout}\n{proc.stderr}")
         self.assertIn("demo instance-seg", proc.stdout)
         self.assertIn("doctor --proof", proc.stdout)
+
+    def test_guide_evaluate_runs_without_checkout_assets(self):
+        from yolozu.cli_entry import GUIDE_ROUTES
+
+        repo_root = Path(__file__).resolve().parents[1]
+        env = dict(os.environ, PYTHONPATH=str(repo_root))
+        with tempfile.TemporaryDirectory() as tmp:
+            for command in GUIDE_ROUTES["evaluate"]["commands"]:
+                args = shlex.split(command)
+                self.assertEqual(args[0], "yolozu")
+                proc = subprocess.run(
+                    [sys.executable, "-m", "yolozu", *args[1:]],
+                    cwd=tmp, env=env, capture_output=True, text=True, timeout=90,
+                )
+                self.assertEqual(proc.returncode, 0, f"{command}\n{proc.stdout}\n{proc.stderr}")
+            result = json.loads((Path(tmp) / "reports/eval.json").read_text())
+            self.assertTrue(result["dry_run"])
+            self.assertEqual(result["counts"]["images"], 1)
 
     def test_doctor_proof_writes_artifacts_and_compares_metrics(self):
         repo_root = Path(__file__).resolve().parents[1]

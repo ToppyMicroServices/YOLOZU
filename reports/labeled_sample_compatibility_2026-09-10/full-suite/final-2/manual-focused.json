@@ -1,0 +1,11 @@
+{
+  "command": ".venv/bin/python -m unittest discover -s tests -p 'test_manual*' -v",
+  "exit_code": 0,
+  "tests_run": 22,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "seconds": 6.667,
+  "remediation": "Replaced the old keypoints_format literal-presence assertion with the actual keypoints JSON key in tests/test_manual_predictions_examples.py. Strict validation of the full examples remains covered by the new singular test module. No manual, PDF, runtime, or historical case-study artifacts were changed.",
+  "scope": "Focused remediation evidence; the original full-suite failure is preserved in tests.json."
+}

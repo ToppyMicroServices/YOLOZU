@@ -2,11 +2,44 @@
 
 ## Pip (default stable path)
 
+Requires Python 3.10 or newer. A virtual environment avoids modifying a
+system-managed Python installation. On macOS/Linux:
+
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 python3 -m pip install yolozu
 yolozu --help
 yolozu doctor --output -
 ```
+
+On Windows PowerShell, activation is optional when you call the environment's
+Python directly:
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install yolozu
+.\.venv\Scripts\python.exe -m yolozu --help
+.\.venv\Scripts\python.exe -m yolozu doctor --output -
+```
+
+If `yolozu` is not found after installation, use `python3 -m yolozu` from the
+same environment, or reactivate it. Do not install optional model runtimes just
+to make every `doctor` capability available; core validation and the synthetic
+demo do not need Torch, CUDA, or MPS.
+
+Try a local demo without a dataset or model download:
+
+```bash
+yolozu demo instance-seg --background synthetic --inference none --run-dir reports/quickstart_instance_seg --progress
+```
+
+The report and PNG overlays under `reports/quickstart_instance_seg/` verify
+the workflow using generated data. They do not measure a real model's accuracy.
+For real object-detection metrics, install `yolozu[coco]` and follow the
+[README evaluation steps](../README.md#install-and-evaluate-your-predictions).
+If you already have predictions, no model runtime or repository checkout is
+needed for that evaluation path.
 
 ## Optional extras
 
@@ -33,7 +66,8 @@ Note: PyTorch wheels are platform-dependent. If `pip install 'yolozu[demo]'` fai
 ## macOS / Apple Silicon beta scope
 
 `Torch backend on macOS/MPS` is a qualification path in this repo, not a blanket production-ready claim.
-MPS is supported when `torch.backends.mps.is_available()` is `true`.
+`torch.backends.mps.is_available()` reports whether this process can use MPS.
+A true result does not qualify every model, operator, precision, or workload.
 
 - good fit: `yolozu demo`, `yolozu export --backend torch`, small `rtdetr_pose/tools/train_minimal.py` smoke runs
 - not in scope: TensorRT engine build/run paths (`trtexec`, CUDA-only workflows)
@@ -52,30 +86,37 @@ Training-device notes:
 - `--amp fp16|bf16` on MPS is best-effort beta; if autocast is unavailable, the trainer warns and falls back to fp32
 - post-train ONNX export is attempted on CPU by default, even when training itself ran on MPS/CUDA
 
-## macOS / Apple Silicon Miniforge/MPS workflow
+## macOS / Apple Silicon MPS workflow
 
-You can build the environment with plain Python tooling (`venv` + `pip`) first. Miniforge/conda is not a hard requirement for YOLOZU or for Python itself. The fallback exists because MPS availability is decided by the installed Torch binary/runtime combination, not by whether Python can create the environment.
+Use `venv` and `pip` for a new source-checkout environment. Miniforge/conda is
+optional. PyTorch stopped publishing to its official Conda channel starting
+with [PyTorch 2.6](https://pytorch.org/blog/pytorch2-6/), so the old
+`conda install ... -c pytorch` route is not a source for the `torch>=2.10`
+required by YOLOZU's training extra. Do not bypass dependency checks with
+`--no-deps` during a fresh install.
 
-If a `pip`-installed PyTorch build reports `mps_available=false` on a compatible Apple Silicon Mac, try a Miniforge/conda PyTorch build before giving up on MPS.
+MPS availability depends on the runtime and the process's access to the device.
+If a probe fails inside a restricted runner, repeat the same probe with the same
+Python interpreter in a normal terminal before replacing the environment.
 
-The repo was verified on `macOS 26.3.1 arm64` with:
+An earlier `macOS 26.3.1 arm64` check recorded:
 
 - `pip` PyTorch wheels: `mps_built=true`, `mps_available=false`
 - Miniforge/conda PyTorch: `mps_built=true`, `mps_available=true`
 - `rtdetr_pose/tools/train_minimal.py --device mps --dry-run`: completed on MPS
 
-Suggested setup:
+Those observations do not isolate packaging as the cause and are not a current
+support matrix. Follow the current [PyTorch MPS notes](https://docs.pytorch.org/docs/stable/notes/mps.html)
+when diagnosing your environment.
+
+Source-checkout setup:
 
 ```bash
 git clone https://github.com/ToppyMicroServices/YOLOZU.git
 cd YOLOZU
-curl -L -o /tmp/Miniforge3-MacOSX-arm64.sh \
-  https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh
-bash /tmp/Miniforge3-MacOSX-arm64.sh -b -p "$HOME/miniforge3"
-source "$HOME/miniforge3/bin/activate"
-conda create -y -n yolozu-mps python=3.11 pytorch torchvision -c pytorch
-conda activate yolozu-mps
-python -m pip install -e '.[train]' --no-deps
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -e '.[train]'
 ```
 
 Verify MPS before longer runs:
@@ -91,13 +132,18 @@ PY
 yolozu doctor --output -
 ```
 
-Treat this as the qualification gate:
+Interpret the probe separately from workload qualification:
 
-- `torch.backends.mps.is_available() == true` means the MPS path is actually usable on this machine
+- `torch.backends.mps.is_available() == true` plus a successful tensor allocation confirms device access for this process
 - `macos_ok: true` in the manifest only means the CLI can run on macOS; it does not guarantee MPS availability
 - if `mps_available=false`, stay on `cpu` or `--device auto`
 
 Small training smoke:
+
+Use the committed `data/smoke` fixture; a fresh checkout does not contain a
+downloaded `data/coco128` dataset. The trainer's `--dry-run` performs one
+optimization step, unlike evaluation `--dry-run`, which skips metric computation.
+This checks execution, not model quality.
 
 ```bash
 PYTHONPATH="$PWD:$PWD/rtdetr_pose" \
@@ -105,7 +151,8 @@ python rtdetr_pose/tools/train_minimal.py \
   --device mps \
   --amp none \
   --dry-run \
-  --dataset-root data/coco128 \
+  --dataset-root data/smoke \
+  --split val \
   --config rtdetr_pose/configs/base.json \
   --run-dir runs/mps_train_smoke
 ```
@@ -118,10 +165,9 @@ Expected signals:
 
 If MPS still stays unavailable:
 
-- keep `PYTORCH_ENABLE_MPS_FALLBACK=1` for partial CPU fallback when an op is unsupported
-- prefer `--device auto` for day-to-day safety
-- treat Miniforge/conda as a workaround for Torch packaging/runtime mismatches, not as a requirement for Python environment creation
-- compare `pip` and `conda` outputs with `yolozu doctor --output -` to isolate whether the blocker is the Torch build or the repo config
+- `PYTORCH_ENABLE_MPS_FALLBACK=1` can handle unsupported operations after MPS is available; it does not make an unavailable device visible
+- use `cpu` or `--device auto` to continue without MPS
+- compare the interpreter, Torch version, architecture, and execution context before changing packages
 
 ## CI dependency tiers
 
@@ -167,7 +213,10 @@ yolozu demo continual --problem mnist_rotate --method ewc
 
 > **Data placement:** See [training_inference_export.md § Canonical COCO data placement](training_inference_export.md#canonical-coco-data-placement) for the full directory standard and copy-paste setup commands.
 
-# COCO instances (polygon) mask demo
+## COCO instances (polygon) mask demo
+
+The download helper below requires a source checkout and downloads COCO assets.
+The explicit synthetic demo above works from a pip install without those files.
 
 If you don't have COCO instances data yet, you can download a tiny subset (2 images) locally:
 
@@ -244,7 +293,6 @@ To run the demo suite (no subcommand) but still include the COCO instances polyg
 yolozu demo \
 	--coco-instances-json /path/to/annotations/instances_val2017.json \
 	--coco-images-dir /path/to/images/val2017
-```
 ```
 
 Demo outputs are written under `demo_output/` by default.

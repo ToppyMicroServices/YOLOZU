@@ -1,4 +1,5 @@
 \chapter{Workflows: Evaluate and Export}
+\label{chap:evaluation-workflows}
 
 \ChapterMeta{
 This chapter outlines the canonical workflows for evaluating existing artifacts, exporting predictions from a backend, and executing convenient folder-level inference.
@@ -99,11 +100,18 @@ You do not need to rerun inference; you only need a valid predictions artifact a
 
 If you have already generated a \path{predictions.json} artifact from any inference backend, you can evaluate it directly:
 \begin{lstlisting}[language=bash]
+python3 -m pip install 'yolozu[coco]'
 yolozu validate predictions /path/to/predictions.json --strict
+yolozu eval-coco --dataset /path/to/yolo-dataset --predictions /path/to/predictions.json --output reports/eval_coco.json
+\end{lstlisting}
+Replace the placeholder paths with your dataset and predictions. This installed-package
+path computes COCO metrics; \cmd{--dry-run} only checks conversion and report generation.
+
+For a suite over several saved prediction artifacts, the repository also provides:
+\begin{lstlisting}[language=bash]
 python3 tools/eval_suite.py --dataset /path/to/yolo-dataset --predictions-glob '/path/to/predictions.json'
 \end{lstlisting}
-
-This represents the most common integration pathway for external inference systems.
+The suite helper requires a source checkout.
 
 \section{Workflow B: Run inference and export predictions}
 Choose this path when you want \yolozu{} to be the boundary that turns backend-specific execution into a stable predictions artifact.

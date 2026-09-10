@@ -81,6 +81,14 @@ SynthGen intake};
 
 When links and prose disagree, treat these interface contract documents as canonical and re-verify against \path{tools/manifest.json} and tool \cmd{--help} output.
 
+\paragraph{Prediction versions and image identity.}
+The predictions wrapper uses version 1; individual entries use version 2.
+Missing legacy entry versions can be upgraded with
+\cmd{yolozu predictions migrate}. Explicit null or unsupported versions are
+rejected before normalization. Migration of a metadata-free artifact does not
+invent inference metadata. Bbox COCO evaluation rejects ambiguous basename
+fallbacks; provide the exact dataset image path when filenames repeat.
+
 \section{Datasets}
 Dataset intake uses Dataset Contract v1. Its preferred stored box form is absolute pixel \cmd{xyxy_abs}; YOLO \cmd{cxcywh_norm} and COCO \cmd{xywh_abs} are adapter views derived at backend boundaries when image size is available.
 Training data follows the same boundary: raw datasets pass through a
@@ -143,12 +151,12 @@ same metrics};
 \subsection{YOLO-style data.yaml Datasets (YOLOv8/YOLO11)}
 If your dataset is already defined by a YOLO-style \path{data.yaml} (referencing \path{images/<split>/} and \path{labels/<split>/}), \yolozu{} can generate a lightweight \path{dataset.json} wrapper, leaving the original dataset entirely unmodified.
 
-For precise command syntax and validation procedures, refer to Chapter~5 (Workflow~D: Migrate Datasets and Predictions).
+For precise command syntax and validation procedures, refer to Chapter~\ref{chap:evaluation-workflows} (Workflow~D: Migrate Datasets and Predictions).
 
 \subsection{COCO JSON Datasets (Migration)}
 Numerous ecosystems rely on COCO-style \path{instances_*.json} files for object detection. \yolozu{} can read these through a \path{dataset.json} wrapper, keep dataset boxes as \cmd{xyxy_abs}, and derive YOLO or COCO adapter views when exporting or training.
 
-For the specific conversion command, consult Chapter~5 (Workflow~D: Migrate Datasets and Predictions).
+For the specific conversion command, consult Chapter~\ref{chap:evaluation-workflows} (Workflow~D: Migrate Datasets and Predictions).
 
 \subsection{Importing Predictions from External Ecosystems}
 Frameworks such as Detectron2, MMDetection, and YOLOX frequently export detection results in COCO format. Typical fields include:
@@ -192,8 +200,11 @@ A predictions artifact typically manifests as a JSON array containing per-image 
 
 \subsection{Minimal task examples}
 Use these examples as shape checks, not as good predictions. They show the smallest artifact that a downstream evaluator can understand, plus the fields that actually affect scoring.
+The base prediction examples omit optional inference metadata. If you add
+\cmd{meta}, provide its complete fields as described in
+\path{docs/predictions_schema.md}; a partial metadata object fails strict validation.
 
-\paragraph{Detection}
+\paragraph{Detection}\mbox{}\par
 \begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
 {
   "schema_version": 1,
@@ -211,11 +222,7 @@ Use these examples as shape checks, not as good predictions. They show the small
         }
       ]
     }
-  ],
-  "meta": {
-    "task": "detect",
-    "export_settings": {"bbox_format": "cxcywh_norm"}
-  }
+  ]
 }
 \end{lstlisting}
 
@@ -227,7 +234,7 @@ Use these examples as shape checks, not as good predictions. They show the small
   \item Scoring uses: class ID, score order, box coordinates, dataset labels, and the chosen evaluation protocol.
 \end{itemize}
 
-\paragraph{Instance segmentation}
+\paragraph{Instance segmentation}\mbox{}\par
 \begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
 {
   "schema_version": 1,
@@ -253,9 +260,10 @@ Use these examples as shape checks, not as good predictions. They show the small
   \item Scoring uses: mask pixels, class ID, score order, GT masks, and the mask loading policy.
 \end{itemize}
 
-\paragraph{Keypoints}
+\paragraph{Keypoints}\mbox{}\par
 \begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
 {
+  "schema_version": 1,
   "predictions": [
     {
       "schema_version": 2,
@@ -274,8 +282,7 @@ Use these examples as shape checks, not as good predictions. They show the small
         }
       ]
     }
-  ],
-  "meta": {"task": "keypoints", "keypoints_format": "xy_norm"}
+  ]
 }
 \end{lstlisting}
 
@@ -308,9 +315,10 @@ Depth evaluation compares a predicted depth map with a GT depth map. In the benc
   \item Scoring uses: predicted depth pixels, GT depth pixels, optional valid-pixel mask, scale factors, and alignment policy.
 \end{itemize}
 
-\paragraph{6DoF pose}
+\paragraph{6DoF pose}\mbox{}\par
 \begin{lstlisting}[language=json,basicstyle=\ttfamily\footnotesize]
 {
+  "schema_version": 1,
   "predictions": [
     {
       "schema_version": 2,
@@ -328,8 +336,7 @@ Depth evaluation compares a predicted depth map with a GT depth map. In the benc
         }
       ]
     }
-  ],
-  "meta": {"task": "pose6d", "depth_unit": "metric"}
+  ]
 }
 \end{lstlisting}
 

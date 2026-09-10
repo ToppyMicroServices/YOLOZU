@@ -64,7 +64,7 @@ python3 tools/check_schema_compatibility.py
 python3 tools/check_golden_compatibility.py
 python3 tools/release.py --check --output reports/release_metadata_check.json
 python3 -m unittest tests.test_adaptive_vision_roadmap_generator tests.test_manifest_docs_references tests.test_tool_manifest tests.test_packaged_tools_manifest
-python3 -m unittest tests.test_generated_cli_reference tests.test_ssot_capability_coverage
+python3 -m unittest tests.test_generated_cli_reference tests.test_ssot_capability_coverage tests.test_manual_prediction_examples
 python3 -m unittest tests.test_backend_shape_format_contracts tests.test_external_inference_templates_smoke tests.test_summarize_gpu_ngc_run_tool
 python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.release.json
 # optional but recommended when auditing repository settings / badge evidence

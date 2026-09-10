@@ -1,0 +1,37 @@
+{
+  "source": "docs/yolozu_manual.pdf",
+  "sha256": "790fc63d05bc1f26766afaa57b25531baacb375f33fa135be120b4a48fee6bfd",
+  "status": "reviewed_with_minor_observation",
+  "scope": "Visual inspection of all 27 contact sheets, covering all 175 pages in Poppler, PDFium, and PDFKit; selected full-size page images as listed below. This is not full-size inspection or line-by-line proofreading of all pages, and is not user approval.",
+  "page_numbering": "One-based physical PDF pages, not printed page labels",
+  "contact_sheets_reviewed": {
+    "poppler": ["poppler-contact-01.png", "poppler-contact-02.png", "poppler-contact-03.png", "poppler-contact-04.png", "poppler-contact-05.png", "poppler-contact-06.png", "poppler-contact-07.png", "poppler-contact-08.png", "poppler-contact-09.png"],
+    "pdfium": ["pdfium-contact-01.png", "pdfium-contact-02.png", "pdfium-contact-03.png", "pdfium-contact-04.png", "pdfium-contact-05.png", "pdfium-contact-06.png", "pdfium-contact-07.png", "pdfium-contact-08.png", "pdfium-contact-09.png"],
+    "pdfkit": ["pdfkit-contact-01.png", "pdfkit-contact-02.png", "pdfkit-contact-03.png", "pdfkit-contact-04.png", "pdfkit-contact-05.png", "pdfkit-contact-06.png", "pdfkit-contact-07.png", "pdfkit-contact-08.png", "pdfkit-contact-09.png"]
+  },
+  "full_size_pages_reviewed": {
+    "poppler": [1, 4, 18, 19, 24, 25, 27, 175],
+    "pdfium": [19, 25, 27],
+    "pdfkit": [19, 25, 27]
+  },
+  "blocking_findings": [],
+  "minor_observations": [
+    {
+      "page": 27,
+      "printed_page": 25,
+      "renderers": ["poppler", "pdfium", "pdfkit"],
+      "description": "The code-listing top rules begin after the bold inline titles and extend farther right than the listing bodies. Text remains inside the bodies and no content loss was observed. The same appearance occurs in all three renderers."
+    }
+  ],
+  "observed": [
+    "No obvious blank-page render failures, overlapping content blocks, or clipped content were observed in the inspected contact sheets.",
+    "The reusable-sample instructions and version declarations on page 19 and prediction-version/image-identity paragraph on page 25 are legible in all three full-size renders.",
+    "Cover date, contents entries, chapter transitions, and final references were visually present in the reviewed images."
+  ],
+  "not_checked": [
+    "Full-size visual inspection of every page",
+    "Line-by-line technical proofreading of the entire manual",
+    "User review or approval"
+  ],
+  "user_review": "not_performed"
+}

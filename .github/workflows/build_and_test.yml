@@ -175,6 +175,7 @@ jobs:
           python tools/generate_benchmark_support_matrix.py --check --json
           python tools/generate_web_docs.py --check --json
           python -m unittest \
+            tests.test_manual_prediction_examples \
             tests.test_adaptive_vision_roadmap_generator \
             tests.test_adaptive_evidence_activation \
             tests.test_adaptive_evidence_contracts \

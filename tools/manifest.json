@@ -1013,9 +1013,10 @@
       "id": "audit_manual_cli_drift",
       "inputs": [
         {
-          "default": "manual/chapters/04_cli_reference.tex",
+          "default": "manual/chapters",
+          "description": "A TeX chapter file or directory of chapters; checks command macros and code listings.",
           "flag": "--manual",
-          "kind": "file",
+          "kind": "string",
           "name": "manual",
           "required": false
         },
@@ -1064,7 +1065,7 @@
         "python_packages": []
       },
       "runner": "python3",
-      "summary": "Audit manual chapter 04 against canonical yolozu CLI help and the legacy wrapper passthrough help surface.",
+      "summary": "Audit all manual chapters, including code listings, against canonical yolozu CLI help and legacy wrapper help.",
       "tags": [
         "cli",
         "manual",
@@ -3392,6 +3393,83 @@
         "security",
         "governance",
         "repo-policy"
+      ]
+    },
+    {
+      "docs": [
+        "docs/versions.md",
+        "docs/labeled_sample.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Creates a new report directory with logs, generated labeled samples, relocated copies, and COCO evaluation reports; refuses an existing output directory.",
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/ci/check_sample_compatibility.py",
+      "examples": [
+        {
+          "command": "python3 tools/ci/check_sample_compatibility.py --wheel /path/to/yolozu-candidate.whl --output-dir reports/sample_compatibility",
+          "description": "Check an already installed non-editable candidate wheel and its coco extra through sample generation, strict validation, and evaluation after relocation."
+        }
+      ],
+      "id": "check_sample_compatibility",
+      "inputs": [
+        {
+          "description": "Exact candidate wheel already installed in the invoking interpreter.",
+          "flag": "--wheel",
+          "kind": "file",
+          "name": "wheel",
+          "required": true
+        },
+        {
+          "description": "New output directory; existing paths are never overwritten.",
+          "flag": "--output-dir",
+          "kind": "dir",
+          "name": "output_dir",
+          "required": true
+        },
+        {
+          "description": "Source Git revision used to build the candidate wheel.",
+          "flag": "--source-revision",
+          "kind": "string",
+          "name": "source_revision",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": null,
+          "description": "compatibility-report.json, command logs, samples, and COCO reports under --output-dir.",
+          "kind": "dir",
+          "name": "compatibility_evidence"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "python_packages": [
+          "yolozu",
+          "pip",
+          "pycocotools"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Verify installed candidate-wheel identity, dependency consistency, and labeled-sample evaluation before and after relocation.",
+      "tags": [
+        "compatibility",
+        "installation",
+        "evaluation"
       ]
     },
     {
@@ -20382,6 +20460,8 @@
         "docs/tools_index.md",
         "docs/import_adapters.md",
         "docs/doctor_diagnostics.md",
+        "docs/labeled_sample.md",
+        "docs/versions.md",
         "docs/interop_yolox.md",
         "docs/byop_quickstarts.md",
         "docs/training_inference_export.md",
@@ -20435,7 +20515,7 @@
             "scope": "path"
           },
           {
-            "description": "Optional run directory for continual runners.",
+            "description": "Run directory for continual runners and demos. demo dataset defaults to reports/labeled_sample and refuses any existing path.",
             "flag": "--run-dir",
             "kind": "dir",
             "scope": "tree"
@@ -20476,7 +20556,7 @@
         },
         {
           "command": "python3 -m yolozu guide --goal evaluate",
-          "description": "Print beginner-friendly route guidance with copy-paste evaluation commands."
+          "description": "Print a self-contained evaluation route using doctor-generated toy artifacts, with explicit dry-run and real-COCO guidance. Printing the guide does not execute the commands."
         },
         {
           "command": "python3 -m yolozu guide --goal first-run",
@@ -20489,6 +20569,10 @@
         {
           "command": "python3 -m yolozu demo overview --output reports/demo_overview_report.json",
           "description": "Demo overview report (capability coverage + dependency checks + visible quickstart command)."
+        },
+        {
+          "command": "python3 -m yolozu demo dataset --run-dir reports/labeled_sample --seed 0",
+          "description": "Create eight portable synthetic images with YOLO labels, class mapping, known predictions, a labeled preview, and a versioned sample manifest; refuses existing output paths."
         },
         {
           "command": "python3 -m yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress",
@@ -20947,7 +21031,7 @@
           "required": false
         },
         {
-          "description": "Selects the beginner guide route for `yolozu guide` (`all`, `first-run`, `evaluate`, `export`, or `debug`).",
+          "description": "Selects the beginner guide route for `yolozu guide` (`all`, `first-run`, `evaluate`, `export`, or `debug`). Evaluation/export/debug examples generate their own toy inputs and need no checkout assets.",
           "flag": "--goal",
           "kind": "string",
           "name": "goal",
@@ -21450,6 +21534,7 @@
         },
         {
           "default": null,
+          "description": "Subcommand-specific run directory. demo dataset defaults to reports/labeled_sample and never overwrites an existing path.",
           "flag": "--run-dir",
           "kind": "dir",
           "name": "run_dir",
@@ -22149,6 +22234,12 @@
           "description": "Doctor proof artifact directory containing toy dataset, known predictions, evaluation report, and proof report when --proof is used.",
           "kind": "dir",
           "name": "doctor_proof_dir"
+        },
+        {
+          "default": "reports/labeled_sample",
+          "description": "demo dataset output: eight synthetic images, YOLO labels and classes, data.yaml, known predictions, labeled preview, README, and versioned sample manifest with hashes.",
+          "kind": "dir",
+          "name": "labeled_sample_dir"
         }
       ],
       "platform": {

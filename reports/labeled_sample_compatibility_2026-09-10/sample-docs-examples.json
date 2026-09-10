@@ -1,0 +1,12 @@
+{
+  "checked_examples": 6,
+  "docs": [
+    "docs/labeled_sample.md",
+    "docs/versions.md"
+  ],
+  "failures": [],
+  "kind": "docs_examples_drift_audit",
+  "ok": true,
+  "schema_version": 1,
+  "subchecks": []
+}

@@ -12,6 +12,31 @@ The shared validation and evaluation lane is stable. The four inference
 exporters remain external-runtime bridges: YOLOZU does not bundle their
 frameworks, checkpoints, or framework-specific licenses.
 
+## Already have a predictions JSON file?
+
+You can use the installed CLI directly without a framework exporter or source
+checkout. In an activated Python 3.10+ environment, install COCO evaluation
+support and replace the paths below with your files:
+
+```bash
+python3 -m pip install 'yolozu[coco]'
+yolozu validate predictions /absolute/path/to/predictions.json --strict
+yolozu validate dataset /absolute/path/to/yolo-dataset --split val --strict
+yolozu eval-coco \
+  --dataset /absolute/path/to/yolo-dataset --split val \
+  --predictions /absolute/path/to/predictions.json \
+  --bbox-format cxcywh_norm --output reports/coco_eval.json
+```
+
+The dataset uses `images/val/` and `labels/val/` with YOLO-format ground truth.
+The prediction image keys, zero-based class IDs, and normalized `cx, cy, w, h`
+boxes must agree with that dataset; see the [predictions interface contract](predictions_schema.md).
+The report's `metrics.map50_95` and `metrics.map50` contain measured COCO scores.
+With `--dry-run`, those metrics are `null` because COCOeval did not run.
+
+Use one of the following framework routes only when you still need to export
+model predictions into this format.
+
 New artifacts from these four quickstarts declare wrapper
 `schema_version: 1` and per-entry `schema_version: 2`. The strict validator
 should print `OK` without a legacy-version `WARN:` for both real and smoke
@@ -36,14 +61,19 @@ compatibility path.
 
 ## One-time setup
 
-Run from a YOLOZU source checkout. Install the evaluation dependency, then
-prepare each framework in the environment where its own import and model load
-already work:
+Run the exporter routes from a YOLOZU source checkout. Activate the environment
+where your chosen framework's import and model load already work, then install
+YOLOZU's evaluation dependency into it:
 
 ```bash
+git clone https://github.com/ToppyMicroServices/YOLOZU.git
+cd YOLOZU
 python3 -m pip install -e ".[coco]"
-python3 -m yolozu validate dataset /absolute/path/to/yolo-dataset --strict
+python3 -m yolozu validate dataset /absolute/path/to/yolo-dataset --split val --strict
 ```
+
+If you already have the checkout, start with `cd` rather than cloning again.
+Use the same split in this preflight and `BYOP_SPLIT` below.
 
 The dataset must have matching `images/<split>/` and `labels/<split>/`
 directories. The framework class indices must match the YOLO-format label

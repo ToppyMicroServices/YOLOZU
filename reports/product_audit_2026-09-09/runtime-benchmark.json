@@ -1,0 +1,56 @@
+{
+  "baseline_revision": "b5f5601",
+  "environment": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]",
+    "executable_name": "python3.14"
+  },
+  "scope": "Local synthetic CPU evaluation and dataset-validation overhead; no inference or accuracy claim.",
+  "simple_map": {
+    "images": 2000,
+    "ground_truth_boxes": 2000,
+    "detections": 4000,
+    "classes": 20,
+    "thresholds": 10,
+    "seconds": {
+      "before": [
+        1.940861250001035,
+        1.7353688330003934,
+        1.7100657089977176
+      ],
+      "after": [
+        0.21591516700209468,
+        0.2056290420005098,
+        0.20387487500192947
+      ]
+    },
+    "median_seconds": {
+      "before": 1.7353688330003934,
+      "after": 0.2056290420005098
+    },
+    "speedup": 8.439317793427696,
+    "metrics_before_after": {
+      "map50": 1,
+      "map50_95": 1
+    }
+  },
+  "dataset_validation": {
+    "generated_records": 100000,
+    "check_images": false,
+    "measurements": {
+      "before": {
+        "seconds_with_tracemalloc": 0.6806238749995828,
+        "peak_allocated_bytes": 29773146
+      },
+      "after": {
+        "seconds_with_tracemalloc": 0.414065249999112,
+        "peak_allocated_bytes": 1588
+      }
+    }
+  },
+  "randomized_metric_parity": {
+    "seeds": 100,
+    "threshold_configurations_per_seed": 4,
+    "exact_equal": true
+  }
+}

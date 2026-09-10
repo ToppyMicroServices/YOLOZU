@@ -18,6 +18,10 @@ wrapped, they also declare wrapper `schema_version: 1`. Missing versions remain
 accepted for older artifacts, but strict validation reports
 legacy-compatibility migration warnings.
 
+Explicit `null` is not a missing version. Unsupported wrapper or entry versions
+are rejected by loading, validation, and migration rather than silently
+normalized. `class_id` must be an integer, not a JSON boolean.
+
 ## Allowed top-level shapes
 
 ### Shape A: array of entries
@@ -55,11 +59,7 @@ legacy-compatibility migration warnings.
         }
       ]
     }
-  ],
-  "meta": {
-    "adapter": "rtdetr_pose",
-    "images": 1
-  }
+  ]
 }
 ```
 

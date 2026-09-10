@@ -109,7 +109,7 @@ def _validate_detection(det: Any, *, strict: bool, where: str) -> list[str]:
     warnings.extend(_validate_bbox(det["bbox"], strict=strict, where=f"{where}.bbox"))
 
     if "class_id" in det:
-        if strict and not isinstance(det["class_id"], int):
+        if strict and (not isinstance(det["class_id"], int) or isinstance(det["class_id"], bool)):
             raise ValueError(f"{where}: detection.class_id must be int")
     else:
         if strict:
@@ -216,8 +216,7 @@ def _coerce_entry_schema_version(
     where: str,
     warnings: list[str],
 ) -> tuple[int, dict[str, Any]]:
-    raw = entry.get("schema_version")
-    if raw is None:
+    if "schema_version" not in entry:
         migrated = dict(entry)
         migrated["schema_version"] = CURRENT_ENTRY_SCHEMA_VERSION
         warnings.append(
@@ -225,6 +224,7 @@ def _coerce_entry_schema_version(
         )
         return CURRENT_ENTRY_SCHEMA_VERSION, migrated
 
+    raw = entry["schema_version"]
     if not isinstance(raw, int) or isinstance(raw, bool):
         raise ValueError(f"{where}.schema_version: must be int")
     if raw < MIN_SUPPORTED_ENTRY_SCHEMA_VERSION:
@@ -432,7 +432,7 @@ def canonicalize_predictions(
             else:
                 det_out["bbox"] = bbox_out
             if "class_id" in det_out:
-                if strict and not isinstance(det_out["class_id"], int):
+                if strict and (not isinstance(det_out["class_id"], int) or isinstance(det_out["class_id"], bool)):
                     raise ValueError(f"{det_where}.class_id: must be int")
             dets_out.append(det_out)
 
@@ -618,6 +618,7 @@ def validate_predictions_entries(entries: Iterable[dict[str, Any]], *, strict: b
 def load_predictions_entries(path: str | Path) -> list[dict[str, Any]]:
     path = Path(path)
     data = json.loads(path.read_text())
+    validate_payload_schema_version(data, artifact="predictions")
     entries, _ = normalize_predictions_payload(data)
     return canonicalize_predictions(entries, strict=False, policy="clamp").entries
 
@@ -625,6 +626,7 @@ def load_predictions_entries(path: str | Path) -> list[dict[str, Any]]:
 def load_predictions_payload(path: str | Path) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
     path = Path(path)
     data = json.loads(path.read_text())
+    validate_payload_schema_version(data, artifact="predictions")
     entries, meta = normalize_predictions_payload(data)
     canonical = canonicalize_predictions(entries, strict=False, policy="clamp")
     return canonical.entries, meta

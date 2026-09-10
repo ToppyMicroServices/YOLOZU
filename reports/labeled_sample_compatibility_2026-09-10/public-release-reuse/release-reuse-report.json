@@ -1,0 +1,626 @@
+{
+  "kind": "public_release_labeled_sample_reuse",
+  "schema_version": 1,
+  "scope": "Same synthetic labeled sample, public 4.6.0 and 4.7.0, macOS arm64 Python3.14; not universal compatibility.",
+  "generator_source_sha256": "a11b70167378fbc2dd8a7e213785b9709bd154da8aff149a701935ff33dfabd7",
+  "sample_manifest_sha256": "11d00ff74206f92d019cbdbb4d91bdbc697c395c7c7f5ecfb81331bfd0dce981",
+  "source_files_sha256": {
+    "README.md": "536e1465106187030c0f21f5421c114a7133087db792021a2052b342506b6528",
+    "data.yaml": "671e7af3e60beffe0d372ee318b7af2691e8145226cd72c7683c318b586be600",
+    "images/train/train_0001.png": "7959227a2fcecaf9dd949c26fd7e4111decb8d620af60b4606cd156cf3a44a4d",
+    "images/train/train_0002.png": "253440a83e306a31b32045ed65d4646421562765d4374db21f466c24260f00ee",
+    "images/train/train_0003.png": "b00462938a6121840218716291558f197d67f34cb77a91a0d810511a14fe7552",
+    "images/train/train_0004.png": "92c71ea277552b385b73b53d4e2796d2f6a420f1494ec37805dc8f3f65135195",
+    "images/val/val_0001.png": "7e0015da0b363a2ea3c821544f1ddd3f58fde12a3d84654244006f970432d36c",
+    "images/val/val_0002.png": "36f9937d65f56333760e020862e5d06793a758458296bdd7eed1c9a27c9352f6",
+    "images/val/val_0003.png": "9b286f7ea33511e798d86a5878a61da2bc8ef8739bc43aa807c2e410829d6f6e",
+    "images/val/val_0004.png": "36526201b101379428082e7d47e34e9e1d55960581be6ade9f597786a55696df",
+    "labeled_preview.png": "a810a3efceb4dbfcbbc9331f3355ad70612a64ebe7a5fa8116bc59413a19f120",
+    "labels/train/classes.json": "50f67921e3877edcce1e7cb23a84bb64b01b47bc46e04e6431e75ec7aa393c2c",
+    "labels/train/train_0001.txt": "76869872e9f0693c6decec191c37461e2b03c20b2034a5f47f5e50cad2f2e31a",
+    "labels/train/train_0002.txt": "52de4bc1e74bde9bd403d3ef4a0adb5a75934bc5e23b88f271e19af943f60cef",
+    "labels/train/train_0003.txt": "6ab9253072ad419570fcd398afd11bc994a4c6e7253b1ea69d66015c1e395cb7",
+    "labels/train/train_0004.txt": "f167115e9b21970f86de8a53be2d2a3aad0c7fef9459fd038757505d38138548",
+    "labels/val/classes.json": "50f67921e3877edcce1e7cb23a84bb64b01b47bc46e04e6431e75ec7aa393c2c",
+    "labels/val/val_0001.txt": "d7ff32cdb8396774d2bd3dfd5ddf880acbfbf09c7af5857a025586a1387e28b7",
+    "labels/val/val_0002.txt": "58edbb876006c51a032588e3c379bcfc79947b268f6f95ab41091ae5e5cb3d00",
+    "labels/val/val_0003.txt": "8ec950d0896ef5db6aebf7265b640cbde65c3ffa5b6ba563194eca48e88cd093",
+    "labels/val/val_0004.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "predictions.json": "6399c62799e73a0bcded3b10052e338b975420ada39367f7e1affc0aee2248a8",
+    "sample_manifest.json": "11d00ff74206f92d019cbdbb4d91bdbc697c395c7c7f5ecfb81331bfd0dce981"
+  },
+  "relative_prediction_paths": true,
+  "releases": [
+    {
+      "expected_version": "4.6.0",
+      "environment": "reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv",
+      "cwd": "temporary directory outside repository",
+      "steps": [
+        {
+          "name": "installed-identity",
+          "argv": [
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv/bin/python",
+            "-I",
+            "-c",
+            "\nimport importlib.metadata as metadata\nimport json\nfrom pathlib import Path\nimport platform\nimport sys\nimport yolozu\ndistribution = metadata.distribution('yolozu')\ndirect = json.loads(distribution.read_text('direct_url.json') or '{}')\nversions = {}\nfor name in ('yolozu', 'numpy', 'Pillow', 'PyYAML', 'pycocotools', 'typing_extensions'):\n    try:\n        versions[name] = metadata.version(name)\n    except metadata.PackageNotFoundError:\n        versions[name] = None\nprint(json.dumps({\n    'version': distribution.version, 'module_version': yolozu.__version__,\n    'module_file': str(Path(yolozu.__file__).resolve()),\n    'distribution_module_file': str(Path(distribution.locate_file('yolozu/__init__.py')).resolve()),\n    'editable': bool(direct.get('dir_info', {}).get('editable', False)),\n    'python': platform.python_version(), 'system': platform.system(),\n    'machine': platform.machine(), 'dependencies': versions,\n}))\n"
+          ],
+          "exit_code": 0,
+          "seconds": 0.112764,
+          "log": "4.6.0/logs/installed-identity.log"
+        },
+        {
+          "name": "pip-check",
+          "argv": [
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv/bin/python",
+            "-I",
+            "-m",
+            "pip",
+            "check"
+          ],
+          "exit_code": 0,
+          "seconds": 0.400251,
+          "log": "4.6.0/logs/pip-check.log"
+        },
+        {
+          "name": "dataset-help",
+          "argv": [
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "dataset",
+            "--help"
+          ],
+          "exit_code": 0,
+          "seconds": 0.16209,
+          "log": "4.6.0/logs/dataset-help.log"
+        },
+        {
+          "name": "predictions-help",
+          "argv": [
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "predictions",
+            "--help"
+          ],
+          "exit_code": 0,
+          "seconds": 0.165088,
+          "log": "4.6.0/logs/predictions-help.log"
+        },
+        {
+          "name": "eval-help",
+          "argv": [
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "eval-coco",
+            "--help"
+          ],
+          "exit_code": 0,
+          "seconds": 0.143126,
+          "log": "4.6.0/logs/eval-help.log"
+        },
+        {
+          "name": "original-dataset-train",
+          "argv": [
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/shared labeled sample",
+            "--split",
+            "train",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.658035,
+          "log": "4.6.0/logs/original-dataset-train.log"
+        },
+        {
+          "name": "original-dataset-val",
+          "argv": [
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/shared labeled sample",
+            "--split",
+            "val",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.265565,
+          "log": "4.6.0/logs/original-dataset-val.log"
+        },
+        {
+          "name": "original-yaml",
+          "argv": [
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/shared labeled sample/data.yaml",
+            "--split",
+            "val",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.225977,
+          "log": "4.6.0/logs/original-yaml.log"
+        },
+        {
+          "name": "original-predictions",
+          "argv": [
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "predictions",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/shared labeled sample/predictions.json",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.183855,
+          "log": "4.6.0/logs/original-predictions.log"
+        },
+        {
+          "name": "original-coco",
+          "argv": [
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "eval-coco",
+            "--dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/shared labeled sample",
+            "--split",
+            "val",
+            "--predictions",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/shared labeled sample/predictions.json",
+            "--output",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/4.6.0/original-coco.json"
+          ],
+          "exit_code": 0,
+          "seconds": 1.129742,
+          "log": "4.6.0/logs/original-coco.log"
+        },
+        {
+          "name": "relocated-dataset-train",
+          "argv": [
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/relocated labeled sample with spaces",
+            "--split",
+            "train",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.186483,
+          "log": "4.6.0/logs/relocated-dataset-train.log"
+        },
+        {
+          "name": "relocated-dataset-val",
+          "argv": [
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/relocated labeled sample with spaces",
+            "--split",
+            "val",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.183719,
+          "log": "4.6.0/logs/relocated-dataset-val.log"
+        },
+        {
+          "name": "relocated-yaml",
+          "argv": [
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/relocated labeled sample with spaces/data.yaml",
+            "--split",
+            "val",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.181741,
+          "log": "4.6.0/logs/relocated-yaml.log"
+        },
+        {
+          "name": "relocated-predictions",
+          "argv": [
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "predictions",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/relocated labeled sample with spaces/predictions.json",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.156993,
+          "log": "4.6.0/logs/relocated-predictions.log"
+        },
+        {
+          "name": "relocated-coco",
+          "argv": [
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/legacy-4.6-venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "eval-coco",
+            "--dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/relocated labeled sample with spaces",
+            "--split",
+            "val",
+            "--predictions",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/relocated labeled sample with spaces/predictions.json",
+            "--output",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/4.6.0/relocated-coco.json"
+          ],
+          "exit_code": 0,
+          "seconds": 0.284683,
+          "log": "4.6.0/logs/relocated-coco.log"
+        }
+      ],
+      "ok": true,
+      "wheel": {
+        "filename": "yolozu-4.6.0-py3-none-any.whl",
+        "sha256": "5313c55d955b5ed606b9c4ee93b169cd4c5efcf6e81ccf99729741b7e22deac6",
+        "version": "4.6.0",
+        "installed_package_files_verified": 286,
+        "package_content_sha256": "80723192d36d6298e3b5b930e75ab7fd47c107a2f3719b6d02297a9351c63bbe"
+      },
+      "runtime": {
+        "python": "3.14.6",
+        "system": "Darwin",
+        "machine": "arm64",
+        "dependencies": {
+          "yolozu": "4.6.0",
+          "numpy": "2.5.3",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": null
+        }
+      },
+      "module_file_in_environment": "lib/python3.14/site-packages/yolozu/__init__.py",
+      "metrics": {
+        "original": {
+          "ar100": 1.0,
+          "map50": 1.0,
+          "map50_95": 1.0,
+          "map75": 1.0
+        },
+        "relocated": {
+          "ar100": 1.0,
+          "map50": 1.0,
+          "map50_95": 1.0,
+          "map75": 1.0
+        }
+      }
+    },
+    {
+      "expected_version": "4.7.0",
+      "environment": "reports/product_audit_2026-09-09/public-install-network/venv",
+      "cwd": "temporary directory outside repository",
+      "steps": [
+        {
+          "name": "installed-identity",
+          "argv": [
+            "<repository>/reports/product_audit_2026-09-09/public-install-network/venv/bin/python",
+            "-I",
+            "-c",
+            "\nimport importlib.metadata as metadata\nimport json\nfrom pathlib import Path\nimport platform\nimport sys\nimport yolozu\ndistribution = metadata.distribution('yolozu')\ndirect = json.loads(distribution.read_text('direct_url.json') or '{}')\nversions = {}\nfor name in ('yolozu', 'numpy', 'Pillow', 'PyYAML', 'pycocotools', 'typing_extensions'):\n    try:\n        versions[name] = metadata.version(name)\n    except metadata.PackageNotFoundError:\n        versions[name] = None\nprint(json.dumps({\n    'version': distribution.version, 'module_version': yolozu.__version__,\n    'module_file': str(Path(yolozu.__file__).resolve()),\n    'distribution_module_file': str(Path(distribution.locate_file('yolozu/__init__.py')).resolve()),\n    'editable': bool(direct.get('dir_info', {}).get('editable', False)),\n    'python': platform.python_version(), 'system': platform.system(),\n    'machine': platform.machine(), 'dependencies': versions,\n}))\n"
+          ],
+          "exit_code": 0,
+          "seconds": 0.17286,
+          "log": "4.7.0/logs/installed-identity.log"
+        },
+        {
+          "name": "pip-check",
+          "argv": [
+            "<repository>/reports/product_audit_2026-09-09/public-install-network/venv/bin/python",
+            "-I",
+            "-m",
+            "pip",
+            "check"
+          ],
+          "exit_code": 0,
+          "seconds": 0.446794,
+          "log": "4.7.0/logs/pip-check.log"
+        },
+        {
+          "name": "dataset-help",
+          "argv": [
+            "<repository>/reports/product_audit_2026-09-09/public-install-network/venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "dataset",
+            "--help"
+          ],
+          "exit_code": 0,
+          "seconds": 0.167438,
+          "log": "4.7.0/logs/dataset-help.log"
+        },
+        {
+          "name": "predictions-help",
+          "argv": [
+            "<repository>/reports/product_audit_2026-09-09/public-install-network/venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "predictions",
+            "--help"
+          ],
+          "exit_code": 0,
+          "seconds": 0.171976,
+          "log": "4.7.0/logs/predictions-help.log"
+        },
+        {
+          "name": "eval-help",
+          "argv": [
+            "<repository>/reports/product_audit_2026-09-09/public-install-network/venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "eval-coco",
+            "--help"
+          ],
+          "exit_code": 0,
+          "seconds": 0.192473,
+          "log": "4.7.0/logs/eval-help.log"
+        },
+        {
+          "name": "original-dataset-train",
+          "argv": [
+            "<repository>/reports/product_audit_2026-09-09/public-install-network/venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/shared labeled sample",
+            "--split",
+            "train",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.231275,
+          "log": "4.7.0/logs/original-dataset-train.log"
+        },
+        {
+          "name": "original-dataset-val",
+          "argv": [
+            "<repository>/reports/product_audit_2026-09-09/public-install-network/venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/shared labeled sample",
+            "--split",
+            "val",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.201037,
+          "log": "4.7.0/logs/original-dataset-val.log"
+        },
+        {
+          "name": "original-yaml",
+          "argv": [
+            "<repository>/reports/product_audit_2026-09-09/public-install-network/venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/shared labeled sample/data.yaml",
+            "--split",
+            "val",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.189492,
+          "log": "4.7.0/logs/original-yaml.log"
+        },
+        {
+          "name": "original-predictions",
+          "argv": [
+            "<repository>/reports/product_audit_2026-09-09/public-install-network/venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "predictions",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/shared labeled sample/predictions.json",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.160879,
+          "log": "4.7.0/logs/original-predictions.log"
+        },
+        {
+          "name": "original-coco",
+          "argv": [
+            "<repository>/reports/product_audit_2026-09-09/public-install-network/venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "eval-coco",
+            "--dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/shared labeled sample",
+            "--split",
+            "val",
+            "--predictions",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/shared labeled sample/predictions.json",
+            "--output",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/4.7.0/original-coco.json"
+          ],
+          "exit_code": 0,
+          "seconds": 0.33908,
+          "log": "4.7.0/logs/original-coco.log"
+        },
+        {
+          "name": "relocated-dataset-train",
+          "argv": [
+            "<repository>/reports/product_audit_2026-09-09/public-install-network/venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/relocated labeled sample with spaces",
+            "--split",
+            "train",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.175626,
+          "log": "4.7.0/logs/relocated-dataset-train.log"
+        },
+        {
+          "name": "relocated-dataset-val",
+          "argv": [
+            "<repository>/reports/product_audit_2026-09-09/public-install-network/venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/relocated labeled sample with spaces",
+            "--split",
+            "val",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.173087,
+          "log": "4.7.0/logs/relocated-dataset-val.log"
+        },
+        {
+          "name": "relocated-yaml",
+          "argv": [
+            "<repository>/reports/product_audit_2026-09-09/public-install-network/venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/relocated labeled sample with spaces/data.yaml",
+            "--split",
+            "val",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.173944,
+          "log": "4.7.0/logs/relocated-yaml.log"
+        },
+        {
+          "name": "relocated-predictions",
+          "argv": [
+            "<repository>/reports/product_audit_2026-09-09/public-install-network/venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "validate",
+            "predictions",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/relocated labeled sample with spaces/predictions.json",
+            "--strict"
+          ],
+          "exit_code": 0,
+          "seconds": 0.15419,
+          "log": "4.7.0/logs/relocated-predictions.log"
+        },
+        {
+          "name": "relocated-coco",
+          "argv": [
+            "<repository>/reports/product_audit_2026-09-09/public-install-network/venv/bin/python",
+            "-I",
+            "-m",
+            "yolozu",
+            "eval-coco",
+            "--dataset",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/relocated labeled sample with spaces",
+            "--split",
+            "val",
+            "--predictions",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/relocated labeled sample with spaces/predictions.json",
+            "--output",
+            "<repository>/reports/labeled_sample_compatibility_2026-09-10/public-release-reuse/4.7.0/relocated-coco.json"
+          ],
+          "exit_code": 0,
+          "seconds": 0.256273,
+          "log": "4.7.0/logs/relocated-coco.log"
+        }
+      ],
+      "ok": true,
+      "wheel": {
+        "filename": "yolozu-4.7.0-py3-none-any.whl",
+        "sha256": "5ff9073e7d88a1bb4bf5c9510c2812ba16b338d15071234a68fc086be16b7f3a",
+        "version": "4.7.0",
+        "installed_package_files_verified": 358,
+        "package_content_sha256": "fb036678fe4321568683fede070268f35a504bed30cd1e611156f186c5537d23"
+      },
+      "runtime": {
+        "python": "3.14.6",
+        "system": "Darwin",
+        "machine": "arm64",
+        "dependencies": {
+          "yolozu": "4.7.0",
+          "numpy": "2.5.3",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": null
+        }
+      },
+      "module_file_in_environment": "lib/python3.14/site-packages/yolozu/__init__.py",
+      "metrics": {
+        "original": {
+          "ar100": 1.0,
+          "map50": 1.0,
+          "map50_95": 1.0,
+          "map75": 1.0
+        },
+        "relocated": {
+          "ar100": 1.0,
+          "map50": 1.0,
+          "map50_95": 1.0,
+          "map75": 1.0
+        }
+      }
+    }
+  ],
+  "ok": true,
+  "source_files_unchanged": true,
+  "cross_release_metrics_identical": true
+}

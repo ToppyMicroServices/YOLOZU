@@ -143,7 +143,7 @@ write effects; `--overwrite` is restricted to owned conversion roots.
 - Conditional OpenVINO benchmark: `python3 -m yolozu benchmark --model runs/example/model.pt --openvino-model exports/example.xml --data data/coco8.yaml --format torch,openvino --parity-reference-backend openvino --dry-run --output reports/benchmark_openvino_report.json`
   - canonical and standalone benchmark surfaces accept the same OpenVINO override/reference choices; detect execution requires an external OpenVINO install and compatible IR, while artifact-backed tasks consume prepared files without an OpenVINO runtime check
 - Manual CLI drift audit: `python3 tools/audit_manual_cli_drift.py --json`
-  - checks manual chapter 04 against `python3 -m yolozu --help` and the legacy wrapper help surface
+  - checks every manual chapter, including code listings, against `python3 -m yolozu --help` and the legacy wrapper help surface; `--manual` accepts one TeX file or a chapter directory
 - SynthGen intake eval (kpts/seg/depth): `python3 tools/eval_synthgen.py --dataset-root /path/to/synthgen_dataset --predictions /path/to/synthgen_dataset/shards/predictions_synthgen.json --schema-id animal_v1 --output reports/synthgen_eval.json`
 - Generic depth pair eval: `python3 tools/eval_depth.py --pred-depth /path/to/pred_depth.npy --gt-depth /path/to/gt_depth.npy --align median_scale --output reports/depth_eval.json`
   - writes `abs_rel`, `sq_rel`, `rmse`, `rmse_log`, `delta1/2/3`, plus valid-pixel counts
