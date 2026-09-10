@@ -86,6 +86,9 @@ python3 tools/validate_predictions.py \
 
 ## Reproduce from a clean source tree
 
+For exact reproduction, use a separate clean checkout at commit
+`2218b465fe2c6f8a0d2a541df293f198a9fe76c6`, whose source hashes are recorded in
+the published bundle. A newer checkout is not the same historical baseline.
 Use Python 3.12 and a new virtual environment. The recorded separate clean run
 used Python 3.12.13, Torch 2.10.0, Torchvision 0.25.0, Pillow 12.2.0,
 NumPy 2.4.4, and pycocotools 2.0.11; the exact executed environment remains
@@ -97,7 +100,7 @@ public release versions of those dependencies (ignoring local suffixes such as
 OS release, machine, processor, and Python patch version remain provenance but
 are not hard equality conditions.
 The first install command pins the CPU runtime pair and the second installs the
-current source plus the COCO evaluator.
+that checkout plus the COCO evaluator.
 
 ```bash
 python3.12 -m venv .venv-case-study
@@ -133,6 +136,10 @@ result, or metrics do not reproduce. Its comparison is written to
 The checked-in
 [`reproduction_check.json`](../assets/case_studies/maskrcnn_eager_torchscript/reproduction_check.json)
 records the separate clean run performed for this publication.
+
+To check the current source instead, use a new, empty `--output-dir` and omit
+`--baseline-dir`. This produces a separate current-runtime comparison; it does
+not reproduce or replace the historical bundle.
 
 If `--output-dir` already contains a case-study bundle and `--baseline-dir` is
 omitted, the generator uses that existing bundle as an implicit baseline. It
