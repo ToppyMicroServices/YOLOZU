@@ -17,6 +17,8 @@ and prediction-file compatibility.
 
 ## Testing
 
+- The final source-checkout suite ran 1,736 tests with 18 environment skips,
+  zero failures, and zero errors; Ruff and whitespace checks passed.
 - The 4.8.0 candidate passed installed-wheel identity checks, `pip check`, strict
   sample validation, and official COCO evaluation before and after relocation.
 - Published 4.6.0 and 4.7.0 both read the same generated sample on macOS arm64 /

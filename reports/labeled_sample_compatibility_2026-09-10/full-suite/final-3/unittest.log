@@ -1,0 +1,94 @@
+............................................................................................................................................................................................................................................................................../Users/akira/YOLOZU/tmpk081mbok/backend_support_audit.json
+................................................................................................................................................................................................./Users/akira/YOLOZU/tmp53kjzhpb/model.onnx
+................................../var/folders/_x/c6_p83cs5wxd3bxp685kdp100000gn/T/tmp22ow8jkz/predictions.json
+...................................sss.........................................................................depth demo: model=depth_anything depth_range=[0.1, 1.5] (output_dir=/Users/akira/YOLOZU/tmpuavhx9ge/depth_run)
+/Users/akira/YOLOZU/tmpuavhx9ge/depth_report.json
+.keypoints demo: persons=1 image=data/smoke/images/val/000001.jpg (output_dir=/Users/akira/YOLOZU/tmpbylafeom/keypoints_run)
+/Users/akira/YOLOZU/tmpbylafeom/keypoints_run/overlay.png
+/Users/akira/YOLOZU/tmpbylafeom/keypoints_report.json
+.demo overview:
+/Users/akira/YOLOZU/tmpkom4trle/demo_overview_report.json
+visible quickstart (writes PNG overlays):
+yolozu demo instance-seg --run-dir reports/quickstart_instance_seg --progress
+settings checklist:
+configs/quickstart/instance_seg_demo.yaml
+expected PNG:
+reports/quickstart_instance_seg/overlays/overlay_img_0000.png
+.pose demo (chessboard): t_xyz=[0.1, 0.2, 0.3] (output_dir=/Users/akira/YOLOZU/tmpf27iulxr/pose_run)
+/Users/akira/YOLOZU/tmpf27iulxr/pose_run/overlay.png
+/Users/akira/YOLOZU/tmpf27iulxr/pose_report.json
+.train demo: steps=5 loss_mean=0.500 val_acc=0.800 (output_dir=/Users/akira/YOLOZU/tmpeab2a5v0/train_run)
+/Users/akira/YOLOZU/tmpeab2a5v0/train_report.json
+....................................................................................................................../Users/akira/YOLOZU/tests/test_export_predictions_torchscript_tool.py:44: TracerWarning: torch.tensor results are registered as constants in the trace. You can safely ignore this warning if you use this function to create tensors out of constant variables that would be the same every time you call this function. In any other case, this might cause the trace to be incorrect.
+  return torch.tensor([[[0.1, 0.2, 0.5, 0.7, 0.9, 2.0]]], dtype=x.dtype, device=x.device)
+....../Users/akira/YOLOZU/tmp5j4rsv_w/predictions.json
+..../Users/akira/YOLOZU/tmplt5wrk04/predictions.json
+..............................................ss.........................................................................s...................................................CREATE+LINK T44-open -> #23
+Done. Linked 1 Beads issues.
+...................................................sssssss..........................................ss...........................................................................................................................torch.compile not available; using explicit eager fallback
+...torch.compile setup failed (invalid backend); using explicit eager fallback
+...torch.compile first execution failed (lazy compile failure); using explicit eager fallback
+....s/Users/akira/YOLOZU/.venv/lib/python3.14/site-packages/torch/profiler/profiler.py:272: UserWarning: Warning: Profiler clears events at the end of each cycle.Only events from the current cycle will be reported.To keep events across cycles, set acc_events=True.
+  _warn_once(
+..................................................................................................................s.s..../Users/akira/YOLOZU/tmpqq5274q2/reports/multitask_finetune_demo_report.json
+........../Users/akira/YOLOZU/tmpzis1iruu/concise/plan.json
+./Users/akira/YOLOZU/tmp09qk3m29/mim/plan.json
+./Users/akira/YOLOZU/tmpfchomctv/mim_probe/plan.json
+.../Users/akira/YOLOZU/tmprbvd9s1z/tent/plan.json
+/Users/akira/YOLOZU/tmprbvd9s1z/mim/plan.json
+/Users/akira/YOLOZU/tmprbvd9s1z/mim_probe/plan.json
+/Users/akira/YOLOZU/tmprbvd9s1z/cotta/plan.json
+/Users/akira/YOLOZU/tmprbvd9s1z/eata/plan.json
+/Users/akira/YOLOZU/tmprbvd9s1z/sar/plan.json
+/Users/akira/YOLOZU/tmprbvd9s1z/detector_response/plan.json
+............/var/folders/_x/c6_p83cs5wxd3bxp685kdp100000gn/T/tmpv4v6u4if/out/plan.json
+.usage: run_tests.py [-h] -d DATASET -x SHIFTED_DATASET [-s SPLIT]
+                    -c CHECKPOINT --mim-checkpoint MIM_CHECKPOINT -o OUT
+                    [--methods METHODS] [--seeds SEEDS] [-n MAX_IMAGES]
+                    [--image-size IMAGE_SIZE] [--device DEVICE]
+                    [--score-threshold SCORE_THRESHOLD]
+                    [--max-detections MAX_DETECTIONS]
+                    [--protocol {yolo26,nms_applied,e2e_nms_free}] [--dry-run]
+                    [--force]
+
+Run clean and shifted TTT comparisons for at least three seeds and aggregate
+generated COCO, calibration, collapse, and cost metrics.
+
+options:
+  -h, --help            show this help message and exit
+  -d, --dataset DATASET
+                        Clean YOLO dataset.
+  -x, --shifted-dataset SHIFTED_DATASET
+                        Deterministic shifted dataset.
+  -s, --split SPLIT     Dataset split.
+  -c, --checkpoint CHECKPOINT
+                        Full-compatible base checkpoint.
+  --mim-checkpoint MIM_CHECKPOINT
+                        Full-compatible MIM checkpoint.
+  -o, --out OUT         Evidence output directory.
+  --methods METHODS     Comma-separated method list.
+  --seeds SEEDS         At least three unique integer seeds.
+  -n, --max-images MAX_IMAGES
+  --image-size IMAGE_SIZE
+  --device DEVICE
+  --score-threshold SCORE_THRESHOLD
+  --max-detections MAX_DETECTIONS
+  --protocol {yolo26,nms_applied,e2e_nms_free}
+                        Optional canonical eval protocol; omit for arbitrary
+                        dataset splits.
+  --dry-run             Validate and write child plans only.
+  --force               Overwrite known child artifacts; directories are never
+                        recursively deleted.
+...............case-study checks failed; existing output bundle was preserved
+................................................................................................................................/var/folders/_x/c6_p83cs5wxd3bxp685kdp100000gn/T/tmp6d9vjthi/dod_summary.json
+./var/folders/_x/c6_p83cs5wxd3bxp685kdp100000gn/T/tmpsmwjzr5p/dod_summary.json
+./var/folders/_x/c6_p83cs5wxd3bxp685kdp100000gn/T/tmpllzq5re6/dod_summary.json
+..................................................................................WARNING: ONNX export failed — bad axis. Training results are saved; the run continues without a post-training ONNX artifact.
+..........dataset_stats cad_points=0 depth=0 intrinsics=0 mask=0 pose=0
+epoch=0 step=1 optim_step=1 loss=4.8644
+epoch=0 done steps=1 optim_step=1 loss=4.8644
+.........................................................................................................................................................................................................
+----------------------------------------------------------------------
+Ran 1736 tests in 613.453s
+
+OK (skipped=18)

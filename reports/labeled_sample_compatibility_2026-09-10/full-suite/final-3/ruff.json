@@ -1,0 +1,5 @@
+{
+  "command": ".venv/bin/python -m ruff check . && git diff --check",
+  "exit_code": 0,
+  "output": "All checks passed!\n"
+}
