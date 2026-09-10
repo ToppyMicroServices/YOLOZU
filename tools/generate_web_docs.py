@@ -958,6 +958,11 @@ def _search_index(
             for item in tool.get("inputs") or []
             if isinstance(item, dict)
         )
+        examples = " ".join(
+            example["command"]
+            for example in tool.get("examples") or []
+            if isinstance(example, dict) and isinstance(example.get("command"), str)
+        )
         entries.append(
             {
                 "title": tool_id,
@@ -966,7 +971,7 @@ def _search_index(
                 "href": f"commands.html#tool-{_slug(tool_id)}",
                 "search_text": (
                     f"{tool_id} {tool['summary']} {tool['maturity']} "
-                    f"{tool['entrypoint']} {flags}"
+                    f"{tool['entrypoint']} {flags} {examples}"
                 ),
             }
         )
