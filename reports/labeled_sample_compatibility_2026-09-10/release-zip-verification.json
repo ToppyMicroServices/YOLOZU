@@ -1,0 +1,294 @@
+{
+  "kind": "yolozu_release_zip_verification",
+  "schema_version": 1,
+  "release_version": "4.8.0",
+  "verified_at_utc": "2026-09-11T00:31:13.498372Z",
+  "method": "Read-only independent recheck of the already-redownloaded public release ZIP. No extraction, upload, download, or existing-artifact modification.",
+  "asset_url": "https://github.com/ToppyMicroServices/YOLOZU/releases/download/v4.8.0/yolozu-labeled-sample-v4.8.0.zip",
+  "downloaded_asset_path": "reports/labeled_sample_compatibility_2026-09-10/public-v4.8-release-download/yolozu-labeled-sample-v4.8.0.zip",
+  "public_checksum_asset_path": "reports/labeled_sample_compatibility_2026-09-10/public-v4.8-release-download/yolozu-labeled-sample-v4.8.0.zip.sha256",
+  "sample_reference_path": "reports/labeled_sample_compatibility_2026-09-10/public-v4.8/sample",
+  "archive": {
+    "sha256": "9d439c4cb6408ce955740292e360893adbc5c7d40079cd77111c6fb5c5b75652",
+    "bytes": 30557,
+    "matches_downloaded_public_checksum": true,
+    "checksum_filename_matches": true,
+    "matches_prior_release_asset_verification_sha256": true,
+    "byte_identical_to_original_sample_zip": true,
+    "member_count": 30,
+    "file_count": 23,
+    "directory_count": 7,
+    "directory_entries": [
+      "sample/",
+      "sample/images/",
+      "sample/images/train/",
+      "sample/images/val/",
+      "sample/labels/",
+      "sample/labels/train/",
+      "sample/labels/val/"
+    ],
+    "uncompressed_bytes": 44389
+  },
+  "crc": {
+    "method": "zipfile.ZipFile.testzip() plus explicit binascii.crc32 for every file",
+    "files_checked": 23,
+    "first_bad_member": null,
+    "all_pass": true
+  },
+  "safe_paths": {
+    "all_pass": true,
+    "members_checked": 30,
+    "unsafe_members": [],
+    "checks": [
+      "No absolute POSIX paths, UNC paths, or Windows drive paths.",
+      "No parent traversal, dot/empty path segments, backslashes, or control characters.",
+      "Every member stays under the single sample/ root; an explicit sample/ directory entry is allowed.",
+      "No duplicate names or case-fold collisions.",
+      "No symlinks, device/special files, or encrypted members."
+    ]
+  },
+  "sample_identity": {
+    "files_compared": 23,
+    "exact_file_set_match": true,
+    "all_file_bytes_identical": true,
+    "missing_members": [],
+    "extra_members": []
+  },
+  "members": [
+    {
+      "path": "sample/images/train/train_0002.png",
+      "uncompressed_bytes": 1086,
+      "compressed_bytes": 616,
+      "crc32_expected": "e4b54756",
+      "crc32_actual": "e4b54756",
+      "crc_ok": true,
+      "sha256": "4ce36ec37e67d8d0b26647981816b654d96f4dd1e3074c886cdbc35f0a5a8ab9",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/images/train/train_0003.png",
+      "uncompressed_bytes": 1087,
+      "compressed_bytes": 629,
+      "crc32_expected": "9a46aadb",
+      "crc32_actual": "9a46aadb",
+      "crc_ok": true,
+      "sha256": "4936b4aac3e2e76fd57e19784d1e93a87a14bd6b4f43831bc12fabd7be2f02c7",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/images/train/train_0001.png",
+      "uncompressed_bytes": 1034,
+      "compressed_bytes": 549,
+      "crc32_expected": "564aabda",
+      "crc32_actual": "564aabda",
+      "crc_ok": true,
+      "sha256": "fada356682f871ea878e443412d18984d03d782205f119d12c295fd4e01259a7",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/images/train/train_0004.png",
+      "uncompressed_bytes": 1045,
+      "compressed_bytes": 572,
+      "crc32_expected": "b82f1d93",
+      "crc32_actual": "b82f1d93",
+      "crc_ok": true,
+      "sha256": "5086542164398b3befd5e13f206fcc286de4f26e5fe85de46552e006b74517ba",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/images/val/val_0004.png",
+      "uncompressed_bytes": 781,
+      "compressed_bytes": 130,
+      "crc32_expected": "6705b339",
+      "crc32_actual": "6705b339",
+      "crc_ok": true,
+      "sha256": "f62f5c2e6b6bf9a5fe335828877a305cafd4a8352eae655d53e9baf836cf42bb",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/images/val/val_0001.png",
+      "uncompressed_bytes": 1012,
+      "compressed_bytes": 516,
+      "crc32_expected": "6ba928f1",
+      "crc32_actual": "6ba928f1",
+      "crc_ok": true,
+      "sha256": "51d957794252470e9865f044fabb5beb05c1f93033c1a95a6ae9801f46047ff7",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/images/val/val_0002.png",
+      "uncompressed_bytes": 1053,
+      "compressed_bytes": 582,
+      "crc32_expected": "3bea43df",
+      "crc32_actual": "3bea43df",
+      "crc_ok": true,
+      "sha256": "83a7e8bbc7783b59c8339311d8120d9c548ee0d24ccf5fd25fb3de155c363b85",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/images/val/val_0003.png",
+      "uncompressed_bytes": 1026,
+      "compressed_bytes": 543,
+      "crc32_expected": "3edfe1d0",
+      "crc32_actual": "3edfe1d0",
+      "crc_ok": true,
+      "sha256": "3dc71f70b6fc1b0563e6f4079b0498910d4b96fbeefaa5fe52c7568fc1eae6c5",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/labeled_preview.png",
+      "uncompressed_bytes": 24668,
+      "compressed_bytes": 18764,
+      "crc32_expected": "8f01dfa0",
+      "crc32_actual": "8f01dfa0",
+      "crc_ok": true,
+      "sha256": "7e58f7a051feaf6bb5d8be4d2d92c8bc3c2661de724d111f7f30185bc50879ed",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/labels/train/classes.json",
+      "uncompressed_bytes": 189,
+      "compressed_bytes": 117,
+      "crc32_expected": "861450c9",
+      "crc32_actual": "861450c9",
+      "crc_ok": true,
+      "sha256": "50f67921e3877edcce1e7cb23a84bb64b01b47bc46e04e6431e75ec7aa393c2c",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/labels/train/train_0003.txt",
+      "uncompressed_bytes": 120,
+      "compressed_bytes": 60,
+      "crc32_expected": "fdee7fff",
+      "crc32_actual": "fdee7fff",
+      "crc_ok": true,
+      "sha256": "6ab9253072ad419570fcd398afd11bc994a4c6e7253b1ea69d66015c1e395cb7",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/labels/train/train_0002.txt",
+      "uncompressed_bytes": 103,
+      "compressed_bytes": 50,
+      "crc32_expected": "c453d8fd",
+      "crc32_actual": "c453d8fd",
+      "crc_ok": true,
+      "sha256": "52de4bc1e74bde9bd403d3ef4a0adb5a75934bc5e23b88f271e19af943f60cef",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/labels/train/train_0001.txt",
+      "uncompressed_bytes": 98,
+      "compressed_bytes": 50,
+      "crc32_expected": "c0d99be0",
+      "crc32_actual": "c0d99be0",
+      "crc_ok": true,
+      "sha256": "76869872e9f0693c6decec191c37461e2b03c20b2034a5f47f5e50cad2f2e31a",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/labels/train/train_0004.txt",
+      "uncompressed_bytes": 107,
+      "compressed_bytes": 57,
+      "crc32_expected": "b49b135a",
+      "crc32_actual": "b49b135a",
+      "crc_ok": true,
+      "sha256": "f167115e9b21970f86de8a53be2d2a3aad0c7fef9459fd038757505d38138548",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/labels/val/classes.json",
+      "uncompressed_bytes": 189,
+      "compressed_bytes": 117,
+      "crc32_expected": "861450c9",
+      "crc32_actual": "861450c9",
+      "crc_ok": true,
+      "sha256": "50f67921e3877edcce1e7cb23a84bb64b01b47bc46e04e6431e75ec7aa393c2c",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/labels/val/val_0004.txt",
+      "uncompressed_bytes": 0,
+      "compressed_bytes": 0,
+      "crc32_expected": "00000000",
+      "crc32_actual": "00000000",
+      "crc_ok": true,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/labels/val/val_0001.txt",
+      "uncompressed_bytes": 94,
+      "compressed_bytes": 54,
+      "crc32_expected": "cefdb998",
+      "crc32_actual": "cefdb998",
+      "crc_ok": true,
+      "sha256": "d7ff32cdb8396774d2bd3dfd5ddf880acbfbf09c7af5857a025586a1387e28b7",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/labels/val/val_0003.txt",
+      "uncompressed_bytes": 90,
+      "compressed_bytes": 52,
+      "crc32_expected": "c592562c",
+      "crc32_actual": "c592562c",
+      "crc_ok": true,
+      "sha256": "8ec950d0896ef5db6aebf7265b640cbde65c3ffa5b6ba563194eca48e88cd093",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/labels/val/val_0002.txt",
+      "uncompressed_bytes": 98,
+      "compressed_bytes": 51,
+      "crc32_expected": "0007bd27",
+      "crc32_actual": "0007bd27",
+      "crc_ok": true,
+      "sha256": "58edbb876006c51a032588e3c379bcfc79947b268f6f95ab41091ae5e5cb3d00",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/README.md",
+      "uncompressed_bytes": 1461,
+      "compressed_bytes": 772,
+      "crc32_expected": "534ee9ca",
+      "crc32_actual": "534ee9ca",
+      "crc_ok": true,
+      "sha256": "536e1465106187030c0f21f5421c114a7133087db792021a2052b342506b6528",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/data.yaml",
+      "uncompressed_bytes": 142,
+      "compressed_bytes": 108,
+      "crc32_expected": "8bf21af8",
+      "crc32_actual": "8bf21af8",
+      "crc_ok": true,
+      "sha256": "671e7af3e60beffe0d372ee318b7af2691e8145226cd72c7683c318b586be600",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/sample_manifest.json",
+      "uncompressed_bytes": 7099,
+      "compressed_bytes": 1982,
+      "crc32_expected": "0b62037b",
+      "crc32_actual": "0b62037b",
+      "crc_ok": true,
+      "sha256": "518e565cd9e732051c94a01279dff3681e43ac1e071e57bd6d1fde577e49f6ad",
+      "matches_public_package_generated_sample": true
+    },
+    {
+      "path": "sample/predictions.json",
+      "uncompressed_bytes": 1807,
+      "compressed_bytes": 298,
+      "crc32_expected": "b189a0a1",
+      "crc32_actual": "b189a0a1",
+      "crc_ok": true,
+      "sha256": "6399c62799e73a0bcded3b10052e338b975420ada39367f7e1affc0aee2248a8",
+      "matches_public_package_generated_sample": true
+    }
+  ],
+  "limitations": [
+    "Public provenance uses the previously downloaded release asset and checksum; no new network fetch was performed.",
+    "This verifies ZIP integrity, safe member paths, and sample identity. It does not add a new model or user-data evaluation."
+  ],
+  "ok": true
+}

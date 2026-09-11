@@ -14,9 +14,9 @@ qualification claim.
   and all four release-helper quality checks pass.
   See `release-tag-report.json`.
 
-The final PR rerun was still queued at merge time. The packaged runtime,
-dependencies, workflows, and primary READMEs were unchanged from commit
-`658e9bf`, whose four CI workflows passed. Later changes corrected historical
+The final PR rerun was still queued at merge time. The runtime and build paths
+listed in the retained source comparison were unchanged from commit `658e9bf`,
+whose PR CI passed; its full-gate job was skipped. Later changes corrected historical
 documentation and a stale manual assertion, retained test evidence, and included
 the existing main adoption snapshot. The final source suite ran 1,736 tests with
 zero failures/errors and 18 environment skips; focused document checks passed.
@@ -42,13 +42,17 @@ and four relevant source files match the wheel; a local sdist build was not run.
 See `public-v4.8-artifacts/public-verification.json`,
 `public-v4.8/compatibility-report.json`, and
 `public-v4.8-journey/installed-journey.json`.
+The journey's short per-file hash block is a subset, not a complete evaluator
+provenance manifest. `public-evaluator-verification.json` separately records
+the official COCO evaluator's source files and their public-wheel identity.
 
 The [labeled sample ZIP](https://github.com/ToppyMicroServices/YOLOZU/releases/download/v4.8.0/yolozu-labeled-sample-v4.8.0.zip)
 and its checksum are attached to the release. A fresh release-asset download
 matches all 23 source files, has safe paths and valid ZIP CRCs, and has SHA-256
 `9d439c4cb6408ce955740292e360893adbc5c7d40079cd77111c6fb5c5b75652`.
 See `release-assets-verification.json`; the earlier pre-upload package report
-is retained unchanged.
+is retained as a historical capture. `release-zip-verification.json` repeats
+the public-download CRC and path checks with explicit outcomes.
 
 The actual release commit also passed all eight candidate CI lanes in run
 34542754702: Linux Python 3.10–3.14, macOS Python 3.14, Windows Python 3.12,
@@ -143,6 +147,18 @@ consented first-use observation. Beads state was shared at `f7785ae`, with the
 successful frozen-binary follow-up at `912fec2`, preserving
 all remote rows, tombstones, and interactions and excluding the unrelated
 local-only issue from publication.
+
+## Published evidence views
+
+Machine-local paths in the public JSON views are normalized to placeholders.
+Exact raw captures remain in the ignored local `private-evidence/` directory.
+`redaction-report.json` records the normalization rules and before/after JSON
+hashes. Package, PDF, sample, and source-code hashes still refer to the actual
+verified bytes. The CI supplement distinguishes the unchanged historical raw
+capture from its normalized public view; normalization does not change a
+canceled result into a passing one.
+This applies to the published head, not retroactive redaction of earlier PR
+commits or repository history.
 
 ## Limits
 

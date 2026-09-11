@@ -61,7 +61,7 @@
     "requirement": "yolozu[coco]==4.8.0",
     "no_cache": true,
     "isolated_pip": true,
-    "working_directory": "/private/tmp",
+    "working_directory": "<temporary-directory>",
     "exit_code": 0,
     "noneditable": true,
     "python": "3.14.6",

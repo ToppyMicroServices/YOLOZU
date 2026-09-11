@@ -1214,7 +1214,7 @@
       "main_ci_trigger_has_no_paths_restriction": true
     },
     "local_reproduction": {
-      "module": "/Users/akira/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/pnpm/dist/node_modules/picomatch",
+      "module": "<runtime-bundle>/dependencies/node/node_modules/pnpm/dist/node_modules/picomatch",
       "version": "4.0.5",
       "paths": [
         {

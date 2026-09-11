@@ -1,0 +1,249 @@
+{
+  "kind": "yolozu_public_evidence_path_normalization",
+  "schema_version": 1,
+  "normalized_at_utc": "2026-09-11T00:30:12.242973+00:00",
+  "scope": "Only JSON files newly added relative to origin/main in PR304; no Markdown, Beads logs, older reports, or runtime artifacts were normalized.",
+  "raw_captures": "Exact original bytes are kept under ignored private-evidence/, using the same audit-relative subpaths. They are local-only and must not be staged or published.",
+  "public_view": "Path placeholders are presentation redactions, not literal executed paths. Raw and public-view hashes are distinct where bytes changed.",
+  "rules": [
+    {
+      "id": "repository-root",
+      "replacement": "<repo>",
+      "description": "Replace the local YOLOZU checkout prefix."
+    },
+    {
+      "id": "runtime-bundle",
+      "replacement": "<runtime-bundle>",
+      "description": "Replace the user-specific bundled-runtime prefix; preserve package subpaths."
+    },
+    {
+      "id": "runner-workspace",
+      "replacement": "<runner-workspace>",
+      "description": "Replace the hosted CI checkout prefix."
+    },
+    {
+      "id": "temporary-directory",
+      "replacement": "<temporary-directory>",
+      "description": "Replace the machine-local temporary-directory prefix."
+    },
+    {
+      "id": "homebrew-prefix",
+      "replacement": "<homebrew-prefix>",
+      "description": "Replace the local package-manager installation prefix."
+    }
+  ],
+  "hash_scope_adjustment": "main-ci-final.json labels the earlier workflow-report digest as raw_capture_sha256 and records public_view_sha256 separately. The original cancellation and later CI results are unchanged.",
+  "preserved": [
+    "HTTP(S) URLs",
+    "existing SHA-256 values",
+    "version and platform values",
+    "test counts, timings, statuses, and execution claims"
+  ],
+  "checks": {
+    "raw_copy_byte_equality": true,
+    "raw_copies_git_ignored": true,
+    "http_urls_unchanged": true,
+    "existing_hash_values_preserved": true,
+    "only_declared_path_and_hash_scope_changes": true
+  },
+  "files": [
+    {
+      "path": "hosted-docs-v4.8-search-fixed/browser-verification.json",
+      "raw_capture_sha256": "821c7dc86d9478deaa4023bbfaddfdcd5fd8fb2051d5907a3f3ac173a05d0cb3",
+      "public_view_sha256": "821c7dc86d9478deaa4023bbfaddfdcd5fd8fb2051d5907a3f3ac173a05d0cb3",
+      "changed": false,
+      "changes": []
+    },
+    {
+      "path": "hosted-docs-v4.8-search-fixed/deployment.json",
+      "raw_capture_sha256": "6e5963219e114809dbd467766181173e2eeafc5ac075e6925b7e9cad9b72edd4",
+      "public_view_sha256": "6e5963219e114809dbd467766181173e2eeafc5ac075e6925b7e9cad9b72edd4",
+      "changed": false,
+      "changes": []
+    },
+    {
+      "path": "hosted-docs-v4.8-search-fixed/public-verification.json",
+      "raw_capture_sha256": "3e2aaa2187913802d8b8c43248da20cab07ea2edc3b7ca199cb675516c25f070",
+      "public_view_sha256": "3e2aaa2187913802d8b8c43248da20cab07ea2edc3b7ca199cb675516c25f070",
+      "changed": false,
+      "changes": []
+    },
+    {
+      "path": "hosted-docs-v4.8/deployment.json",
+      "raw_capture_sha256": "09cc4df72dfcaede739b13fd21db62562418fef7f646a98f89300cc73b4c016a",
+      "public_view_sha256": "09cc4df72dfcaede739b13fd21db62562418fef7f646a98f89300cc73b4c016a",
+      "changed": false,
+      "changes": []
+    },
+    {
+      "path": "hosted-docs-v4.8/public-verification.json",
+      "raw_capture_sha256": "b956129192bd1ff395e7b6de95431ed824fa4420f194acafa1e30758f1f5306b",
+      "public_view_sha256": "b956129192bd1ff395e7b6de95431ed824fa4420f194acafa1e30758f1f5306b",
+      "changed": false,
+      "changes": []
+    },
+    {
+      "path": "main-ci-final.json",
+      "raw_capture_sha256": "5b44b5acae79d68735d1ccd04a5948fdd7190f3f45d3d8cb717141d4a28395ef",
+      "public_view_sha256": "cad373402766a9f23fdf947f4e7fe532814a198bdd064398f3292e422eb26251",
+      "changed": true,
+      "changes": [
+        {
+          "json_pointer": "/selected_nonsecret_log_lines/4",
+          "rule": "runner-workspace",
+          "replacements": 1
+        },
+        {
+          "json_pointer": "/historical_report",
+          "rule": "raw-and-public-hash-scope",
+          "replacements": 1
+        }
+      ]
+    },
+    {
+      "path": "public-manual-v4.8-qa/qa-report.json",
+      "raw_capture_sha256": "cc07a10516ad4d875d76a8f8cd9266f1b7037218afb9022e659b09268f94523b",
+      "public_view_sha256": "cc07a10516ad4d875d76a8f8cd9266f1b7037218afb9022e659b09268f94523b",
+      "changed": false,
+      "changes": []
+    },
+    {
+      "path": "public-manual-v4.8-qa/visual-review.json",
+      "raw_capture_sha256": "77adc052f167938bb80cdebad8460073521e2fb85fffac1ae737cb25aeaff737",
+      "public_view_sha256": "77adc052f167938bb80cdebad8460073521e2fb85fffac1ae737cb25aeaff737",
+      "changed": false,
+      "changes": []
+    },
+    {
+      "path": "public-manual-v4.8/publication-verification.json",
+      "raw_capture_sha256": "3d6b25cfde76f336bf1a53df2ea0a7bad543e3271b163ed7312ed190f7bcdadf",
+      "public_view_sha256": "3d6b25cfde76f336bf1a53df2ea0a7bad543e3271b163ed7312ed190f7bcdadf",
+      "changed": false,
+      "changes": []
+    },
+    {
+      "path": "public-v4.8-artifacts/artifact-integrity.json",
+      "raw_capture_sha256": "468ef611bfc54b9cf216227101ebca84ffca065911da785f5f592812b8f0aa8c",
+      "public_view_sha256": "468ef611bfc54b9cf216227101ebca84ffca065911da785f5f592812b8f0aa8c",
+      "changed": false,
+      "changes": []
+    },
+    {
+      "path": "public-v4.8-artifacts/public-verification.json",
+      "raw_capture_sha256": "5ec4f6e149a9416a9e9621b2ef66dd660fc92067707e8ac665d305689281a259",
+      "public_view_sha256": "061a474200bd0cd45a2a4d1dc1a0d9e5805f943b18e4baaabef0d305c18b35d8",
+      "changed": true,
+      "changes": [
+        {
+          "json_pointer": "/install/working_directory",
+          "rule": "temporary-directory",
+          "replacements": 1
+        }
+      ]
+    },
+    {
+      "path": "public-v4.8-journey/installed-journey.json",
+      "raw_capture_sha256": "9cd493ea165305f53d73742f7571a395f36057bda950d23bab01f639961e7fd1",
+      "public_view_sha256": "9cd493ea165305f53d73742f7571a395f36057bda950d23bab01f639961e7fd1",
+      "changed": false,
+      "changes": []
+    },
+    {
+      "path": "public-v4.8/compatibility-report.json",
+      "raw_capture_sha256": "cb76f5db0752b0443d7a07d0ca2e25e403d7c4726947008bb14e1da1bb20d9f6",
+      "public_view_sha256": "cb76f5db0752b0443d7a07d0ca2e25e403d7c4726947008bb14e1da1bb20d9f6",
+      "changed": false,
+      "changes": []
+    },
+    {
+      "path": "release-assets-verification.json",
+      "raw_capture_sha256": "7d2a0f9e73947e0a66d5e3cd952b8af02cee86331125fb35ba2a64b417ce7582",
+      "public_view_sha256": "7d2a0f9e73947e0a66d5e3cd952b8af02cee86331125fb35ba2a64b417ce7582",
+      "changed": false,
+      "changes": []
+    },
+    {
+      "path": "release-ci-summary.json",
+      "raw_capture_sha256": "cc0f90da15f6b3804587df059971df3b27b24080edace871d2327f8e9a9da252",
+      "public_view_sha256": "cc0f90da15f6b3804587df059971df3b27b24080edace871d2327f8e9a9da252",
+      "changed": false,
+      "changes": []
+    },
+    {
+      "path": "release-tag-report.json",
+      "raw_capture_sha256": "3531cbc07f55527934a7c5f9341ab1267cd10d805979bf14f9ff22ec457ba2b1",
+      "public_view_sha256": "23246571f8bd13d0408de085bd0540ece7fb1cb145e45c49cec0bb5373c82233",
+      "changed": true,
+      "changes": [
+        {
+          "json_pointer": "/steps/0/cwd",
+          "rule": "repository-root",
+          "replacements": 1
+        },
+        {
+          "json_pointer": "/steps/0/stdout",
+          "rule": "repository-root",
+          "replacements": 1
+        },
+        {
+          "json_pointer": "/steps/1/cwd",
+          "rule": "repository-root",
+          "replacements": 1
+        },
+        {
+          "json_pointer": "/steps/2/cwd",
+          "rule": "repository-root",
+          "replacements": 1
+        },
+        {
+          "json_pointer": "/steps/3/cwd",
+          "rule": "repository-root",
+          "replacements": 1
+        },
+        {
+          "json_pointer": "/steps/3/stdout",
+          "rule": "repository-root",
+          "replacements": 1
+        },
+        {
+          "json_pointer": "/steps/4/cwd",
+          "rule": "repository-root",
+          "replacements": 1
+        },
+        {
+          "json_pointer": "/steps/5/cwd",
+          "rule": "repository-root",
+          "replacements": 1
+        },
+        {
+          "json_pointer": "/steps/5/stdout",
+          "rule": "repository-root",
+          "replacements": 5
+        },
+        {
+          "json_pointer": "/steps/5/stdout",
+          "rule": "homebrew-prefix",
+          "replacements": 2
+        },
+        {
+          "json_pointer": "/steps/6/cwd",
+          "rule": "repository-root",
+          "replacements": 1
+        }
+      ]
+    },
+    {
+      "path": "release-workflows-verification.json",
+      "raw_capture_sha256": "e1733e1d9e177a8f77f22c5dcebd49b0996ecc8b6ceb7b120b8abca005d3d791",
+      "public_view_sha256": "cb2f5208aea6d38381a631ed81e4144ff646435ef7a173dd0f948abe609af5ef",
+      "changed": true,
+      "changes": [
+        {
+          "json_pointer": "/evidence_only_ci_routing/local_reproduction/module",
+          "rule": "runtime-bundle",
+          "replacements": 1
+        }
+      ]
+    }
+  ]
+}

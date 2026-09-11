@@ -6,11 +6,13 @@
   "release_source_revision": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
   "historical_report": {
     "path": "reports/labeled_sample_compatibility_2026-09-10/release-workflows-verification.json",
-    "sha256": "e1733e1d9e177a8f77f22c5dcebd49b0996ecc8b6ceb7b120b8abca005d3d791",
-    "modified": false,
     "release_main_run_id": 34542754706,
     "release_main_conclusion": "cancelled",
-    "note": "This supplement does not rewrite the release-commit cancellation or its earlier bounded snapshot."
+    "note": "This supplement does not rewrite the release-commit cancellation or its earlier bounded snapshot. The original sha256/modified fields described the raw capture, preserved byte-for-byte in ignored private evidence. The published view replaces a machine-local path; its separate hash is public_view_sha256.",
+    "raw_capture_sha256": "e1733e1d9e177a8f77f22c5dcebd49b0996ecc8b6ceb7b120b8abca005d3d791",
+    "raw_capture_modified": false,
+    "public_view_sha256": "cb2f5208aea6d38381a631ed81e4144ff646435ef7a173dd0f948abe609af5ef",
+    "public_view_path_normalized": true
   },
   "run": {
     "run_id": 34544605121,
@@ -645,7 +647,7 @@
     "ci tier: recommended (full gate suite)\tUnit tests\t2026-09-11T00:12:06.3091922Z OK (skipped=30)",
     "ci tier: recommended (full gate suite)\tUnit tests\t2026-09-11T00:12:10.4456364Z Ran 113 tests in 1.841s",
     "ci tier: recommended (full gate suite)\tUnit tests\t2026-09-11T00:12:10.4456792Z OK (skipped=14)",
-    "ci tier: recommended (full gate suite)\tPyInstaller smoke (build + resources list)\t2026-09-11T00:15:12.3110429Z 119617 INFO: Build complete! The results are available in: /home/runner/work/YOLOZU/YOLOZU/dist",
+    "ci tier: recommended (full gate suite)\tPyInstaller smoke (build + resources list)\t2026-09-11T00:15:12.3110429Z 119617 INFO: Build complete! The results are available in: <runner-workspace>/dist",
     "ci tier: recommended (full gate suite)\tPyInstaller smoke (build + resources list)\t2026-09-11T00:15:13.0454476Z usage: yolozu [-h] [--version]",
     "ci tier: recommended (full gate suite)\tPyInstaller smoke (build + resources list)\t2026-09-11T00:15:13.2797607Z adaptive_routing/bundle_lifecycle.jsonl",
     "ci tier: recommended (full gate suite)\tPyInstaller smoke (build + resources list)\t2026-09-11T00:15:13.2798199Z adaptive_routing/bundle_specs.json",
