@@ -3,6 +3,16 @@
 YOLOZU 4.8.0 adds a reusable labeled sample and improves first-run evaluation
 and prediction-file compatibility.
 
+Install from [PyPI](https://pypi.org/project/yolozu/4.8.0/):
+
+```bash
+python -m pip install "yolozu[coco]==4.8.0"
+yolozu demo dataset --run-dir sample-data --seed 0
+```
+
+Or download the [ready-made labeled sample ZIP](https://github.com/ToppyMicroServices/YOLOZU/releases/download/v4.8.0/yolozu-labeled-sample-v4.8.0.zip).
+It includes images, YOLO labels, known predictions, a preview, and reuse instructions.
+
 ## Changes
 
 - Generate eight synthetic images with YOLO bbox labels, a preview, known
@@ -31,6 +41,19 @@ and prediction-file compatibility.
 - The 175-page local manual passed qpdf/Ghostscript structural checks and
   all-page rendering with Poppler, PDFium, and PDFKit. The release rebuild is
   verified separately after publication.
+
+## Post-publication checks
+
+- The actual public wheel and source archive match PyPI hashes. A fresh macOS
+  arm64 / Python 3.14.6 public-wheel installation passed both 13-check sample
+  compatibility and 13-check first-use journeys, including official COCO
+  evaluation and relocation. All 360 installed package files match the wheel.
+- All eight compatibility lanes passed again on the exact release commit.
+- The release ZIP was downloaded again and all 23 sample files matched.
+- The [public Manual 4.8.0](https://zenodo.org/records/22699038) matches the
+  release workflow PDF. Its 175 pages passed structural checks and rendering
+  with all three engines. All contact sheets and selected full-size pages were
+  reviewed; no layout blocker was observed at those scales.
 
 ## Notes
 

@@ -1,0 +1,20 @@
+{
+  "metadata_version": "4.8.0",
+  "artifacts": [
+    {
+      "filename": "yolozu-4.8.0-py3-none-any.whl",
+      "sha256": "36894d84deac82971a88bbc07efa2fbe66fe33b85db0a4219919fe9c096d8391",
+      "size": 1129832,
+      "published_sha256_matches": true,
+      "archive_members": 366
+    },
+    {
+      "filename": "yolozu-4.8.0.tar.gz",
+      "sha256": "14ba05a02477fe33df843ded2c9294e253a6251d37793af1658e2e516931de18",
+      "size": 1976398,
+      "published_sha256_matches": true,
+      "archive_members": 997
+    }
+  ],
+  "ok": true
+}

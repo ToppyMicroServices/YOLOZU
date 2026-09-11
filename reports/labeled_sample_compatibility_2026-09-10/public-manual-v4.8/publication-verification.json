@@ -1,0 +1,63 @@
+{
+  "kind": "yolozu_public_manual_verification",
+  "schema_version": 1,
+  "checked_at_utc": "2026-09-10T23:51:05Z",
+  "release": {
+    "tag": "v4.8.0",
+    "version": "4.8.0",
+    "commit": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+    "annotated_tag_object": "c30ec18cb8c853c423a0649cc0211a73db5ae56b",
+    "url": "https://github.com/ToppyMicroServices/YOLOZU/releases/tag/v4.8.0",
+    "published_at": "2026-09-10T23:35:13Z",
+    "draft": false,
+    "prerelease": false
+  },
+  "workflow": {
+    "name": "manual-doi",
+    "run_id": 34542813551,
+    "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542813551",
+    "event": "release",
+    "head_branch": "v4.8.0",
+    "head_sha": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+    "status": "completed",
+    "conclusion": "success",
+    "downloaded_artifacts": ["manual_doi_publish", "manual_pdf"]
+  },
+  "public_record": {
+    "api_url": "https://zenodo.org/api/records/22699038",
+    "record_url": "https://zenodo.org/records/22699038",
+    "record_id": 22699038,
+    "state_from_publish_report": "published",
+    "title": "YOLOZU Manual 4.8.0",
+    "version": "4.8.0",
+    "publication_date": "2026-09-11",
+    "doi": "10.5281/zenodo.22699038",
+    "conceptdoi": "10.5281/zenodo.18744926",
+    "software_concept_doi": "10.5281/zenodo.18744756",
+    "download_url_from_record": "https://zenodo.org/api/records/22699038/files/yolozu_manual.pdf/content"
+  },
+  "public_file": {
+    "path": "public-yolozu_manual.pdf",
+    "bytes": 3476875,
+    "pages": 175,
+    "sha256": "9270069c713804b42b78aa1a0ab3047e4f9dfae53f2042fe6427026248da136d",
+    "md5": "7e02fffdc12a55b2f1ed5c2a5b31cefc",
+    "public_record_checksum": "md5:7e02fffdc12a55b2f1ed5c2a5b31cefc",
+    "public_record_checksum_matches": true,
+    "workflow_artifact_path": "manual_pdf/yolozu_manual.pdf",
+    "workflow_artifact_sha256": "9270069c713804b42b78aa1a0ab3047e4f9dfae53f2042fe6427026248da136d",
+    "workflow_artifact_byte_comparison_exit_code": 0,
+    "workflow_artifact_bytes_match": true,
+    "differs_from_local_manual_sha256": "bdc64b35cd527b5d9e8f1caa7ea1d64a973cc1c83e19b6cac4f9b2a6ef0f579c"
+  },
+  "qa": {
+    "report": "../public-manual-v4.8-qa/qa-report.json",
+    "visual_review": "../public-manual-v4.8-qa/visual-review.json",
+    "status": "passed",
+    "verification_script_exit_code": 0,
+    "visual_review_status": "reviewed",
+    "visual_review_completed_at_utc": "2026-09-10T23:57:55Z",
+    "user_review": "not_performed"
+  },
+  "publication_mutations_performed_by_verifier": false
+}

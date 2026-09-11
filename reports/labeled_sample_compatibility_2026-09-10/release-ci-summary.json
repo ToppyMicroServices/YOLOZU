@@ -1,0 +1,996 @@
+{
+  "kind": "release_commit_sample_compatibility",
+  "release_version": "4.8.0",
+  "source_revision": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+  "workflow": {
+    "conclusion": "success",
+    "createdAt": "2026-09-10T23:34:29Z",
+    "headSha": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+    "jobs": [
+      {
+        "completedAt": "2026-09-10T23:41:39Z",
+        "conclusion": "success",
+        "databaseId": 103088769643,
+        "name": "ubuntu-latest / Python 3.12 / latest",
+        "startedAt": "2026-09-10T23:41:13Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-10T23:41:15Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-10T23:41:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:17Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 2,
+            "startedAt": "2026-09-10T23:41:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:17Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 3,
+            "startedAt": "2026-09-10T23:41:17Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:34Z",
+            "conclusion": "success",
+            "name": "Build and install the exact candidate in a clean environment",
+            "number": 4,
+            "startedAt": "2026-09-10T23:41:17Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:36Z",
+            "conclusion": "success",
+            "name": "Check labeled sample and relocation from the installed wheel",
+            "number": 5,
+            "startedAt": "2026-09-10T23:41:34Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:37Z",
+            "conclusion": "success",
+            "name": "Upload compatibility evidence",
+            "number": 6,
+            "startedAt": "2026-09-10T23:41:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:37Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 11,
+            "startedAt": "2026-09-10T23:41:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:37Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 12,
+            "startedAt": "2026-09-10T23:41:37Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:37Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-09-10T23:41:37Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542754702/job/103088769643"
+      },
+      {
+        "completedAt": "2026-09-10T23:42:17Z",
+        "conclusion": "success",
+        "databaseId": 103088769740,
+        "name": "ubuntu-latest / Python 3.11 / latest",
+        "startedAt": "2026-09-10T23:41:56Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-10T23:41:57Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-10T23:41:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:42:00Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 2,
+            "startedAt": "2026-09-10T23:41:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:42:00Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 3,
+            "startedAt": "2026-09-10T23:42:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:42:12Z",
+            "conclusion": "success",
+            "name": "Build and install the exact candidate in a clean environment",
+            "number": 4,
+            "startedAt": "2026-09-10T23:42:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:42:14Z",
+            "conclusion": "success",
+            "name": "Check labeled sample and relocation from the installed wheel",
+            "number": 5,
+            "startedAt": "2026-09-10T23:42:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:42:15Z",
+            "conclusion": "success",
+            "name": "Upload compatibility evidence",
+            "number": 6,
+            "startedAt": "2026-09-10T23:42:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:42:15Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 11,
+            "startedAt": "2026-09-10T23:42:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:42:15Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 12,
+            "startedAt": "2026-09-10T23:42:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:42:15Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-09-10T23:42:15Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542754702/job/103088769740"
+      },
+      {
+        "completedAt": "2026-09-10T23:45:03Z",
+        "conclusion": "success",
+        "databaseId": 103088769790,
+        "name": "ubuntu-latest / Python 3.14 / latest",
+        "startedAt": "2026-09-10T23:44:40Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-10T23:44:41Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-10T23:44:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:44:43Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 2,
+            "startedAt": "2026-09-10T23:44:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:44:43Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 3,
+            "startedAt": "2026-09-10T23:44:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:44:58Z",
+            "conclusion": "success",
+            "name": "Build and install the exact candidate in a clean environment",
+            "number": 4,
+            "startedAt": "2026-09-10T23:44:43Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:45:00Z",
+            "conclusion": "success",
+            "name": "Check labeled sample and relocation from the installed wheel",
+            "number": 5,
+            "startedAt": "2026-09-10T23:44:58Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:45:01Z",
+            "conclusion": "success",
+            "name": "Upload compatibility evidence",
+            "number": 6,
+            "startedAt": "2026-09-10T23:45:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:45:01Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 11,
+            "startedAt": "2026-09-10T23:45:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:45:01Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 12,
+            "startedAt": "2026-09-10T23:45:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:45:01Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-09-10T23:45:01Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542754702/job/103088769790"
+      },
+      {
+        "completedAt": "2026-09-10T23:42:07Z",
+        "conclusion": "success",
+        "databaseId": 103088769800,
+        "name": "ubuntu-latest / Python 3.10 / minimum",
+        "startedAt": "2026-09-10T23:41:40Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-10T23:41:42Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-10T23:41:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:44Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 2,
+            "startedAt": "2026-09-10T23:41:42Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:44Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 3,
+            "startedAt": "2026-09-10T23:41:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:42:01Z",
+            "conclusion": "success",
+            "name": "Build and install the exact candidate in a clean environment",
+            "number": 4,
+            "startedAt": "2026-09-10T23:41:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:42:03Z",
+            "conclusion": "success",
+            "name": "Check labeled sample and relocation from the installed wheel",
+            "number": 5,
+            "startedAt": "2026-09-10T23:42:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:42:05Z",
+            "conclusion": "success",
+            "name": "Upload compatibility evidence",
+            "number": 6,
+            "startedAt": "2026-09-10T23:42:03Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:42:05Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 11,
+            "startedAt": "2026-09-10T23:42:05Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:42:05Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 12,
+            "startedAt": "2026-09-10T23:42:05Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:42:05Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-09-10T23:42:05Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542754702/job/103088769800"
+      },
+      {
+        "completedAt": "2026-09-10T23:41:57Z",
+        "conclusion": "success",
+        "databaseId": 103088769808,
+        "name": "ubuntu-latest / Python 3.13 / latest",
+        "startedAt": "2026-09-10T23:41:38Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-10T23:41:39Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-10T23:41:38Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:41Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 2,
+            "startedAt": "2026-09-10T23:41:39Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:41Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 3,
+            "startedAt": "2026-09-10T23:41:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:53Z",
+            "conclusion": "success",
+            "name": "Build and install the exact candidate in a clean environment",
+            "number": 4,
+            "startedAt": "2026-09-10T23:41:41Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:55Z",
+            "conclusion": "success",
+            "name": "Check labeled sample and relocation from the installed wheel",
+            "number": 5,
+            "startedAt": "2026-09-10T23:41:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:55Z",
+            "conclusion": "success",
+            "name": "Upload compatibility evidence",
+            "number": 6,
+            "startedAt": "2026-09-10T23:41:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:56Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 11,
+            "startedAt": "2026-09-10T23:41:55Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:56Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 12,
+            "startedAt": "2026-09-10T23:41:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:41:56Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-09-10T23:41:56Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542754702/job/103088769808"
+      },
+      {
+        "completedAt": "2026-09-10T23:37:03Z",
+        "conclusion": "success",
+        "databaseId": 103088769814,
+        "name": "macos-14 / Python 3.14 / latest",
+        "startedAt": "2026-09-10T23:36:45Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-10T23:36:46Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-10T23:36:45Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:36:49Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 2,
+            "startedAt": "2026-09-10T23:36:46Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:36:49Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 3,
+            "startedAt": "2026-09-10T23:36:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:36:58Z",
+            "conclusion": "success",
+            "name": "Build and install the exact candidate in a clean environment",
+            "number": 4,
+            "startedAt": "2026-09-10T23:36:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:37:00Z",
+            "conclusion": "success",
+            "name": "Check labeled sample and relocation from the installed wheel",
+            "number": 5,
+            "startedAt": "2026-09-10T23:36:58Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:37:00Z",
+            "conclusion": "success",
+            "name": "Upload compatibility evidence",
+            "number": 6,
+            "startedAt": "2026-09-10T23:37:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:37:00Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 11,
+            "startedAt": "2026-09-10T23:37:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:37:01Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 12,
+            "startedAt": "2026-09-10T23:37:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:37:01Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-09-10T23:37:01Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542754702/job/103088769814"
+      },
+      {
+        "completedAt": "2026-09-10T23:37:24Z",
+        "conclusion": "success",
+        "databaseId": 103088769815,
+        "name": "windows-latest / Python 3.12 / latest",
+        "startedAt": "2026-09-10T23:36:26Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-10T23:36:28Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-10T23:36:27Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:36:34Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 2,
+            "startedAt": "2026-09-10T23:36:28Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:36:34Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 3,
+            "startedAt": "2026-09-10T23:36:34Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:37:13Z",
+            "conclusion": "success",
+            "name": "Build and install the exact candidate in a clean environment",
+            "number": 4,
+            "startedAt": "2026-09-10T23:36:34Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:37:18Z",
+            "conclusion": "success",
+            "name": "Check labeled sample and relocation from the installed wheel",
+            "number": 5,
+            "startedAt": "2026-09-10T23:37:13Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:37:19Z",
+            "conclusion": "success",
+            "name": "Upload compatibility evidence",
+            "number": 6,
+            "startedAt": "2026-09-10T23:37:18Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:37:19Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 11,
+            "startedAt": "2026-09-10T23:37:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:37:22Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 12,
+            "startedAt": "2026-09-10T23:37:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:37:22Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-09-10T23:37:22Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542754702/job/103088769815"
+      },
+      {
+        "completedAt": "2026-09-10T23:44:56Z",
+        "conclusion": "success",
+        "databaseId": 103088769863,
+        "name": "ubuntu-latest / Python 3.10 / latest",
+        "startedAt": "2026-09-10T23:44:32Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-09-10T23:44:34Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-09-10T23:44:33Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:44:36Z",
+            "conclusion": "success",
+            "name": "Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 2,
+            "startedAt": "2026-09-10T23:44:34Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:44:36Z",
+            "conclusion": "success",
+            "name": "Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 3,
+            "startedAt": "2026-09-10T23:44:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:44:49Z",
+            "conclusion": "success",
+            "name": "Build and install the exact candidate in a clean environment",
+            "number": 4,
+            "startedAt": "2026-09-10T23:44:36Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:44:52Z",
+            "conclusion": "success",
+            "name": "Check labeled sample and relocation from the installed wheel",
+            "number": 5,
+            "startedAt": "2026-09-10T23:44:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:44:53Z",
+            "conclusion": "success",
+            "name": "Upload compatibility evidence",
+            "number": 6,
+            "startedAt": "2026-09-10T23:44:52Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:44:53Z",
+            "conclusion": "success",
+            "name": "Post Run actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405",
+            "number": 11,
+            "startedAt": "2026-09-10T23:44:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:44:53Z",
+            "conclusion": "success",
+            "name": "Post Run actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+            "number": 12,
+            "startedAt": "2026-09-10T23:44:53Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-09-10T23:44:53Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 13,
+            "startedAt": "2026-09-10T23:44:53Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542754702/job/103088769863"
+      }
+    ],
+    "name": "Candidate labeled-sample compatibility",
+    "status": "completed",
+    "updatedAt": "2026-09-10T23:45:03Z",
+    "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542754702"
+  },
+  "lanes": [
+    {
+      "lane": "sample-compatibility-macos-14-py3.14-latest",
+      "report_sha256": "df2f81fe651734603237abdaacab9fa0220f9ee1108ace31a04108535b93a53b",
+      "runtime": {
+        "python": "3.14.7",
+        "system": "Darwin",
+        "machine": "arm64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "2.5.3",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": null
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "86d8a144841bd54cc872d57774e22b5e29ce78f6011d56ec036b74c4e348e171",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "84f8cf2596b0537433175e6b807db6bef8d95c1395694071a0e411205910f9d4"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "relocated_metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true,
+      "ok": true
+    },
+    {
+      "lane": "sample-compatibility-ubuntu-latest-py3.10-latest",
+      "report_sha256": "a8102f8334ae0009a3f596c18fc1feddb76355f100e932c79e8e286cf6b01d7b",
+      "runtime": {
+        "python": "3.10.21",
+        "system": "Linux",
+        "machine": "x86_64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "2.2.6",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": "4.16.0"
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "c53a902ecc7853a6deb0412382a7537661bebd24502249629a49ecf2d02f7d87",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "84f8cf2596b0537433175e6b807db6bef8d95c1395694071a0e411205910f9d4"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "relocated_metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true,
+      "ok": true
+    },
+    {
+      "lane": "sample-compatibility-ubuntu-latest-py3.10-minimum",
+      "report_sha256": "8e5b3383b4e864a411523fcc68fc33e6d5d32334231ad8290d082367ceefdd49",
+      "runtime": {
+        "python": "3.10.21",
+        "system": "Linux",
+        "machine": "x86_64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "1.24.0",
+          "Pillow": "12.2.0",
+          "PyYAML": "6.0",
+          "pycocotools": "2.0.7",
+          "typing_extensions": "4.8.0"
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "94dadf320d0e6c48a8c59207c2acd5920ec13891018a9fe9d5550b6377983f3c",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "84f8cf2596b0537433175e6b807db6bef8d95c1395694071a0e411205910f9d4"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "relocated_metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true,
+      "ok": true
+    },
+    {
+      "lane": "sample-compatibility-ubuntu-latest-py3.11-latest",
+      "report_sha256": "40ae789792ca73e46221c772a6d80c3c9ca34c6300c7545e759965f7ee9f250f",
+      "runtime": {
+        "python": "3.11.16",
+        "system": "Linux",
+        "machine": "x86_64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "2.4.6",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": null
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "be2ad518411cadb7f4571d8d1fc5cf9cb6a1121194e070be5ac4231c2b35924a",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "84f8cf2596b0537433175e6b807db6bef8d95c1395694071a0e411205910f9d4"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "relocated_metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true,
+      "ok": true
+    },
+    {
+      "lane": "sample-compatibility-ubuntu-latest-py3.12-latest",
+      "report_sha256": "bd0947bebba070707f91e69c19ba84ddd59a6ce6adc25a93cd7995e616cae7dc",
+      "runtime": {
+        "python": "3.12.14",
+        "system": "Linux",
+        "machine": "x86_64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "2.5.3",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": null
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "bf11a8dae5b4d991a72e06a1cda39b45788f483100f8c847308c290f3623450d",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "84f8cf2596b0537433175e6b807db6bef8d95c1395694071a0e411205910f9d4"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "relocated_metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true,
+      "ok": true
+    },
+    {
+      "lane": "sample-compatibility-ubuntu-latest-py3.13-latest",
+      "report_sha256": "038af1ed2d7c7cc1d02da3f6a64e2be76e4b8eaa643942475852c8644cab2f09",
+      "runtime": {
+        "python": "3.13.15",
+        "system": "Linux",
+        "machine": "x86_64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "2.5.3",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": null
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "e5da45f4adb851b80949c22c7c560158e05b47e14babda01f2345b014bde8508",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "84f8cf2596b0537433175e6b807db6bef8d95c1395694071a0e411205910f9d4"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "relocated_metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true,
+      "ok": true
+    },
+    {
+      "lane": "sample-compatibility-ubuntu-latest-py3.14-latest",
+      "report_sha256": "9291cbd53142d1b618e68d88ed99d7e256b69bcfa006868840141b247cdcd22f",
+      "runtime": {
+        "python": "3.14.7",
+        "system": "Linux",
+        "machine": "x86_64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "2.5.3",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": null
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "5142e5016140ad469f3aa41342763183706d25dd533ad0acfd0d826eb73f9de0",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "84f8cf2596b0537433175e6b807db6bef8d95c1395694071a0e411205910f9d4"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "relocated_metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true,
+      "ok": true
+    },
+    {
+      "lane": "sample-compatibility-windows-latest-py3.12-latest",
+      "report_sha256": "6222432e910b0e2446afbba8f1dd254c74cde8f647b2ef5ffe855f0174562ded",
+      "runtime": {
+        "python": "3.12.10",
+        "system": "Windows",
+        "machine": "AMD64",
+        "dependencies": {
+          "yolozu": "4.8.0",
+          "numpy": "2.5.3",
+          "Pillow": "12.3.0",
+          "PyYAML": "6.0.3",
+          "pycocotools": "2.0.11",
+          "typing_extensions": null
+        }
+      },
+      "wheel": {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "2085e54908ffb871a830c2ee39b967c091d14b6cf249b1892e780f0b757c649f",
+        "version": "4.8.0",
+        "installed_package_files_verified": 360,
+        "package_content_sha256": "18ea5da861e40f66eeb94066c62e81fa2195cb5735d671856c5fcf5c4b0a1308"
+      },
+      "metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "relocated_metrics": {
+        "ar100": 1.0,
+        "map50": 1.0,
+        "map50_95": 1.0,
+        "map75": 1.0
+      },
+      "source_files_unchanged": true,
+      "relocation_metrics_identical": true,
+      "ok": true
+    }
+  ],
+  "scope": "Eight exact candidate-wheel lanes, synthetic labels and COCO evaluation before/after relocation. Public PyPI byte checks are recorded separately; no GPU or model-accuracy claim.",
+  "ok": true
+}

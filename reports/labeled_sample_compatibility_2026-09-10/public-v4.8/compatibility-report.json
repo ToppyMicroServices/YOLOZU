@@ -1,0 +1,162 @@
+{
+  "kind": "yolozu_sample_compatibility",
+  "schema_version": 1,
+  "source_revision": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+  "steps": [
+    {
+      "name": "installed-identity",
+      "exit_code": 0,
+      "seconds": 0.060405,
+      "log": "logs/installed-identity.log"
+    },
+    {
+      "name": "pip-check",
+      "exit_code": 0,
+      "seconds": 0.234475,
+      "log": "logs/pip-check.log"
+    },
+    {
+      "name": "generate-sample",
+      "exit_code": 0,
+      "seconds": 2.144126,
+      "log": "logs/generate-sample.log"
+    },
+    {
+      "name": "original-validate-train",
+      "exit_code": 0,
+      "seconds": 0.09238,
+      "log": "logs/original-validate-train.log"
+    },
+    {
+      "name": "original-validate-val",
+      "exit_code": 0,
+      "seconds": 0.091703,
+      "log": "logs/original-validate-val.log"
+    },
+    {
+      "name": "original-validate-yaml",
+      "exit_code": 0,
+      "seconds": 0.092966,
+      "log": "logs/original-validate-yaml.log"
+    },
+    {
+      "name": "original-validate-predictions",
+      "exit_code": 0,
+      "seconds": 0.078951,
+      "log": "logs/original-validate-predictions.log"
+    },
+    {
+      "name": "original-coco",
+      "exit_code": 0,
+      "seconds": 0.699011,
+      "log": "logs/original-coco.log"
+    },
+    {
+      "name": "relocated-validate-train",
+      "exit_code": 0,
+      "seconds": 0.094764,
+      "log": "logs/relocated-validate-train.log"
+    },
+    {
+      "name": "relocated-validate-val",
+      "exit_code": 0,
+      "seconds": 0.088059,
+      "log": "logs/relocated-validate-val.log"
+    },
+    {
+      "name": "relocated-validate-yaml",
+      "exit_code": 0,
+      "seconds": 0.090981,
+      "log": "logs/relocated-validate-yaml.log"
+    },
+    {
+      "name": "relocated-validate-predictions",
+      "exit_code": 0,
+      "seconds": 0.082259,
+      "log": "logs/relocated-validate-predictions.log"
+    },
+    {
+      "name": "relocated-coco",
+      "exit_code": 0,
+      "seconds": 0.145551,
+      "log": "logs/relocated-coco.log"
+    }
+  ],
+  "ok": true,
+  "wheel": {
+    "filename": "yolozu-4.8.0-py3-none-any.whl",
+    "sha256": "36894d84deac82971a88bbc07efa2fbe66fe33b85db0a4219919fe9c096d8391",
+    "version": "4.8.0",
+    "installed_package_files_verified": 360,
+    "package_content_sha256": "84f8cf2596b0537433175e6b807db6bef8d95c1395694071a0e411205910f9d4"
+  },
+  "runtime": {
+    "python": "3.14.6",
+    "system": "Darwin",
+    "machine": "arm64",
+    "dependencies": {
+      "yolozu": "4.8.0",
+      "numpy": "2.5.3",
+      "Pillow": "12.3.0",
+      "PyYAML": "6.0.3",
+      "pycocotools": "2.0.11",
+      "typing_extensions": null
+    }
+  },
+  "noneditable_candidate_verified": true,
+  "sample": {
+    "splits": {
+      "train": {
+        "images": 4,
+        "label_files": 4
+      },
+      "val": {
+        "images": 4,
+        "label_files": 4
+      }
+    },
+    "class_ids": [
+      0,
+      1
+    ]
+  },
+  "metrics": {
+    "ar100": 1.0,
+    "map50": 1.0,
+    "map50_95": 1.0,
+    "map75": 1.0
+  },
+  "relocated_metrics": {
+    "ar100": 1.0,
+    "map50": 1.0,
+    "map50_95": 1.0,
+    "map75": 1.0
+  },
+  "sample_files_sha256": {
+    "README.md": "536e1465106187030c0f21f5421c114a7133087db792021a2052b342506b6528",
+    "data.yaml": "671e7af3e60beffe0d372ee318b7af2691e8145226cd72c7683c318b586be600",
+    "images/train/train_0001.png": "fada356682f871ea878e443412d18984d03d782205f119d12c295fd4e01259a7",
+    "images/train/train_0002.png": "4ce36ec37e67d8d0b26647981816b654d96f4dd1e3074c886cdbc35f0a5a8ab9",
+    "images/train/train_0003.png": "4936b4aac3e2e76fd57e19784d1e93a87a14bd6b4f43831bc12fabd7be2f02c7",
+    "images/train/train_0004.png": "5086542164398b3befd5e13f206fcc286de4f26e5fe85de46552e006b74517ba",
+    "images/val/val_0001.png": "51d957794252470e9865f044fabb5beb05c1f93033c1a95a6ae9801f46047ff7",
+    "images/val/val_0002.png": "83a7e8bbc7783b59c8339311d8120d9c548ee0d24ccf5fd25fb3de155c363b85",
+    "images/val/val_0003.png": "3dc71f70b6fc1b0563e6f4079b0498910d4b96fbeefaa5fe52c7568fc1eae6c5",
+    "images/val/val_0004.png": "f62f5c2e6b6bf9a5fe335828877a305cafd4a8352eae655d53e9baf836cf42bb",
+    "labeled_preview.png": "7e58f7a051feaf6bb5d8be4d2d92c8bc3c2661de724d111f7f30185bc50879ed",
+    "labels/train/classes.json": "50f67921e3877edcce1e7cb23a84bb64b01b47bc46e04e6431e75ec7aa393c2c",
+    "labels/train/train_0001.txt": "76869872e9f0693c6decec191c37461e2b03c20b2034a5f47f5e50cad2f2e31a",
+    "labels/train/train_0002.txt": "52de4bc1e74bde9bd403d3ef4a0adb5a75934bc5e23b88f271e19af943f60cef",
+    "labels/train/train_0003.txt": "6ab9253072ad419570fcd398afd11bc994a4c6e7253b1ea69d66015c1e395cb7",
+    "labels/train/train_0004.txt": "f167115e9b21970f86de8a53be2d2a3aad0c7fef9459fd038757505d38138548",
+    "labels/val/classes.json": "50f67921e3877edcce1e7cb23a84bb64b01b47bc46e04e6431e75ec7aa393c2c",
+    "labels/val/val_0001.txt": "d7ff32cdb8396774d2bd3dfd5ddf880acbfbf09c7af5857a025586a1387e28b7",
+    "labels/val/val_0002.txt": "58edbb876006c51a032588e3c379bcfc79947b268f6f95ab41091ae5e5cb3d00",
+    "labels/val/val_0003.txt": "8ec950d0896ef5db6aebf7265b640cbde65c3ffa5b6ba563194eca48e88cd093",
+    "labels/val/val_0004.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "predictions.json": "6399c62799e73a0bcded3b10052e338b975420ada39367f7e1affc0aee2248a8",
+    "sample_manifest.json": "518e565cd9e732051c94a01279dff3681e43ac1e071e57bd6d1fde577e49f6ad"
+  },
+  "source_files_unchanged": true,
+  "relocation_metrics_identical": true
+}

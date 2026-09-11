@@ -1,0 +1,220 @@
+{
+  "base_url": "https://www.toppymicros.com/yolozu/docs/",
+  "browser_check": {
+    "reason": "CUA getBrowser returned: No browser is available; interactive search and rendering were not verified.",
+    "status": "unavailable"
+  },
+  "checked_at_utc": "2026-09-11T00:04:33.394750+00:00",
+  "deployment_run_url": "https://github.com/ToppyMicroServices/toppymicroservices.github.io/actions/runs/34544824895",
+  "files": [
+    {
+      "bytes": 3023,
+      "final_url": "https://www.toppymicros.com/yolozu/docs/assets/docs.js",
+      "http_status": 200,
+      "match": true,
+      "path": "assets/docs.js",
+      "public_sha256": "3a2fa0ff04b1dcb8872cc876d8ff05fb4e2e33b6d0c990e3460836e8840feac4",
+      "source_sha256": "3a2fa0ff04b1dcb8872cc876d8ff05fb4e2e33b6d0c990e3460836e8840feac4",
+      "url": "https://www.toppymicros.com/yolozu/docs/assets/docs.js"
+    },
+    {
+      "bytes": 249971,
+      "final_url": "https://www.toppymicros.com/yolozu/docs/assets/examples/instance-seg-demo.png",
+      "http_status": 200,
+      "match": true,
+      "path": "assets/examples/instance-seg-demo.png",
+      "public_sha256": "c126d1fb8939c06778d071a2e9cc8abd12b07c17c304b7fd7f6327e67f385bf5",
+      "source_sha256": "c126d1fb8939c06778d071a2e9cc8abd12b07c17c304b7fd7f6327e67f385bf5",
+      "url": "https://www.toppymicros.com/yolozu/docs/assets/examples/instance-seg-demo.png"
+    },
+    {
+      "bytes": 52123,
+      "final_url": "https://www.toppymicros.com/yolozu/docs/assets/examples/ttt-method-results.png",
+      "http_status": 200,
+      "match": true,
+      "path": "assets/examples/ttt-method-results.png",
+      "public_sha256": "750ec8a38ae871211638ab7161a8b561fa999981e55d5fd47abb5c13ac8c5553",
+      "source_sha256": "750ec8a38ae871211638ab7161a8b561fa999981e55d5fd47abb5c13ac8c5553",
+      "url": "https://www.toppymicros.com/yolozu/docs/assets/examples/ttt-method-results.png"
+    },
+    {
+      "bytes": 229,
+      "final_url": "https://www.toppymicros.com/yolozu/docs/assets/favicon.svg",
+      "http_status": 200,
+      "match": true,
+      "path": "assets/favicon.svg",
+      "public_sha256": "6c16d3e359bc198efcb19c418e9a3dbb1ccc79a9caeaa902f7a774f772581147",
+      "source_sha256": "6c16d3e359bc198efcb19c418e9a3dbb1ccc79a9caeaa902f7a774f772581147",
+      "url": "https://www.toppymicros.com/yolozu/docs/assets/favicon.svg"
+    },
+    {
+      "bytes": 8065,
+      "final_url": "https://www.toppymicros.com/yolozu/docs/assets/styles.css",
+      "http_status": 200,
+      "match": true,
+      "path": "assets/styles.css",
+      "public_sha256": "cda379fa2e035b4ee3ade7fc7f30d696c7c233de1febd4356ebfa9670f40138f",
+      "source_sha256": "cda379fa2e035b4ee3ade7fc7f30d696c7c233de1febd4356ebfa9670f40138f",
+      "url": "https://www.toppymicros.com/yolozu/docs/assets/styles.css"
+    },
+    {
+      "bytes": 420400,
+      "final_url": "https://www.toppymicros.com/yolozu/docs/commands.html",
+      "http_status": 200,
+      "match": true,
+      "path": "commands.html",
+      "public_sha256": "d21c14bf2a0fe916bf98b988b124a60ee976ebdc4f4bb74211468167cf507086",
+      "source_sha256": "d21c14bf2a0fe916bf98b988b124a60ee976ebdc4f4bb74211468167cf507086",
+      "url": "https://www.toppymicros.com/yolozu/docs/commands.html"
+    },
+    {
+      "bytes": 8770,
+      "final_url": "https://www.toppymicros.com/yolozu/docs/examples.html",
+      "http_status": 200,
+      "match": true,
+      "path": "examples.html",
+      "public_sha256": "8b478ae398fd2e5b67c5b981ceca0c1b1196590538ce1cf848a4d7a184c1f1eb",
+      "source_sha256": "8b478ae398fd2e5b67c5b981ceca0c1b1196590538ce1cf848a4d7a184c1f1eb",
+      "url": "https://www.toppymicros.com/yolozu/docs/examples.html"
+    },
+    {
+      "bytes": 8971,
+      "final_url": "https://www.toppymicros.com/yolozu/docs/glossary.html",
+      "http_status": 200,
+      "match": true,
+      "path": "glossary.html",
+      "public_sha256": "76c53ad5cfa17a64f192b04fd60f57b45958461bc7500cfda8be30bb2a009a66",
+      "source_sha256": "76c53ad5cfa17a64f192b04fd60f57b45958461bc7500cfda8be30bb2a009a66",
+      "url": "https://www.toppymicros.com/yolozu/docs/glossary.html"
+    },
+    {
+      "bytes": 7949,
+      "final_url": "https://www.toppymicros.com/yolozu/docs/index.html",
+      "http_status": 200,
+      "match": true,
+      "path": "index.html",
+      "public_sha256": "6476e9ea12da5b0b9d0862b6ef58d4d49c2d81816b9caf1be9178bc71bead450",
+      "source_sha256": "6476e9ea12da5b0b9d0862b6ef58d4d49c2d81816b9caf1be9178bc71bead450",
+      "url": "https://www.toppymicros.com/yolozu/docs/index.html"
+    },
+    {
+      "bytes": 40143,
+      "final_url": "https://www.toppymicros.com/yolozu/docs/provenance.json",
+      "http_status": 200,
+      "match": true,
+      "path": "provenance.json",
+      "public_sha256": "1ca37638077b5a69ac587a15d21c5322d786ce7c648c79524816659a1fbf74ea",
+      "source_sha256": "1ca37638077b5a69ac587a15d21c5322d786ce7c648c79524816659a1fbf74ea",
+      "url": "https://www.toppymicros.com/yolozu/docs/provenance.json"
+    },
+    {
+      "bytes": 106931,
+      "final_url": "https://www.toppymicros.com/yolozu/docs/schemas.html",
+      "http_status": 200,
+      "match": true,
+      "path": "schemas.html",
+      "public_sha256": "be19c4ca383b9548597b7e9d9527b7632b5a7b4c398f3903cc5b6d70cd6ad19d",
+      "source_sha256": "be19c4ca383b9548597b7e9d9527b7632b5a7b4c398f3903cc5b6d70cd6ad19d",
+      "url": "https://www.toppymicros.com/yolozu/docs/schemas.html"
+    },
+    {
+      "bytes": 199197,
+      "final_url": "https://www.toppymicros.com/yolozu/docs/search-index.json",
+      "http_status": 200,
+      "match": true,
+      "path": "search-index.json",
+      "public_sha256": "36607ce19567f759f20d00abb8cea10de575a1c9de12cc6752b6641396a67a7d",
+      "source_sha256": "36607ce19567f759f20d00abb8cea10de575a1c9de12cc6752b6641396a67a7d",
+      "url": "https://www.toppymicros.com/yolozu/docs/search-index.json"
+    },
+    {
+      "bytes": 12090,
+      "final_url": "https://www.toppymicros.com/yolozu/docs/start.html",
+      "http_status": 200,
+      "match": true,
+      "path": "start.html",
+      "public_sha256": "928306c21d2a841aed6053e96cb5af21ab484c7fcc247152c831c1c87da80888",
+      "source_sha256": "928306c21d2a841aed6053e96cb5af21ab484c7fcc247152c831c1c87da80888",
+      "url": "https://www.toppymicros.com/yolozu/docs/start.html"
+    },
+    {
+      "bytes": 10510,
+      "final_url": "https://www.toppymicros.com/yolozu/docs/troubleshooting.html",
+      "http_status": 200,
+      "match": true,
+      "path": "troubleshooting.html",
+      "public_sha256": "4cc77ab14a076ab2217286db2c2668f059f0440d62c335d5f877c6d60433e45e",
+      "source_sha256": "4cc77ab14a076ab2217286db2c2668f059f0440d62c335d5f877c6d60433e45e",
+      "url": "https://www.toppymicros.com/yolozu/docs/troubleshooting.html"
+    }
+  ],
+  "global_search_query": {
+    "matches": [
+      {
+        "href": "commands.html#tool-yolozu",
+        "title": "yolozu"
+      }
+    ],
+    "method": "Mirror the published docs.js lowercase/whitespace substring filter and 12-result limit over the fetched public search index; not an interactive browser test.",
+    "query": "demo dataset"
+  },
+  "limits": [
+    "Only the four listed external links were fetched; this is not a full external-link crawl.",
+    "Public byte and HTML checks do not establish interactive browser behavior or visual layout."
+  ],
+  "linked_site_routes": [
+    {
+      "bytes": 21904,
+      "final_url": "https://www.toppymicros.com/yolozu/",
+      "http_status": 200,
+      "url": "https://www.toppymicros.com/yolozu/"
+    },
+    {
+      "bytes": 6309,
+      "final_url": "https://www.toppymicros.com/privacy-policy.html",
+      "http_status": 200,
+      "url": "https://www.toppymicros.com/privacy-policy.html"
+    }
+  ],
+  "local_fragments_checked": 7,
+  "local_references_checked": 115,
+  "merge_commit": "0f746afa3c839568eef5d9dc4fa38671454b02e4",
+  "ok": true,
+  "public_html_pages": 7,
+  "pull_request": "https://github.com/ToppyMicroServices/toppymicroservices.github.io/pull/14",
+  "reference_errors": [],
+  "sample_discovery_static_checks": {
+    "commands_contain_demo_dataset": true,
+    "commands_contain_labeled_sample_guide_link": true,
+    "global_query_finds_yolozu_card": true,
+    "global_query_target_anchor_exists": true,
+    "search_index_contains_compatibility_check": true,
+    "search_index_contains_demo_dataset": true
+  },
+  "selected_external_links": [
+    {
+      "bytes": 275977,
+      "final_url": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/labeled_sample.md",
+      "http_status": 200,
+      "url": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/labeled_sample.md"
+    },
+    {
+      "bytes": 277908,
+      "final_url": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/versions.md",
+      "http_status": 200,
+      "url": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/versions.md"
+    },
+    {
+      "bytes": 404987,
+      "final_url": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/ci/check_sample_compatibility.py",
+      "http_status": 200,
+      "url": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/ci/check_sample_compatibility.py"
+    },
+    {
+      "bytes": 32799,
+      "final_url": "https://pypi.org/pypi/yolozu/4.8.0/json",
+      "http_status": 200,
+      "url": "https://pypi.org/pypi/yolozu/4.8.0/json"
+    }
+  ]
+}

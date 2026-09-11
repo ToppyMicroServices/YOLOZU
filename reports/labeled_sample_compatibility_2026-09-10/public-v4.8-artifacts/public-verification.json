@@ -1,0 +1,127 @@
+{
+  "kind": "yolozu_public_release_verification",
+  "schema_version": 1,
+  "release_version": "4.8.0",
+  "release_source_revision": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+  "verified_tag_commit": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+  "public_metadata_url": "https://pypi.org/pypi/yolozu/4.8.0/json",
+  "public_metadata_observed_at_utc": "2026-09-10T23:45:10Z",
+  "published_artifacts": [
+    {
+      "filename": "yolozu-4.8.0-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/60/4b/9fc49d4b1daa2085d7ca19ecf647c3de08d73bf4d79845d2e26f1fdd3cc4/yolozu-4.8.0-py3-none-any.whl",
+      "packagetype": "bdist_wheel",
+      "size": 1129832,
+      "upload_time_iso_8601": "2026-09-10T23:43:42.473145Z",
+      "sha256": "36894d84deac82971a88bbc07efa2fbe66fe33b85db0a4219919fe9c096d8391"
+    },
+    {
+      "filename": "yolozu-4.8.0.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/7e/f9/bf2126e9bc79e3f323b57f69fbef2575511e78828c658f6656df5a7fbd14/yolozu-4.8.0.tar.gz",
+      "packagetype": "sdist",
+      "size": 1976398,
+      "upload_time_iso_8601": "2026-09-10T23:43:44.562878Z",
+      "sha256": "14ba05a02477fe33df843ded2c9294e253a6251d37793af1658e2e516931de18"
+    }
+  ],
+  "artifact_integrity": {
+    "metadata_version": "4.8.0",
+    "artifacts": [
+      {
+        "filename": "yolozu-4.8.0-py3-none-any.whl",
+        "sha256": "36894d84deac82971a88bbc07efa2fbe66fe33b85db0a4219919fe9c096d8391",
+        "size": 1129832,
+        "published_sha256_matches": true,
+        "archive_members": 366
+      },
+      {
+        "filename": "yolozu-4.8.0.tar.gz",
+        "sha256": "14ba05a02477fe33df843ded2c9294e253a6251d37793af1658e2e516931de18",
+        "size": 1976398,
+        "published_sha256_matches": true,
+        "archive_members": 997
+      }
+    ],
+    "ok": true
+  },
+  "sdist_checks": {
+    "name": "yolozu",
+    "version": "4.8.0",
+    "archive_paths_checked": true,
+    "matching_wheel_source_files": [
+      "yolozu/demos/labeled_dataset.py",
+      "yolozu/eval/image_id_index.py",
+      "yolozu/predictions/predictions.py",
+      "yolozu/data/manifest/tools_manifest.json"
+    ],
+    "built_from_sdist_locally": false
+  },
+  "install": {
+    "source": "https://pypi.org/simple",
+    "requirement": "yolozu[coco]==4.8.0",
+    "no_cache": true,
+    "isolated_pip": true,
+    "working_directory": "/private/tmp",
+    "exit_code": 0,
+    "noneditable": true,
+    "python": "3.14.6",
+    "platform": "macOS arm64",
+    "dependencies": {
+      "yolozu": "4.8.0",
+      "numpy": "2.5.3",
+      "Pillow": "12.3.0",
+      "PyYAML": "6.0.3",
+      "pycocotools": "2.0.11"
+    }
+  },
+  "installed_wheel_identity": {
+    "all_package_files_match_downloaded_wheel": true,
+    "package_files_verified": 360,
+    "wheel_sha256": "36894d84deac82971a88bbc07efa2fbe66fe33b85db0a4219919fe9c096d8391"
+  },
+  "sample_check": {
+    "report": "../public-v4.8/compatibility-report.json",
+    "steps_passed": 13,
+    "steps_total": 13,
+    "pip_check_passed": true,
+    "train_images": 4,
+    "val_images": 4,
+    "class_ids": [
+      0,
+      1
+    ],
+    "strict_validation_passed": true,
+    "official_coco_metrics": {
+      "ar100": 1,
+      "map50": 1,
+      "map50_95": 1,
+      "map75": 1
+    },
+    "relocation_metrics_identical": true,
+    "sample_files_unchanged": true,
+    "preview_visually_inspected": true,
+    "preview_findings": []
+  },
+  "installed_journey": {
+    "report": "../public-v4.8-journey/installed-journey.json",
+    "steps_passed": 13,
+    "steps_total": 13,
+    "installed_outside_checkout": true,
+    "ok": true
+  },
+  "sample_zip": {
+    "filename": "yolozu-labeled-sample-v4.8.0.zip",
+    "sha256": "9d439c4cb6408ce955740292e360893adbc5c7d40079cd77111c6fb5c5b75652",
+    "size": 30557,
+    "files_verified": 23,
+    "source_files_unchanged": true,
+    "zip_bytes_match_generated_sample": true,
+    "uploaded": false
+  },
+  "limits": [
+    "The sample uses synthetic geometry and known predictions; its perfect score does not measure model accuracy.",
+    "This local public-package run covers macOS arm64 and Python 3.14.6; broader version evidence is recorded separately in CI.",
+    "No GPU performance or first-time human usability observation is claimed."
+  ],
+  "ok": true
+}
