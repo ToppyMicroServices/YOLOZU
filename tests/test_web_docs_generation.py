@@ -202,6 +202,31 @@ class TestWebDocsGeneration(TestCase):
         )
         self.assertTrue(all(entry["href"] and entry["search_text"] for entry in search_index))
 
+    def test_global_search_indexes_manifest_example_commands(self) -> None:
+        search_index = json.loads(self._read("search-index.json"))
+        commands = {
+            entry["title"]: entry
+            for entry in search_index
+            if entry["kind"] == "command"
+        }
+        manifest = json.loads(
+            (self.repo_root / "tools" / "manifest.json").read_text(encoding="utf-8")
+        )
+        for tool in manifest["tools"]:
+            for example in tool.get("examples") or []:
+                with self.subTest(tool=tool["id"], command=example["command"]):
+                    self.assertIn(example["command"], commands[tool["id"]]["search_text"])
+
+    def test_global_search_finds_labeled_sample_command(self) -> None:
+        search_index = json.loads(self._read("search-index.json"))
+        query = "demo dataset"
+        matches = [
+            entry["href"]
+            for entry in search_index
+            if query in " ".join(entry["search_text"].lower().split())
+        ][:12]
+        self.assertIn("commands.html#tool-yolozu", matches)
+
     def test_measurement_does_not_send_search_terms(self) -> None:
         script = self._read("assets/docs.js")
         self.assertIn('window.plausible(target.getAttribute("data-docs-event")', script)
