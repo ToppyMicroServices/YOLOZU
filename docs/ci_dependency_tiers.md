@@ -17,7 +17,7 @@ starts on every PR and `main` push, then selects jobs by changed files:
 
 | Changed files | Selected checks in `ci` |
 | --- | --- |
-| Runtime code, tools, scripts, tests, configs, data, baselines, dependency locks, packaging config | Core and recommended gates; full CPU suite only on `main` |
+| Runtime code, tools, scripts, tests, configs, data, baselines, schemas, protocols, examples, deployment files, root Python/shell launchers, dependency locks, packaging config | Core and recommended gates; full CPU suite only on `main` |
 | README, `docs/**`, listed MCP/Actions files and adaptive-roadmap reports | Docs/MCP and AI interface contract gates |
 | `manual/**` | Manual build |
 | `.github/workflows/**`, routing regression test | Workflow regression tests, including the pinned paths-filter bundle |

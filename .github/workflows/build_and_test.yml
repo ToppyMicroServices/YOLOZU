@@ -44,7 +44,7 @@ jobs:
           predicate-quantifier: every
           filters: |
             full_ci:
-              - '{yolozu/**,tools/**,scripts/**,rtdetr_pose/**,tests/**,configs/**,data/**,baselines/**,requirements-locks/**,requirements*.txt,requirements*.lock,pyproject.toml,pytest.ini,ruff.toml,MANIFEST.in,setup.py,setup.cfg}'
+              - '{yolozu/**,tools/**,scripts/**,rtdetr_pose/**,tests/**,configs/**,data/**,baselines/**,schemas/**,protocols/**,examples/**,deploy/**,requirements-locks/**,requirements*.txt,requirements*.lock,*.py,*.sh,pyproject.toml,pytest.ini,ruff.toml,MANIFEST.in,setup.cfg}'
               - '!yolozu/integrations/mcp_server.py'
               - '!yolozu/integrations/actions_api.py'
               - '!tools/run_mcp_server.py'
