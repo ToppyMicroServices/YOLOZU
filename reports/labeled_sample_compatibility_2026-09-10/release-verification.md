@@ -124,12 +124,23 @@ its full-gate job and does not supply the missing PyInstaller evidence.
 The newer main run was still in progress at the recorded snapshot. None of
 these pending, skipped, or canceled checks is reported as passing.
 
+A later readback of that same newer main run, 34544605121 at `2388280`,
+confirmed success, including the PyInstaller smoke. The Python runtime trees,
+packaging metadata, deployment inputs, scripts, dependency locks, and CI
+workflow match the release source; the changed files are the web generator,
+its search regressions, and generated search data. This supplies a completed
+frozen-binary check for the release-equivalent runtime, without rewriting the
+earlier canceled result. Optional PyArmor remained skipped. See the separate
+`main-ci-final.json` supplement.
+
 `YOLOZU-ll2.85` (actual release surfaces) and `YOLOZU-ll2.86` (compatibility
-qualification) are closed. `YOLOZU-ll2.87` tracks the frozen-binary CI evidence
-gap and investigation of report-only path routing. Its filter-semantics finding
+qualification) are closed. `YOLOZU-ll2.87` now retains only the investigation of
+report-only path routing; its frozen-binary evidence gap is resolved by the
+supplemental run. Its filter-semantics finding
 is separated from a different-version local reproduction; no speculative
 workflow or permission changes were made. `YOLOZU-ll2.84` remains open for
-consented first-use observation. Beads state was shared at `f7785ae`, preserving
+consented first-use observation. Beads state was shared at `f7785ae`, with the
+successful frozen-binary follow-up at `912fec2`, preserving
 all remote rows, tombstones, and interactions and excluding the unrelated
 local-only issue from publication.
 
