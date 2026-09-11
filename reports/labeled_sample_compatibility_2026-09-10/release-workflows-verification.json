@@ -1,0 +1,1238 @@
+{
+  "kind": "yolozu_release_workflows_verification",
+  "schema_version": 1,
+  "release_version": "4.8.0",
+  "release_source_revision": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+  "verified_at_utc": "2026-09-11T00:06:12Z",
+  "all_release_runs_match_source": true,
+  "all_release_main_ci_green": false,
+  "release_runs": [
+    {
+      "run_id": 34542754706,
+      "workflow": "ci",
+      "event": "push",
+      "head_branch": "main",
+      "head_sha": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-09-10T23:34:29Z",
+      "updated_at": "2026-09-11T00:00:38Z",
+      "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542754706",
+      "jobs": [
+        {
+          "job_id": 103088769465,
+          "name": "change scope",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": []
+        },
+        {
+          "job_id": 103089840767,
+          "name": "ci tier: core (runtime smoke)",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "README smoke script",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:46:22Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103089840776,
+          "name": "manual build (main.tex only)",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Build manual PDF (main.tex)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:47:46Z"
+            },
+            {
+              "name": "Verify manual artifact",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:47:46Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103089840789,
+          "name": "ci tier: docs+mcp (lightweight)",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Manifest + docs references gate",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:47:24Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103089840848,
+          "name": "AI/API installed-artifact contract",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Candidate artifact, live schema, and packaged-copy gates",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:47:39Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103089841602,
+          "name": "docs/metadata fast path",
+          "status": "completed",
+          "conclusion": "skipped",
+          "critical_steps": []
+        },
+        {
+          "job_id": 103089842051,
+          "name": "workflows fast path (release/security regression)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "critical_steps": []
+        },
+        {
+          "job_id": 103091437194,
+          "name": "ci tier: recommended (ruff + focused pytest)",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Focused pytest (YOLO26 quality)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:49:36Z"
+            },
+            {
+              "name": "Installed candidate TTT/CTTA contract",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:50:09Z"
+            },
+            {
+              "name": "Web docs contract and candidate-wheel journey",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:50:25Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103091437210,
+          "name": "ci tier: core (pip smoke, py3.11)",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": []
+        },
+        {
+          "job_id": 103091437213,
+          "name": "ci tier: core (pip smoke, py3.12)",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": []
+        },
+        {
+          "job_id": 103091437262,
+          "name": "ci tier: core (pip smoke, py3.10)",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": []
+        },
+        {
+          "job_id": 103092368809,
+          "name": "ci tier: recommended (full gate suite)",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "critical_steps": [
+            {
+              "name": "Wheel contents gate (schemas/protocols/minimal docs)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:51:38Z"
+            },
+            {
+              "name": "Sdist contents gate (schemas/protocols/docs/manifest)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:51:41Z"
+            },
+            {
+              "name": "License policy",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:51:41Z"
+            },
+            {
+              "name": "Lint",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:51:41Z"
+            },
+            {
+              "name": "Unit tests",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:58:42Z"
+            },
+            {
+              "name": "Schema compatibility gate",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:58:43Z"
+            },
+            {
+              "name": "Golden compatibility gate",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:58:43Z"
+            },
+            {
+              "name": "Migration smoke (migrate + validate)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:58:44Z"
+            },
+            {
+              "name": "Scenario smoke run",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:59:50Z"
+            },
+            {
+              "name": "Benchmark publication smoke",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:59:50Z"
+            },
+            {
+              "name": "Training contract smoke (dry-run + ONNX export/parity)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-11T00:00:02Z"
+            },
+            {
+              "name": "DDP smoke (torchrun, CPU gloo, rank0-only artifacts)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-11T00:00:16Z"
+            },
+            {
+              "name": "Backend parity matrix smoke (JSON + HTML)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-11T00:00:17Z"
+            },
+            {
+              "name": "PyInstaller smoke (build + resources list)",
+              "status": "completed",
+              "conclusion": "cancelled",
+              "completed_at": "2026-09-11T00:00:35Z"
+            },
+            {
+              "name": "PyArmor + PyInstaller smoke (optional)",
+              "status": "completed",
+              "conclusion": "skipped",
+              "completed_at": "2026-09-11T00:00:35Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": 34542813653,
+      "workflow": "publish",
+      "event": "release",
+      "head_branch": "v4.8.0",
+      "head_sha": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-10T23:35:14Z",
+      "updated_at": "2026-09-10T23:45:01Z",
+      "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542813653",
+      "jobs": [
+        {
+          "job_id": 103088942463,
+          "name": "macOS wheel build check",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Build wheel only",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:41:11Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103090297104,
+          "name": "pypi",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Validate synchronized release metadata",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:42:42Z"
+            },
+            {
+              "name": "Build",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:43:29Z"
+            },
+            {
+              "name": "Publish to PyPI (Trusted Publishing)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:43:46Z"
+            },
+            {
+              "name": "Verify published release on PyPI",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:44:56Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": 34542813551,
+      "workflow": "manual-doi",
+      "event": "release",
+      "head_branch": "v4.8.0",
+      "head_sha": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-10T23:35:14Z",
+      "updated_at": "2026-09-10T23:47:29Z",
+      "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542813551",
+      "jobs": [
+        {
+          "job_id": 103088942274,
+          "name": "publish_manual_doi",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Build manual PDF",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:47:18Z"
+            },
+            {
+              "name": "Verify manual artifact",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:47:18Z"
+            },
+            {
+              "name": "Resolve Zenodo context",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:47:19Z"
+            },
+            {
+              "name": "Create/newversion deposition, upload PDF, publish",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:47:25Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": 34542817082,
+      "workflow": "container",
+      "event": "push",
+      "head_branch": "v4.8.0",
+      "head_sha": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-10T23:35:17Z",
+      "updated_at": "2026-09-10T23:56:52Z",
+      "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542817082",
+      "jobs": [
+        {
+          "job_id": 103088954779,
+          "name": "cpu (yolozu, deploy/docker/Dockerfile, YOLOZU, YOLOZU CLI + packaged resources (CPU minimal; no t...",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Build and push",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:39:29Z"
+            },
+            {
+              "name": "Mirror to NVIDIA NGC (optional)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:39:32Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103088954990,
+          "name": "cpu (yolozu-demo, deploy/docker/Dockerfile.demo, YOLOZU demo, YOLOZU demo image (includes torch e...",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Build and push",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:51:54Z"
+            },
+            {
+              "name": "Mirror to NVIDIA NGC (optional)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:51:59Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103088955002,
+          "name": "runpod (yolozu-rtdetr-pose, deploy/runpod/Dockerfile.rtdetr_pose, YOLOZU RTDETRPose, YOLOZU RTDET...",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Skip runpod publish (no NGC key)",
+              "status": "completed",
+              "conclusion": "skipped",
+              "completed_at": "2026-09-10T23:41:44Z"
+            },
+            {
+              "name": "Build and push",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:56:38Z"
+            },
+            {
+              "name": "Mirror to NVIDIA NGC (optional)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:56:41Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103088955101,
+          "name": "runpod (yolozu-trt, deploy/runpod/Dockerfile, YOLOZU TRT tools, YOLOZU tooling image for TensorRT...",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Skip runpod publish (no NGC key)",
+              "status": "completed",
+              "conclusion": "skipped",
+              "completed_at": "2026-09-10T23:45:04Z"
+            },
+            {
+              "name": "Build and push",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:56:03Z"
+            },
+            {
+              "name": "Mirror to NVIDIA NGC (optional)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:56:08Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": 34542813558,
+      "workflow": "announce_release",
+      "event": "release",
+      "head_branch": "v4.8.0",
+      "head_sha": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-10T23:35:14Z",
+      "updated_at": "2026-09-10T23:39:13Z",
+      "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542813558",
+      "jobs": [
+        {
+          "job_id": 103088941994,
+          "name": "announce",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Generate announcement bundle (always)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:39:09Z"
+            },
+            {
+              "name": "Post (only if secrets configured)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:39:09Z"
+            },
+            {
+              "name": "Upload bundle artifact",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:39:10Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": 34542754748,
+      "workflow": "gpu-ngc",
+      "event": "push",
+      "head_branch": "main",
+      "head_sha": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-10T23:34:29Z",
+      "updated_at": "2026-09-10T23:41:40Z",
+      "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542754748",
+      "jobs": [
+        {
+          "job_id": 103088769939,
+          "name": "check_runner",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Detect idle GPU self-hosted runner",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:38:07Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103089597914,
+          "name": "no_runner",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Skip (no GPU runner)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:40:47Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103089599100,
+          "name": "trt_and_opencv_cuda",
+          "status": "completed",
+          "conclusion": "skipped",
+          "critical_steps": []
+        },
+        {
+          "job_id": 103090192091,
+          "name": "publish_logs",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Build gpu-ngc summary artifacts",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:41:36Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "run_id": 34542754702,
+      "workflow": "Candidate labeled-sample compatibility",
+      "event": "push",
+      "head_branch": "main",
+      "head_sha": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-10T23:34:29Z",
+      "updated_at": "2026-09-10T23:45:03Z",
+      "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542754702",
+      "jobs": [
+        {
+          "job_id": 103088769643,
+          "name": "ubuntu-latest / Python 3.12 / latest",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Build and install the exact candidate in a clean environment",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:41:34Z"
+            },
+            {
+              "name": "Check labeled sample and relocation from the installed wheel",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:41:36Z"
+            },
+            {
+              "name": "Upload compatibility evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:41:37Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103088769740,
+          "name": "ubuntu-latest / Python 3.11 / latest",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Build and install the exact candidate in a clean environment",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:42:12Z"
+            },
+            {
+              "name": "Check labeled sample and relocation from the installed wheel",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:42:14Z"
+            },
+            {
+              "name": "Upload compatibility evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:42:15Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103088769790,
+          "name": "ubuntu-latest / Python 3.14 / latest",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Build and install the exact candidate in a clean environment",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:44:58Z"
+            },
+            {
+              "name": "Check labeled sample and relocation from the installed wheel",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:45:00Z"
+            },
+            {
+              "name": "Upload compatibility evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:45:01Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103088769800,
+          "name": "ubuntu-latest / Python 3.10 / minimum",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Build and install the exact candidate in a clean environment",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:42:01Z"
+            },
+            {
+              "name": "Check labeled sample and relocation from the installed wheel",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:42:03Z"
+            },
+            {
+              "name": "Upload compatibility evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:42:05Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103088769808,
+          "name": "ubuntu-latest / Python 3.13 / latest",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Build and install the exact candidate in a clean environment",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:41:53Z"
+            },
+            {
+              "name": "Check labeled sample and relocation from the installed wheel",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:41:55Z"
+            },
+            {
+              "name": "Upload compatibility evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:41:55Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103088769814,
+          "name": "macos-14 / Python 3.14 / latest",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Build and install the exact candidate in a clean environment",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:36:58Z"
+            },
+            {
+              "name": "Check labeled sample and relocation from the installed wheel",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:37:00Z"
+            },
+            {
+              "name": "Upload compatibility evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:37:00Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103088769815,
+          "name": "windows-latest / Python 3.12 / latest",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Build and install the exact candidate in a clean environment",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:37:13Z"
+            },
+            {
+              "name": "Check labeled sample and relocation from the installed wheel",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:37:18Z"
+            },
+            {
+              "name": "Upload compatibility evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:37:19Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103088769863,
+          "name": "ubuntu-latest / Python 3.10 / latest",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Build and install the exact candidate in a clean environment",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:44:49Z"
+            },
+            {
+              "name": "Check labeled sample and relocation from the installed wheel",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:44:52Z"
+            },
+            {
+              "name": "Upload compatibility evidence",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:44:53Z"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "main_ci_cancellation": {
+    "confirmed": {
+      "run_id": 34542754706,
+      "full_gate_job_id": 103092368809,
+      "unit_tests_step": "success",
+      "unit_test_log_counts": [
+        1736,
+        113
+      ],
+      "pyinstaller_step": "cancelled",
+      "cancellation_logged_at_utc": "2026-09-11T00:00:35.2848101Z",
+      "nonsecret_log_excerpt": "PyInstaller smoke (build + resources list): The operation was canceled.",
+      "concurrency_group": "ci-${{ github.ref }}",
+      "cancel_in_progress": true,
+      "newer_main_created_at_utc": "2026-09-11T00:00:21Z"
+    },
+    "inference": "The newer main run is consistent with superseding the earlier run through ci-main concurrency. Logs confirm cancellation and timing but do not directly identify its initiator.",
+    "limitation": "The release-commit PyInstaller gate did not complete. No successful result is inferred from preceding steps."
+  },
+  "newer_main_snapshot": {
+    "run_id": 34544605121,
+    "workflow": "ci",
+    "event": "push",
+    "head_branch": "main",
+    "head_sha": "2388280ffcbb154428ff1e91a1695f5b980b2def",
+    "status": "in_progress",
+    "conclusion": null,
+    "created_at": "2026-09-11T00:00:21Z",
+    "updated_at": "2026-09-11T00:03:59Z",
+    "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34544605121",
+    "jobs": [
+      {
+        "job_id": 103094470726,
+        "name": "change scope",
+        "status": "completed",
+        "conclusion": "success",
+        "critical_steps": []
+      },
+      {
+        "job_id": 103094510301,
+        "name": "ci tier: core (runtime smoke)",
+        "status": "completed",
+        "conclusion": "success",
+        "critical_steps": [
+          {
+            "name": "README smoke script",
+            "status": "completed",
+            "conclusion": "success",
+            "completed_at": "2026-09-11T00:01:08Z"
+          }
+        ]
+      },
+      {
+        "job_id": 103094510312,
+        "name": "ci tier: docs+mcp (lightweight)",
+        "status": "completed",
+        "conclusion": "success",
+        "critical_steps": [
+          {
+            "name": "Manifest + docs references gate",
+            "status": "completed",
+            "conclusion": "success",
+            "completed_at": "2026-09-11T00:02:16Z"
+          }
+        ]
+      },
+      {
+        "job_id": 103094510373,
+        "name": "AI/API installed-artifact contract",
+        "status": "completed",
+        "conclusion": "success",
+        "critical_steps": [
+          {
+            "name": "Candidate artifact, live schema, and packaged-copy gates",
+            "status": "completed",
+            "conclusion": "success",
+            "completed_at": "2026-09-11T00:01:50Z"
+          }
+        ]
+      },
+      {
+        "job_id": 103094511342,
+        "name": "docs/metadata fast path",
+        "status": "completed",
+        "conclusion": "skipped",
+        "critical_steps": []
+      },
+      {
+        "job_id": 103094511903,
+        "name": "workflows fast path (release/security regression)",
+        "status": "completed",
+        "conclusion": "skipped",
+        "critical_steps": []
+      },
+      {
+        "job_id": 103094511935,
+        "name": "manual build (main.tex only)",
+        "status": "completed",
+        "conclusion": "skipped",
+        "critical_steps": []
+      },
+      {
+        "job_id": 103094602276,
+        "name": "ci tier: core (pip smoke, py3.11)",
+        "status": "completed",
+        "conclusion": "success",
+        "critical_steps": []
+      },
+      {
+        "job_id": 103094602289,
+        "name": "ci tier: recommended (ruff + focused pytest)",
+        "status": "completed",
+        "conclusion": "success",
+        "critical_steps": [
+          {
+            "name": "Focused pytest (YOLO26 quality)",
+            "status": "completed",
+            "conclusion": "success",
+            "completed_at": "2026-09-11T00:02:51Z"
+          },
+          {
+            "name": "Installed candidate TTT/CTTA contract",
+            "status": "completed",
+            "conclusion": "success",
+            "completed_at": "2026-09-11T00:03:21Z"
+          },
+          {
+            "name": "Web docs contract and candidate-wheel journey",
+            "status": "completed",
+            "conclusion": "success",
+            "completed_at": "2026-09-11T00:03:38Z"
+          }
+        ]
+      },
+      {
+        "job_id": 103094602295,
+        "name": "ci tier: core (pip smoke, py3.10)",
+        "status": "completed",
+        "conclusion": "success",
+        "critical_steps": []
+      },
+      {
+        "job_id": 103094602317,
+        "name": "ci tier: core (pip smoke, py3.12)",
+        "status": "completed",
+        "conclusion": "success",
+        "critical_steps": []
+      },
+      {
+        "job_id": 103095209588,
+        "name": "ci tier: recommended (full gate suite)",
+        "status": "in_progress",
+        "conclusion": null,
+        "critical_steps": [
+          {
+            "name": "Wheel contents gate (schemas/protocols/minimal docs)",
+            "status": "completed",
+            "conclusion": "success",
+            "completed_at": "2026-09-11T00:04:59Z"
+          },
+          {
+            "name": "Sdist contents gate (schemas/protocols/docs/manifest)",
+            "status": "completed",
+            "conclusion": "success",
+            "completed_at": "2026-09-11T00:05:01Z"
+          },
+          {
+            "name": "License policy",
+            "status": "completed",
+            "conclusion": "success",
+            "completed_at": "2026-09-11T00:05:02Z"
+          },
+          {
+            "name": "Lint",
+            "status": "completed",
+            "conclusion": "success",
+            "completed_at": "2026-09-11T00:05:02Z"
+          },
+          {
+            "name": "Unit tests",
+            "status": "in_progress",
+            "conclusion": null
+          },
+          {
+            "name": "Schema compatibility gate",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Golden compatibility gate",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Migration smoke (migrate + validate)",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Scenario smoke run",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Benchmark publication smoke",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Training contract smoke (dry-run + ONNX export/parity)",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "DDP smoke (torchrun, CPU gloo, rank0-only artifacts)",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "Backend parity matrix smoke (JSON + HTML)",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "PyInstaller smoke (build + resources list)",
+            "status": "pending",
+            "conclusion": null
+          },
+          {
+            "name": "PyArmor + PyInstaller smoke (optional)",
+            "status": "pending",
+            "conclusion": null
+          }
+        ]
+      }
+    ]
+  },
+  "source_equivalent_prior_pr": {
+    "run": {
+      "run_id": 34540855745,
+      "workflow": "ci",
+      "event": "pull_request",
+      "head_branch": "fix/product-readiness-2026-09-09",
+      "head_sha": "658e9bfb7051fe9c6ad23c777246b6cbaa68da2a",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-09-10T23:09:26Z",
+      "updated_at": "2026-09-10T23:12:55Z",
+      "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34540855745",
+      "jobs": [
+        {
+          "job_id": 103082957418,
+          "name": "change scope",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": []
+        },
+        {
+          "job_id": 103083002593,
+          "name": "manual build (main.tex only)",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Build manual PDF (main.tex)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:11:27Z"
+            },
+            {
+              "name": "Verify manual artifact",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:11:27Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103083002595,
+          "name": "ci tier: core (runtime smoke)",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "README smoke script",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:10:01Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103083002639,
+          "name": "AI/API installed-artifact contract",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Candidate artifact, live schema, and packaged-copy gates",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:10:44Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103083002642,
+          "name": "ci tier: docs+mcp (lightweight)",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Manifest + docs references gate",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:12:25Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103083003976,
+          "name": "workflows fast path (release/security regression)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "critical_steps": []
+        },
+        {
+          "job_id": 103083004388,
+          "name": "docs/metadata fast path",
+          "status": "completed",
+          "conclusion": "skipped",
+          "critical_steps": []
+        },
+        {
+          "job_id": 103083104154,
+          "name": "ci tier: recommended (ruff + focused pytest)",
+          "status": "completed",
+          "conclusion": "success",
+          "critical_steps": [
+            {
+              "name": "Focused pytest (YOLO26 quality)",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:11:47Z"
+            },
+            {
+              "name": "Installed candidate TTT/CTTA contract",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:12:19Z"
+            },
+            {
+              "name": "Web docs contract and candidate-wheel journey",
+              "status": "completed",
+              "conclusion": "success",
+              "completed_at": "2026-09-10T23:12:36Z"
+            }
+          ]
+        },
+        {
+          "job_id": 103083105278,
+          "name": "ci tier: core (pip smoke, py${{ matrix.python-version }})",
+          "status": "completed",
+          "conclusion": "skipped",
+          "critical_steps": []
+        },
+        {
+          "job_id": 103083785350,
+          "name": "ci tier: recommended (full gate suite)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "critical_steps": []
+        }
+      ]
+    },
+    "compared_commit": "658e9bfb7051fe9c6ad23c777246b6cbaa68da2a",
+    "comparison_command": "git diff --name-only 658e bd51c77c267fd6e699d1fae406c7b5cca131e1c6 -- yolozu rtdetr_pose pyproject.toml MANIFEST.in tools scripts requirements-locks .github/workflows/build_and_test.yml",
+    "differences_on_checked_paths": [],
+    "limitation": "The earlier PR run succeeded but skipped the full gate suite, so it supplies no PyInstaller completion evidence."
+  },
+  "container_scope": {
+    "build_and_push_jobs_succeeded": 4,
+    "optional_ngc_mirror_steps_succeeded": 4,
+    "optional_ngc_mirror_continue_on_error": true,
+    "interpretation": "Both required build/push and optional mirror step conclusions were checked directly. Job success alone was not used to infer optional mirror success.",
+    "scope_limit": "Workflow publication evidence only; this check did not pull or run the published containers."
+  },
+  "gpu_scope": {
+    "workflow_conclusion": "success",
+    "actual_gpu_job_conclusion": "skipped",
+    "discovery_http_status": 403,
+    "nonsecret_log_timestamp": "2026-09-10T23:38:07.7661606Z",
+    "nonsecret_log_message": "Runner discovery API returned 403 with default GITHUB_TOKEN. Configure RUNNER_DISCOVERY_TOKEN secret to enable runner availability detection.",
+    "hardware_availability": "unknown",
+    "gpu_execution_verified": false,
+    "interpretation": "Runner discovery could not establish availability. The no_runner path succeeded, but no GPU performance or runtime result follows."
+  },
+  "announcement_scope": {
+    "workflow_conclusion": "success",
+    "bundle_generation_step": "success",
+    "optional_post_command_step": "success",
+    "command": "python tools/announce_release.py --out-dir reports/announce --post --strict-post",
+    "artifact": {
+      "name": "release_announcement_bundle",
+      "id": 10177992526,
+      "bytes": 2295,
+      "sha256": "ef2e5a22796e298d4327adad1fe539824efe1043c797d5abf0420c6895cc2f95",
+      "url": "https://github.com/ToppyMicroServices/YOLOZU/actions/runs/34542813558/artifacts/10177992526"
+    },
+    "confirmed": "Selected nonsecret logs show bundle generation, execution of the optional strict-post command, and successful artifact upload.",
+    "not_verified": "Individual social platforms and external post delivery are not established by these logs. Unconfigured platforms may be skipped by the tool.",
+    "secret_values_read_or_retained": false
+  },
+  "evidence_only_ci_routing": {
+    "primary_source_confirmed": {
+      "action_revision": "fbd0ab8f3e69293af611ebaee6363fc25e6d187d",
+      "filter_source_url": "https://github.com/dorny/paths-filter/blob/fbd0ab8f3e69293af611ebaee6363fc25e6d187d/src/filter.ts",
+      "package_source_url": "https://github.com/dorny/paths-filter/blob/fbd0ab8f3e69293af611ebaee6363fc25e6d187d/package.json",
+      "default_rule_combination": "patterns.some",
+      "each_string_rule": "picomatch(item, {dot: true})",
+      "dependency_range": "picomatch ^2.3.1",
+      "workflow_quantifier_override_present": false,
+      "example_full_ci_rule": "!yolozu/integrations/mcp_server.py",
+      "reports_and_beads_have_no_positive_full_ci_rule": true,
+      "main_ci_trigger_has_no_paths_restriction": true
+    },
+    "local_reproduction": {
+      "module": "<runtime-bundle>/dependencies/node/node_modules/pnpm/dist/node_modules/picomatch",
+      "version": "4.0.5",
+      "paths": [
+        {
+          "path": ".beads/interactions.jsonl",
+          "negative_rule": "!yolozu/integrations/mcp_server.py",
+          "matches": true
+        },
+        {
+          "path": "reports/labeled_sample_compatibility_2026-09-10/release-workflows-verification.json",
+          "negative_rule": "!yolozu/integrations/mcp_server.py",
+          "matches": true
+        }
+      ]
+    },
+    "exact_pinned_dependency_execution_performed": false,
+    "inference": "Independent negated patterns combined with default OR can select evidence-only .beads and reports paths for full_ci. The bundled picomatch 4.0.5 reproduction demonstrates these paths matching the example negative rule; exact pinned 2.3.x execution was not performed.",
+    "operational_risk": "A new main push enters the same ci-main concurrency group and can cancel an in-progress main run even if its later job routing is lightweight. Do not assume an evidence-only merge leaves the newer main CI untouched.",
+    "changes_made": false
+  },
+  "verification_scope": "Read-only workflow/job metadata, selected nonsecret logs, pinned action source inspection, and local path-matcher reproduction. No workflow reruns, source edits, release changes, or uploads."
+}

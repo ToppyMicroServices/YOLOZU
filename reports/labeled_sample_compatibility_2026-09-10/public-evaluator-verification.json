@@ -1,0 +1,155 @@
+{
+  "kind": "yolozu_public_evaluator_verification",
+  "schema_version": 1,
+  "verified_at_utc": "2026-09-11T00:29:03.123172Z",
+  "release_version": "4.8.0",
+  "release_source_revision": "bd51c77c267fd6e699d1fae406c7b5cca131e1c6",
+  "method": "Read-only inspection using the already-installed public wheel environment, with Python -I -B outside the source checkout; no evaluation rerun or existing report changes.",
+  "environment": {
+    "python": "3.14.6",
+    "isolated_mode": true,
+    "bytecode_writes_disabled": true,
+    "working_directory": "<temporary-directory>",
+    "installed_package": "reports/labeled_sample_compatibility_2026-09-10/public-v4.8-venv/lib/python3.14/site-packages/yolozu",
+    "distribution_version": "4.8.0",
+    "package_under_venv_prefix": true,
+    "checkout_root_absent_from_sys_path": true
+  },
+  "public_wheel": {
+    "path": "reports/labeled_sample_compatibility_2026-09-10/public-v4.8-artifacts/yolozu-4.8.0-py3-none-any.whl",
+    "url": "https://files.pythonhosted.org/packages/60/4b/9fc49d4b1daa2085d7ca19ecf647c3de08d73bf4d79845d2e26f1fdd3cc4/yolozu-4.8.0-py3-none-any.whl",
+    "sha256": "36894d84deac82971a88bbc07efa2fbe66fe33b85db0a4219919fe9c096d8391",
+    "matches_saved_public_pypi_sha256": true,
+    "size": 1129832,
+    "matches_saved_public_pypi_size": true,
+    "saved_pypi_metadata": "reports/labeled_sample_compatibility_2026-09-10/public-v4.8-artifacts/pypi.json",
+    "metadata_refetched": false
+  },
+  "package_vs_wheel": {
+    "scope": "Every non-directory yolozu/ member in the downloaded public wheel.",
+    "files_compared": 253,
+    "mismatches": [],
+    "all_identical": true,
+    "wheel_crc_test": "pass"
+  },
+  "evaluator_route": {
+    "kind": "Installed source inspection and imported callable identity; not a new dynamic trace.",
+    "chain": [
+      "yolozu.cli_entry eval-coco dispatch",
+      "yolozu.cli_commands._cmd_eval_coco",
+      "yolozu.api.evaluate_coco",
+      "yolozu.eval.coco_eval.evaluate_coco_map",
+      "pycocotools.coco.COCO and pycocotools.cocoeval.COCOeval"
+    ],
+    "api_callable_is_evaluator_callable": true,
+    "source_checks_passed": true
+  },
+  "source_sha256": [
+    {
+      "package_path": "yolozu/cli_entry.py",
+      "installed_sha256": "a7ed4e82a3302a0dcba29752a33b4d3a83fb071a42cf2d3c62465b48b7358a9b",
+      "wheel_sha256": "a7ed4e82a3302a0dcba29752a33b4d3a83fb071a42cf2d3c62465b48b7358a9b",
+      "identical": true
+    },
+    {
+      "package_path": "yolozu/cli_commands.py",
+      "installed_sha256": "d209fc61a9202339ff310d10ec71787452dc749895988a547bcd7229950c0ed2",
+      "wheel_sha256": "d209fc61a9202339ff310d10ec71787452dc749895988a547bcd7229950c0ed2",
+      "identical": true
+    },
+    {
+      "package_path": "yolozu/api.py",
+      "installed_sha256": "6663ecdc7c2b20fba20cc9ae6b3ff2553247cce4b9089c03ac34844c51e54ca7",
+      "wheel_sha256": "6663ecdc7c2b20fba20cc9ae6b3ff2553247cce4b9089c03ac34844c51e54ca7",
+      "identical": true
+    },
+    {
+      "package_path": "yolozu/eval/coco_eval.py",
+      "installed_sha256": "d7c5e1257768115a07ba5f963a8c7670f2a18dd74f845da48ae6152fa616cadd",
+      "wheel_sha256": "d7c5e1257768115a07ba5f963a8c7670f2a18dd74f845da48ae6152fa616cadd",
+      "identical": true
+    },
+    {
+      "package_path": "yolozu/eval/image_id_index.py",
+      "installed_sha256": "beeaec53467fc1dd7dacd5ef1e0f0c30b3774762310df31cea2e1763c4e97a5b",
+      "wheel_sha256": "beeaec53467fc1dd7dacd5ef1e0f0c30b3774762310df31cea2e1763c4e97a5b",
+      "identical": true
+    },
+    {
+      "package_path": "yolozu/predictions/predictions.py",
+      "installed_sha256": "d9c38e16e18180c0095f032ff599cedea394baf7e2642b1d8fd6e4f217dfc588",
+      "wheel_sha256": "d9c38e16e18180c0095f032ff599cedea394baf7e2642b1d8fd6e4f217dfc588",
+      "identical": true
+    },
+    {
+      "package_path": "yolozu/datasets/dataset.py",
+      "installed_sha256": "5fd862a838f6b8a6409a45d6178a45f15351b0a4014ca64ca97c3c1f6a99d980",
+      "wheel_sha256": "5fd862a838f6b8a6409a45d6178a45f15351b0a4014ca64ca97c3c1f6a99d980",
+      "identical": true
+    },
+    {
+      "package_path": "yolozu/core/image_keys.py",
+      "installed_sha256": "0f6100c3fb87f609c79170ccd49e943f1f0f855d40e6a04e290b5c9c5dbe2799",
+      "wheel_sha256": "0f6100c3fb87f609c79170ccd49e943f1f0f855d40e6a04e290b5c9c5dbe2799",
+      "identical": true
+    },
+    {
+      "package_path": "yolozu/core/image_size.py",
+      "installed_sha256": "b74fc8fe352e42a2cac5d69c3abe2af025900de92ecf5c451ce29ec90bcffbde",
+      "wheel_sha256": "b74fc8fe352e42a2cac5d69c3abe2af025900de92ecf5c451ce29ec90bcffbde",
+      "identical": true
+    }
+  ],
+  "external_evaluator_dependency": {
+    "distribution": "pycocotools",
+    "version": "2.0.11",
+    "installed_sources": [
+      {
+        "module": "pycocotools.coco",
+        "installed_package_path": "pycocotools/coco.py",
+        "sha256": "4a234fc502c6e622f044747312d6a696652545f527e766c98bedf5aa4ca77f41",
+        "artifact_kind": "python_source"
+      },
+      {
+        "module": "pycocotools.cocoeval",
+        "installed_package_path": "pycocotools/cocoeval.py",
+        "sha256": "988485f79624cd42ceed9335d284df4cdcdf7b3d583e052fcbed2dd6bccf0267",
+        "artifact_kind": "python_source"
+      },
+      {
+        "module": "pycocotools.mask",
+        "installed_package_path": "pycocotools/mask.py",
+        "sha256": "4d4788f995971c97c5548f0bd19941f6ec1faaf5d0d7fb6ec489256ff872c617",
+        "artifact_kind": "python_source"
+      },
+      {
+        "module": "pycocotools._mask",
+        "installed_package_path": "pycocotools/_mask.abi3.so",
+        "sha256": "fc9679e7615c67c01b51ec7792c2633ba5cda4f793524ffbb22012ab5143c087",
+        "artifact_kind": "native_extension"
+      }
+    ],
+    "not_in_yolozu_wheel": true,
+    "dependency_wheel_comparison_performed": false
+  },
+  "existing_execution_evidence": {
+    "path": "reports/labeled_sample_compatibility_2026-09-10/public-v4.8-journey/installed-journey.json",
+    "step_name": "real-coco",
+    "exit_code": 0,
+    "dry_run_flag_present": false,
+    "metrics": {
+      "ar100": 1,
+      "map50": 0.9999999999999999,
+      "map50_95": 0.9999999999999998,
+      "map75": 0.9999999999999999
+    },
+    "new_execution_performed": false,
+    "original_report_modified": false
+  },
+  "limitations": [
+    "This adds exact source identity for the COCO evaluator/API omitted from the original journey source list; it does not retroactively add a dynamic function trace to that execution.",
+    "The pycocotools installed evaluator sources and native extension are hashed, but were not compared with a separately downloaded pycocotools wheel in this supplement.",
+    "The previously successful toy-data COCO result is an interface/evaluation check, not model accuracy or GPU performance evidence."
+  ],
+  "ok": true
+}

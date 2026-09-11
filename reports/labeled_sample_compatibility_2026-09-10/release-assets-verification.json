@@ -1,0 +1,10 @@
+{
+  "release_version": "4.8.0",
+  "asset_url": "https://github.com/ToppyMicroServices/YOLOZU/releases/download/v4.8.0/yolozu-labeled-sample-v4.8.0.zip",
+  "sha256": "9d439c4cb6408ce955740292e360893adbc5c7d40079cd77111c6fb5c5b75652",
+  "size": 30557,
+  "downloaded_from_release": true,
+  "checksum_asset_matches": true,
+  "files_matching_public_package_generated_sample": 23,
+  "ok": true
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "date_utc": "2026-09-11",
+  "browser": "Codex In-app Browser",
+  "base_url": "https://www.toppymicros.com/yolozu/docs/",
+  "query": "demo dataset",
+  "observed": {
+    "overview_search_result": "commands.html#tool-yolozu",
+    "result_click_destination": "https://www.toppymicros.com/yolozu/docs/commands.html#tool-yolozu",
+    "command_filter_retains_yolozu": true,
+    "command_entry_expanded": true,
+    "displayed_example": "python3 -m yolozu demo dataset --run-dir reports/labeled_sample --seed 0",
+    "displayed_guide": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/labeled_sample.md",
+    "overview_screenshot_reviewed": true,
+    "overview_screenshot_dimensions": [1280, 720],
+    "visible_overlap_at_reviewed_viewport": false
+  },
+  "method": "Used accessibility-driven input and clicks against the public site, with updated accessibility state after each action and one overview search screenshot.",
+  "prior_agent_browser_unavailable_report_preserved": true,
+  "not_checked": ["Responsive viewport matrix", "First-time human user observation", "Every command entry"],
+  "ok": true
+}

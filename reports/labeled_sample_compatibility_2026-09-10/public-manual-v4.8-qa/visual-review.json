@@ -1,0 +1,55 @@
+{
+  "source": "../public-manual-v4.8/public-yolozu_manual.pdf",
+  "public_url": "https://zenodo.org/api/records/22699038/files/yolozu_manual.pdf/content",
+  "record_url": "https://zenodo.org/records/22699038",
+  "sha256": "9270069c713804b42b78aa1a0ab3047e4f9dfae53f2042fe6427026248da136d",
+  "reviewed_at_utc": "2026-09-10T23:57:55Z",
+  "status": "reviewed",
+  "pages": 175,
+  "page_numbering": "One-based physical PDF pages, not printed page labels",
+  "scope": "Inspected all 27 contact sheets for the actual public PDF, covering all 175 pages in each of Poppler, PDFium, and PDFKit. Inspected the 15 full-size images for pages 26-30 in all three renderers, plus five additional full-size Poppler pages. This is layout review at the stated image scales, not full-text proofreading or user approval.",
+  "contact_sheets_reviewed": {
+    "poppler": ["poppler-contact-01.png", "poppler-contact-02.png", "poppler-contact-03.png", "poppler-contact-04.png", "poppler-contact-05.png", "poppler-contact-06.png", "poppler-contact-07.png", "poppler-contact-08.png", "poppler-contact-09.png"],
+    "pdfium": ["pdfium-contact-01.png", "pdfium-contact-02.png", "pdfium-contact-03.png", "pdfium-contact-04.png", "pdfium-contact-05.png", "pdfium-contact-06.png", "pdfium-contact-07.png", "pdfium-contact-08.png", "pdfium-contact-09.png"],
+    "pdfkit": ["pdfkit-contact-01.png", "pdfkit-contact-02.png", "pdfkit-contact-03.png", "pdfkit-contact-04.png", "pdfkit-contact-05.png", "pdfkit-contact-06.png", "pdfkit-contact-07.png", "pdfkit-contact-08.png", "pdfkit-contact-09.png"]
+  },
+  "full_size_pages_reviewed": {
+    "poppler": [1, 4, 19, 25, 26, 27, 28, 29, 30, 175],
+    "pdfium": [26, 27, 28, 29, 30],
+    "pdfkit": [26, 27, 28, 29, 30]
+  },
+  "blocking_findings": [],
+  "minor_observations": [
+    "Keypoints and 6DoF listings continue across page boundaries; their continuations are visible within the text margins."
+  ],
+  "observed": [
+    "No corrupt or unexpectedly blank pages, clipping, or overlapping content was observed at the reviewed scales.",
+    "The page-27 listing top-rule issue is absent in the public PDF in all three renderers; the Detection, Instance segmentation, and Keypoints headings sit above the frames.",
+    "The reusable labeled sample section is present on physical page 19 and is listed in the contents. Its command pins the COCO extra to version 4.8.0 and distinguishes deterministic workflow checks from model accuracy.",
+    "Physical page 25 describes wrapper version 1, prediction-entry version 2, migration, and ambiguous image-name rejection. Pages 26-29 show the metadata caveat and corrected base-prediction examples.",
+    "The cover, first contents page, and final references page are intact. The cover date is September 10, 2026; the public record publication date is September 11, 2026."
+  ],
+  "comparison_with_local_reviewed_pdf": {
+    "previous_review": "../manual-v4.8-corrected-qa/visual-review.json",
+    "previous_pdf_sha256": "bdc64b35cd527b5d9e8f1caa7ea1d64a973cc1c83e19b6cac4f9b2a6ef0f579c",
+    "method": "Independently SHA-256 compared all 175 corresponding page PNG files per renderer; also compared decoded RGB pixels for all PDFKit pages.",
+    "poppler": {"compared": 175, "png_byte_identical": 175},
+    "pdfium": {"compared": 175, "png_byte_identical": 175},
+    "pdfkit": {
+      "compared": 175,
+      "png_byte_identical": 0,
+      "decoded_rgb_identical": 119,
+      "decoded_rgb_different_pages": [4, 5, 6, 7, 8, 9, 10, 11, 14, 16, 17, 19, 22, 25, 26, 27, 28, 29, 34, 35, 36, 37, 56, 57, 58, 60, 72, 73, 74, 75, 76, 93, 99, 100, 107, 111, 112, 114, 115, 117, 121, 124, 126, 128, 129, 130, 134, 135, 148, 151, 152, 153, 156, 157, 158, 175],
+      "limitation": "Pixel differences were not individually diagnosed. The actual public PDFKit pages received a fresh contact-sheet review, with pages 26-30 also reviewed full-size; no visual blocker was observed."
+    },
+    "review_basis": "Fresh inspection of the public PDF images, not a blanket carry-forward claim from the local PDF."
+  },
+  "not_checked": [
+    "Full-size inspection of every page",
+    "Line-by-line technical proofreading of the entire manual",
+    "Execution of every command and model workflow in the manual",
+    "Real-model accuracy, GPU performance, or adoption causality",
+    "User review or approval"
+  ],
+  "user_review": "not_performed"
+}
