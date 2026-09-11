@@ -10,8 +10,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Supersede older PR revisions, but never cancel a main build for a later
+  # metadata-only push (scope detection happens after concurrency arbitration).
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # Dependency tier policy:
@@ -23,49 +25,49 @@ jobs:
   changes:
     name: change scope
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
-      full_ci: ${{ steps.filter.outputs.full_ci }}
+      full_ci: ${{ steps.runtime_filter.outputs.full_ci }}
       docs_mcp_ci: ${{ steps.filter.outputs.docs_mcp_ci }}
       manual_ci: ${{ steps.filter.outputs.manual_ci }}
       workflows_ci: ${{ steps.filter.outputs.workflows_ci }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
-      - name: Detect change scope
-        id: filter
+      - name: Detect runtime scope
+        id: runtime_filter
         uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
         with:
+          # One positive union AND every exclusion. With the default "some",
+          # a negative pattern independently matches nearly every repository file.
+          predicate-quantifier: every
           filters: |
             full_ci:
-              - 'yolozu/**'
+              - '{yolozu/**,tools/**,scripts/**,rtdetr_pose/**,tests/**,configs/**,data/**,baselines/**,requirements-locks/**,requirements*.txt,requirements*.lock,pyproject.toml,pytest.ini,ruff.toml,MANIFEST.in,setup.py,setup.cfg}'
               - '!yolozu/integrations/mcp_server.py'
               - '!yolozu/integrations/actions_api.py'
-              - 'tools/**'
               - '!tools/run_mcp_server.py'
               - '!tools/run_actions_api.py'
               - '!tools/check_mcp_settings.py'
-              - 'scripts/**'
-              - 'rtdetr_pose/**'
-              - 'tests/**'
               - '!tests/test_ai_first_mcp_surface.py'
               - '!tests/test_candidate_artifact_ai_surface.py'
               - '!tests/test_integrations_mcp_actions_parity.py'
               - '!tests/test_check_mcp_settings_tool.py'
               - '!tests/test_generated_integration_tool_reference.py'
-              - 'configs/**'
-              - 'data/**'
-              - 'baselines/**'
-              - 'requirements*.txt'
-              - 'requirements*.lock'
-              - 'pyproject.toml'
-              - 'pytest.ini'
-              - 'ruff.toml'
-              - 'MANIFEST.in'
-              - 'setup.py'
-              - 'setup.cfg'
+              - '!tests/test_ci_path_routing.py'
+      - name: Detect docs, manual, and workflow scope
+        id: filter
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
+        with:
+          predicate-quantifier: some
+          filters: |
             docs_mcp_ci:
               - 'README.md'
               - 'Readme_jp.md'
               - 'docs/**'
+              - 'requirements-locks/requirements-docs-actions.lock'
+              - 'requirements-locks/requirements-web-docs.lock'
               - 'reports/adaptive_vision_roadmap.md'
               - 'reports/adaptive_qualification_foundation_*.md'
               - 'tools/generate_adaptive_vision_roadmap.py'
@@ -93,6 +95,7 @@ jobs:
               - 'manual/**'
             workflows_ci:
               - '.github/workflows/**'
+              - 'tests/test_ci_path_routing.py'
 
   docs_meta:
     name: docs/metadata fast path
@@ -108,7 +111,7 @@ jobs:
     name: workflows fast path (release/security regression)
     needs:
       - changes
-    if: ${{ needs.changes.outputs.full_ci != 'true' && needs.changes.outputs.docs_mcp_ci != 'true' && needs.changes.outputs.manual_ci != 'true' && needs.changes.outputs.workflows_ci == 'true' }}
+    if: ${{ needs.changes.outputs.workflows_ci == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
@@ -118,11 +121,23 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Check out the pinned paths-filter bundle for routing tests
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
+        with:
+          repository: dorny/paths-filter
+          ref: fbd0ab8f3e69293af611ebaee6363fc25e6d187d
+          path: .ci-paths-filter
+          persist-credentials: false
+          sparse-checkout: dist
+
       - name: Release/security workflow regression tests
+        env:
+          YOLOZU_PATHS_FILTER_ENTRYPOINT: ${{ github.workspace }}/.ci-paths-filter/dist/index.js
         run: |
           python -m unittest \
             tests.test_release_readiness_docs \
-            tests.test_workflow_release_security -v
+            tests.test_workflow_release_security \
+            tests.test_ci_path_routing -v
 
   manual_build:
     name: manual build (main.tex only)
