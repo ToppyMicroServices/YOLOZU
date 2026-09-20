@@ -89,7 +89,8 @@ class TestMcpLiveSurface(unittest.TestCase):
                 "validate_predictions",
             ],
         )
-        self.assertEqual(payload["surface_counts"]["mcp_live"], 27)
+        self.assertEqual(payload["surface_counts"]["mcp_live"], 32)
+        self.assertEqual(payload["surface_counts"]["image_service_safe"], 5)
 
     def test_live_names_and_input_schemas_match_generated_reference(self) -> None:
         from yolozu.integrations.mcp_server import app
@@ -110,6 +111,31 @@ class TestMcpLiveSurface(unittest.TestCase):
         for live, item in zip(live_tools, expected, strict=True):
             with self.subTest(tool=live.name):
                 self.assertEqual(live.inputSchema, item["input_schema"])
+
+    def test_service_app_exposes_only_the_bounded_image_tools(self) -> None:
+        from yolozu.integrations.mcp_server import service_app
+
+        tools = asyncio.run(service_app.list_tools())
+        self.assertEqual(
+            [tool.name for tool in tools],
+            [
+                "image_service_capabilities",
+                "put_image_asset",
+                "submit_image_job",
+                "get_image_job",
+                "cancel_image_job",
+            ],
+        )
+
+    def test_static_token_verifier_uses_exact_token(self) -> None:
+        from yolozu.integrations.mcp_server import _StaticTokenVerifier
+
+        verifier = _StaticTokenVerifier("x" * 32)
+        accepted = asyncio.run(verifier.verify_token("x" * 32))
+        rejected = asyncio.run(verifier.verify_token("y" * 32))
+        self.assertIsNotNone(accepted)
+        self.assertEqual(accepted.scopes, ["yolozu:invoke"])
+        self.assertIsNone(rejected)
 
     def test_actions_shared_parameters_match_full_mcp_schemas(self) -> None:
         reference = build_tool_surface_reference()

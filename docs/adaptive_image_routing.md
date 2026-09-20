@@ -58,8 +58,10 @@ allowlisted `code_owned_audited` runner, or a separately registered code-owned
 isolated service with the exact policy digest for `third_party_isolated`. P0 ships
 the isolation interface and fail-closed gate but no isolated backend. Output is an
 exact managed tree containing `predictions.json`, `provenance.json`,
-`checksums.json`, and only referenced masks. The adaptive runner maps remain empty,
-so the installed default cannot execute a real adaptive model.
+`checksums.json`, and only referenced masks. A code-owned Torchvision Mask R-CNN
+runner is registered for exact safetensors/CPU bundles. No packaged bundle binds
+that runner or passes the required license, qualification, support, evidence, and
+lifecycle gates, so the installed default cannot execute a real adaptive model.
 
 The reviewed [candidate isolation threat model and backend decision](candidate_isolation_threat_model.md)
 records `none_supported`. `python3 tools/probe_candidate_isolation.py` reports that
@@ -80,8 +82,9 @@ exact managed bundles. It pins bounded input and artifact descriptors, runs only
 repository-owned network-free runner in a terminable child process group, applies
 the frozen v1 schedule and handoff, and publishes one unactivated report through
 `ManagedOutputTransaction`. The three current Candidate records have unbound
-execution and the code-owned runner factory map is empty, so the default command
-fails with an actionable error and does
+execution. Although the code-owned Torchvision runner factory is registered,
+none of those records binds it, so the default command fails with an actionable
+error and does
 not create synthetic or no-op qualification evidence. It is not a selector,
 model adapter, or general image-processing capability.
 

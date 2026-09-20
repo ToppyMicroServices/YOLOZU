@@ -649,6 +649,11 @@ def build_tool_surface_reference() -> dict[str, Any]:
             "review_config": "config",
             "recommend_image_pipeline": "recommendation",
             "process_images": "inference",
+            "image_service_capabilities": "image-service",
+            "put_image_asset": "image-service",
+            "submit_image_job": "image-service",
+            "get_image_job": "image-service",
+            "cancel_image_job": "image-service",
         }
     )
 

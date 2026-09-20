@@ -14,6 +14,7 @@ _AI_SURFACE_NAMES = (
     "config_review",
     "actions_public",
 )
+_OPTIONAL_AI_SURFACE_NAMES = ("image_service_safe",)
 
 
 def _surface_sets_from_manifest(
@@ -24,8 +25,10 @@ def _surface_sets_from_manifest(
         raise ValueError("manifest is missing ai_surfaces")
 
     surfaces: dict[str, dict[str, Any]] = {}
-    for name in _AI_SURFACE_NAMES:
+    for name in (*_AI_SURFACE_NAMES, *_OPTIONAL_AI_SURFACE_NAMES):
         item = raw.get(name)
+        if item is None and name in _OPTIONAL_AI_SURFACE_NAMES:
+            continue
         if not isinstance(item, dict):
             raise ValueError(f"manifest ai_surfaces is missing {name}")
         tool_ids = item.get("tool_ids")

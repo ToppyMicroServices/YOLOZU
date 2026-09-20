@@ -154,6 +154,13 @@
     "title": "calibrate_scores"
   },
   {
+    "href": "commands.html#tool-cancel-image-job",
+    "kind": "command",
+    "search_text": "cancel_image_job Cancel one queued image job without claiming interruption of an already running model process. experimental yolozu/integrations/mcp_server.py  Call the cancel_image_job MCP tool with a queued job_id.",
+    "summary": "Cancel one queued image job without claiming interruption of an already running model process.",
+    "title": "cancel_image_job"
+  },
+  {
     "href": "commands.html#tool-check-golden-compatibility",
     "kind": "command",
     "search_text": "check_golden_compatibility Validate versioned golden compatibility assets and hash-pinned eval protocol snapshots. experimental tools/check_golden_compatibility.py --manifest python3 tools/check_golden_compatibility.py --manifest baselines/golden/v1/manifest.json",
@@ -546,6 +553,13 @@
     "title": "generate_web_docs"
   },
   {
+    "href": "commands.html#tool-get-image-job",
+    "kind": "command",
+    "search_text": "get_image_job Return bounded status and result data for one opaque image job without exposing internal paths. experimental yolozu/integrations/mcp_server.py  Call the get_image_job MCP tool with the opaque job_id returned by submit_image_job.",
+    "summary": "Return bounded status and result data for one opaque image job without exposing internal paths.",
+    "title": "get_image_job"
+  },
+  {
     "href": "commands.html#tool-gpu-validation-preflight",
     "kind": "command",
     "search_text": "gpu_validation_preflight Generate a preflight report that splits the YOLOZU-zisn GPU sweep into local-executable checks and GPU-runtime checks. experimental tools/gpu_validation_preflight.py --output --strict python3 tools/gpu_validation_preflight.py --output reports/gpu_validation_preflight.json python3 tools/gpu_validation_preflight.py --strict --output reports/gpu_validation_preflight.json",
@@ -558,6 +572,13 @@
     "search_text": "hpo_sweep Run a configurable parameter sweep (grid or list) and emit JSONL/CSV/MD results. stable tools/hpo_sweep.py --config --dry-run --max-runs --resume python3 tools/hpo_sweep.py --config docs/hpo_sweep_example.json --dry-run",
     "summary": "Run a configurable parameter sweep (grid or list) and emit JSONL/CSV/MD results.",
     "title": "hpo_sweep"
+  },
+  {
+    "href": "commands.html#tool-image-service-capabilities",
+    "kind": "command",
+    "search_text": "image_service_capabilities Describe the bounded single-tenant image-service interface contract without selecting or executing a model. experimental yolozu/integrations/mcp_server.py  Call the image_service_capabilities MCP tool before uploading an image.",
+    "summary": "Describe the bounded single-tenant image-service interface contract without selecting or executing a model.",
+    "title": "image_service_capabilities"
   },
   {
     "href": "commands.html#tool-import-yolo-data-yaml",
@@ -714,6 +735,13 @@
     "title": "publish_benchmark_table"
   },
   {
+    "href": "commands.html#tool-put-image-asset",
+    "kind": "command",
+    "search_text": "put_image_asset Decode, validate, and privately store one bounded image without accepting a filesystem path or remote URL. experimental yolozu/integrations/mcp_server.py   Call the put_image_asset MCP tool with strict base64 and its decoded JPEG, PNG, or WebP media type.",
+    "summary": "Decode, validate, and privately store one bounded image without accepting a filesystem path or remote URL.",
+    "title": "put_image_asset"
+  },
+  {
     "href": "commands.html#tool-qualify-artifact-research",
     "kind": "command",
     "search_text": "qualify_artifact_research Qualify offline prediction distillation and Hessian refinement with three deterministic repetitions, stable COCO metrics, hashes, measured cost, rollback, and explicit hold gates. research tools/qualify_artifact_research.py --student --teacher --dataset --split --distill-config --hessian-config --output-dir --repeats ./.venv/bin/python tools/qualify_artifact_research.py --output-dir /tmp/yolozu-artifact-research",
@@ -835,8 +863,8 @@
   {
     "href": "commands.html#tool-run-mcp-server",
     "kind": "command",
-    "search_text": "run_mcp_server Run the YOLOZU MCP stdio server, expose canonical live tool ids and filtered packaged discovery, and provide typed TTT/CTTA export jobs that reject arbitrary extra args and require status=full checkpoint preflight. stable tools/run_mcp_server.py --transport --manifest --print-tools --guaranteed --supported --maturity --tag --ids-only --sample-generate-config --sample-review-config --workspace-root yolozu-mcp yolozu-mcp --print-tools --guaranteed --ids-only yolozu-mcp --print-tools --supported --ids-only yolozu-mcp --print-tools --ids-only --maturity stable --tag validation yolozu-mcp --sample-generate-config > reports/ai_generate_config.json && yolozu-mcp --sample-review-config reports/ai_generate_config.json",
-    "summary": "Run the YOLOZU MCP stdio server, expose canonical live tool ids and filtered packaged discovery, and provide typed TTT/CTTA export jobs that reject arbitrary extra args and require status=full checkpoint preflight.",
+    "search_text": "run_mcp_server Run the YOLOZU MCP server over stdio or Streamable HTTP, optionally restrict it to the bounded image-service surface, and expose canonical manifest-backed discovery. stable tools/run_mcp_server.py --transport --surface --host --port --http-path --public-url --auth-token-env --tenant-id --retention-seconds --manifest --print-tools --guaranteed --supported --maturity --tag --ids-only --sample-generate-config --sample-review-config --workspace-root yolozu-mcp yolozu-mcp --transport streamable-http --surface image-service --host 127.0.0.1 --port 8000 --http-path /mcp yolozu-mcp --print-tools --guaranteed --ids-only yolozu-mcp --print-tools --supported --ids-only yolozu-mcp --print-tools --ids-only --maturity stable --tag validation yolozu-mcp --sample-generate-config > reports/ai_generate_config.json && yolozu-mcp --sample-review-config reports/ai_generate_config.json",
+    "summary": "Run the YOLOZU MCP server over stdio or Streamable HTTP, optionally restrict it to the bounded image-service surface, and expose canonical manifest-backed discovery.",
     "title": "run_mcp_server"
   },
   {
@@ -908,6 +936,13 @@
     "search_text": "smoke_synthgen Run deterministic SynthGen intake smoke, or generate and qualify a fresh cross-repo handoff with strict QA and loader checks. experimental tools/smoke_synthgen.py --dataset-root --schema-id --predictions --max-samples --output-dir --synthgen-repo --synthgen-python --backend --mode --global-seed --num-train --num-val python3 tools/smoke_synthgen.py --dataset-root data/smoke/synthgen_minishard --output-dir reports ./.venv/bin/python tools/smoke_synthgen.py --synthgen-repo ../YOLOZU-synthgen --output-dir /tmp/yolozu-synthgen-qualification",
     "summary": "Run deterministic SynthGen intake smoke, or generate and qualify a fresh cross-repo handoff with strict QA and loader checks.",
     "title": "smoke_synthgen"
+  },
+  {
+    "href": "commands.html#tool-submit-image-job",
+    "kind": "command",
+    "search_text": "submit_image_job Queue one typed image job that uses only a qualified registered pipeline or explicitly abstains; execution is opt-in. experimental yolozu/integrations/mcp_server.py      Call the submit_image_job MCP tool with an asset_id, fixed_classes, and execute=false. Call the submit_image_job MCP tool with execute=true only after approving model execution.",
+    "summary": "Queue one typed image job that uses only a qualified registered pipeline or explicitly abstains; execution is opt-in.",
+    "title": "submit_image_job"
   },
   {
     "href": "commands.html#tool-summarize-bop19-pose-evidence",

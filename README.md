@@ -241,7 +241,7 @@ implementation did not promote any model; the packaged streams remain Candidate-
 Locally emitted reports can reach only `site_managed` / `site_qualified`; arbitrary
 workspace JSON remains nonselectable. Repository-managed trust additionally requires
 the retained, tracked review workflow and a public review reference.
-No adaptive runner is bound to those records, so the command currently fails
+The three packaged records remain unbound, so the command currently fails
 actionably instead of producing dummy evidence. A pure internal selector now applies the fixed trust,
 compatibility, artifact, evidence, performance, and deterministic ranking rules
 to already validated in-memory observations. It performs no provider-file,
@@ -258,8 +258,11 @@ complete selected decision, revalidates the job, current lifecycle/evidence,
 environment, workload, input, class mapping, and pinned artifact state, and defaults
 to a no-write `dry_run=true`. Explicit execution uses only a registered code-owned,
 network-free route and publishes an atomic managed predictions/provenance/checksum
-tree. The adaptive runner maps remain empty, so no real adaptive model
-can currently execute; no model adapter or performance claim was added. An activation record alone does
+tree. A code-owned Torchvision Mask R-CNN runner is registered for exact
+safetensors/CPU bundles, but no packaged bundle binds it or passes the required
+license, qualification, support, evidence, and lifecycle gates. The default
+installation therefore still cannot execute a real adaptive model; no
+performance claim was added. An activation record alone does
 not select or execute a model. Registry loading, an
 environment profile, a smoke result, and output publication alone are not
 qualification evidence or proof of human adoption.
@@ -276,6 +279,11 @@ records the reviewed mutation, immutable-history, and exact rollback boundaries.
 checks the same boundary from source, sdist, wheel, and installed MCP calls. Its
 positive selector and executor cases use internal fixtures; they do not qualify a
 real bundle or demonstrate a selected public run.
+
+OpenAI and Claude clients can use the bounded five-tool MCP image service without
+receiving filesystem or backend controls. See
+[Bounded MCP image service](docs/image_service_mcp.md) for local stdio,
+Streamable HTTP, authentication, retention, and the current abstention boundary.
 
 See the generated [roadmap report](reports/adaptive_vision_roadmap.md), the packaged [machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json), and the [Beads synchronization rule](docs/roadmap.md).
 

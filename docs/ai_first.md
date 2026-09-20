@@ -69,7 +69,7 @@ yolozu-mcp --sample-review-config reports/ai_generate_config.json
 when the config cannot be read safely, so agents can use the process status
 without parsing human text.
 
-Inspect all 27 registered MCP operations, or filter the broader manifest
+Inspect all 32 registered MCP operations, or filter the broader manifest
 registry without returning full records:
 
 ```bash
@@ -98,9 +98,17 @@ abstains rather than inventing a recommendation.
 requires the complete selected decision, repeats the governed and pinned local
 preflight, and defaults to `dry_run=true`, which creates no runner or output.
 Only explicit `dry_run=false` may use a registered code-owned network-free route
-and publish the exact managed predictions/provenance/checksum tree. The adaptive
-runner maps are empty, so the default installed surface cannot
-currently execute a real adaptive model. It is not `guaranteed_ai_safe`.
+and publish the exact managed predictions/provenance/checksum tree. A code-owned
+Torchvision runner is registered, but no packaged bundle binds it or passes the
+required license, qualification, support, evidence, and lifecycle gates. The
+default installed surface therefore cannot currently execute a real adaptive
+model. It is not `guaranteed_ai_safe`.
+
+For OpenAI or Claude image work, `--surface image-service` exposes only five
+bounded tools for capabilities, asset upload, job submission, status, and
+cancellation. The service uses opaque identities and does not accept caller
+paths, URLs, model names, backends, shell arguments, or output destinations. See
+[`image_service_mcp.md`](image_service_mcp.md).
 
 The [installed-artifact verification report](../reports/adaptive_routing_installed_verification_2026-08-26.md)
 checks that source, candidate artifacts, and installed MCP calls retain this exact

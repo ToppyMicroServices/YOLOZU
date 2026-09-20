@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 import json
+import os
+import re
 import threading
 import time
 import uuid
@@ -22,6 +24,7 @@ _JOB_FAILURE_ERRORS = (
     LookupError,
     AssertionError,
 )
+_JOB_ID_RE = re.compile(r"job_[A-Za-z0-9_-]{1,64}\Z")
 
 
 @dataclass
@@ -64,14 +67,41 @@ class JobManager:
         }
 
     def _persist(self, job: _JobState) -> None:
-        self._job_file(job.job_id).write_text(json.dumps(self._serialize(job), ensure_ascii=False, indent=2), encoding="utf-8")
+        path = self._job_file(job.job_id)
+        temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+        descriptor = os.open(
+            temporary,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+            0o600,
+        )
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                json.dump(
+                    self._serialize(job),
+                    handle,
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, path)
+        finally:
+            try:
+                temporary.unlink()
+            except FileNotFoundError:
+                pass
 
     def _load_from_disk(self) -> None:
         for path in sorted(self._storage_dir.glob("job_*.json")):
             try:
+                if path.is_symlink() or path.stat().st_size > 32 * 1024 * 1024:
+                    continue
                 payload = json.loads(path.read_text(encoding="utf-8"))
+                job_id = payload.get("job_id")
+                if job_id != path.stem or _JOB_ID_RE.fullmatch(str(job_id)) is None:
+                    continue
                 state = _JobState(
-                    job_id=str(payload.get("job_id") or path.stem),
+                    job_id=str(job_id),
                     name=str(payload.get("name") or "unknown"),
                     status=str(payload.get("status") or "unknown"),
                     created_at=float(payload.get("created_at") or 0.0),
@@ -85,6 +115,30 @@ class JobManager:
                 self._jobs[state.job_id] = state
             except (json.JSONDecodeError, OSError, UnicodeDecodeError, TypeError, ValueError):
                 continue
+
+    def purge_terminal_before(self, cutoff: float) -> int:
+        """Remove terminal job records older than an explicit Unix cutoff."""
+
+        if isinstance(cutoff, bool) or not isinstance(cutoff, (int, float)):
+            raise ValueError("cutoff must be a Unix timestamp")
+        removed = 0
+        with self._lock:
+            for job_id, job in list(self._jobs.items()):
+                if job.status not in {"completed", "failed", "cancelled", "unknown"}:
+                    continue
+                finished = job.finished_at if job.finished_at is not None else job.created_at
+                if finished >= float(cutoff):
+                    continue
+                path = self._job_file(job_id)
+                if path.is_symlink():
+                    continue
+                try:
+                    path.unlink()
+                except FileNotFoundError:
+                    pass
+                self._jobs.pop(job_id, None)
+                removed += 1
+        return removed
 
     def submit(self, name: str, fn: Callable[[], dict[str, Any]]) -> str:
         job_id = f"job_{uuid.uuid4().hex[:12]}"

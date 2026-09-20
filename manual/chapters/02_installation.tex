@@ -104,8 +104,9 @@ and the repository-managed stream currently contains two \cmd{hold} records.
 Workspace screening input remains
 \cmd{operator\_asserted}, and a pass record alone cannot register or execute a
 bundle. The Experimental \cmd{yolozu qualify-image-pipeline}
-command is installed, but the unbound Candidate records and empty runner map make the default
-invocation fail actionably without dummy evidence. Its \cmd{--help} documents
+command is installed. A code-owned Torchvision runner is registered, but the
+Candidate records do not bind it, so the default invocation fails actionably
+without dummy evidence. Its \cmd{--help} documents
 the exact-bundle, timeout, pinned-input, and managed-output interface contract.
 
 The Experimental \cmd{yolozu update-image-pipeline-lifecycle} command is also
@@ -123,8 +124,9 @@ repository-owned qualification and processing outputs. It uses bounded manifests
 directory-relative no-follow mutation, and fail-closed recovery on POSIX. It does
 not make a model adapter or runnable model bundle available. The installed
 recommendation, selector, and pinned-processing interface contracts are verified,
-but the Candidate-only registry, held screenings, empty public evidence stream, and empty runner maps
-make the default recommendation abstain with \cmd{maturity\_disallowed} and processing
+but the Candidate-only registry, held screenings, empty public evidence stream,
+and unbound packaged bundles make the default recommendation abstain with
+\cmd{maturity\_disallowed} and processing
 reject with \cmd{selection\_required}.
 Positive selector and executor tests use internal fixtures rather than public
 qualification evidence. The managed output path does not silently weaken its guarantee

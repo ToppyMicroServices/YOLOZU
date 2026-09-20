@@ -57,9 +57,9 @@ Guaranteed AI-safe surface (deterministic/lightweight):
   \item \cmd{validate_predictions}
 \end{itemize}
 
-The live MCP server registers a broader 27-tool surface. The generated JSON
+The live MCP server registers a broader 32-tool surface. The generated JSON
 reference separates \cmd{mcp_live}, \cmd{guaranteed_ai_safe},
-\cmd{config_review}, and \cmd{actions_public}; registration alone does not
+\cmd{image_service_safe}, \cmd{config_review}, and \cmd{actions_public}; registration alone does not
 promote environment-dependent operations into the guaranteed set.
 The generated JSON reference is also packaged in the wheel and supplies a
 summary plus exact JSON input schema for every live id. Surface membership does
@@ -77,6 +77,19 @@ repository-managed pass. The packaged screening stream is empty, so this
 interface contract does not make a candidate model available. Recommendation is
 read-only and separate from the explicit, dry-run-by-default
 \cmd{process\_images} operation.
+
+OpenAI and Claude clients can use the dedicated five-tool image surface over
+stdio or Streamable HTTP:
+\begin{lstlisting}[language=bash]
+yolozu-mcp --surface image-service
+yolozu-mcp --transport streamable-http --surface image-service \
+  --host 127.0.0.1 --port 8000 --http-path /mcp
+\end{lstlisting}
+It accepts bounded image bytes and opaque asset/job ids, not model names,
+backends, filesystem paths, URLs, shell arguments, or output destinations.
+External HTTP requires the dedicated surface, an HTTPS public URL, and a bearer
+token loaded from an environment variable. Actual execution remains opt-in and
+requires a qualified selected bundle.
 
 Copy-paste sanity checks:
 \begin{lstlisting}[language=bash]

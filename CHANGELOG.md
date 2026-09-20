@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Add a bounded five-tool MCP image service for OpenAI and Claude clients, with
+  authenticated Streamable HTTP, private tenant storage, and fail-closed
+  qualified-pipeline selection.
+- Add a code-owned Torchvision Mask R-CNN safetensors runner while keeping the
+  default service abstaining until an exact bundle passes the existing gates.
+
 ## [4.8.0] - 2026-09-10
 
 ### Added

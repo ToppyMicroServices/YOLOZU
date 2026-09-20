@@ -26,6 +26,8 @@ Exposed tools (minimum):
 Also available in the same backend surface:
 - recommendation: `recommend_image_pipeline` (Experimental, MCP-only, read-only)
 - pinned local processing: `process_images` (Experimental, MCP-only, dry-run by default)
+- bounded image service: `image_service_capabilities`, `put_image_asset`,
+  `submit_image_job`, `get_image_job`, `cancel_image_job`
 - inference/calibration: `predict_images`, `parity_check`, `calibrate_predictions`
 - evaluation: `eval_instance_seg`, `eval_long_tail`
 - async jobs: `train_job`, `export_predictions_job`, `test_job`, `ttt_job`, `ctta_job`
@@ -35,10 +37,11 @@ Also available in the same backend surface:
 Guaranteed AI-safe support:
 - `doctor`, `generate_config`, `review_config`, `validate_predictions`
 
-The server also registers a broader 27-tool live MCP surface. The generated
+The server also registers a broader 32-tool live MCP surface. The generated
 reference distinguishes that live set from the four guaranteed tools, the two
-config-review tools, and the 21 canonical Actions operations. Registration does
-not promote environment-dependent tools into the guaranteed set.
+config-review tools, the five-tool `image_service_safe` surface, and the 21
+canonical Actions operations. Registration does not promote
+environment-dependent tools into the guaranteed set.
 
 Installed MCP quickstart (copy-paste):
 
@@ -49,7 +52,7 @@ yolozu-mcp
 # Inspect the four guaranteed AI-safe tools as JSON
 yolozu-mcp --print-tools --guaranteed --ids-only > reports/mcp_tool_ids.json
 
-# Inspect all 27 registered MCP operations
+# Inspect all 32 registered MCP operations
 yolozu-mcp --print-tools --supported --ids-only > reports/mcp_live_tool_ids.json
 
 # Deterministic sample I/O (useful for client wiring tests)
@@ -76,8 +79,28 @@ not itself execute the selected pipeline.
 job/input roots. It revalidates current lifecycle, evidence, environment,
 workload, input, artifact, resolver, and class-mapping identities. `dry_run=true`
 performs no runner call or write. Explicit execution is available only through a
-registered code-owned network-free route; none is registered in the empty public
-baseline, so this surface does not claim a currently runnable model.
+registered code-owned network-free route. A code-owned Torchvision runner now
+exists, but no packaged bundle has
+completed the license, qualification, support-profile, evidence-activation, and
+lifecycle gates needed to select it. This surface therefore does not claim a
+currently runnable model.
+
+For OpenAI or Claude image work, start the five-tool service-only surface:
+
+```bash
+yolozu-mcp --surface image-service
+
+# Local Streamable HTTP endpoint for a private tunnel or local client
+yolozu-mcp --transport streamable-http --surface image-service \
+  --host 127.0.0.1 --port 8000 --http-path /mcp
+```
+
+This surface accepts bounded image bytes and returns opaque `asset_id` and
+`job_id` values. It does not accept caller-selected model names, backends,
+paths, URLs, shell arguments, or output destinations. Actual execution is
+opt-in and still requires a qualified selection. See
+[Bounded MCP image service](image_service_mcp.md) for the public HTTPS,
+authentication, retention, and provider boundaries.
 
 Best-effort only (environment-dependent):
 - training jobs, TensorRT pipelines, OpenCV CUDA/OpenVINO paths
@@ -127,7 +150,8 @@ Detailed setup: [OpenAI MCP / Actions](openai_mcp_actions.md)
 
 ### A. MCP route (recommended)
 
-Use the same YOLOZU MCP server as remote MCP endpoint.
+Use the service-only YOLOZU Streamable HTTP endpoint as the remote MCP endpoint,
+or use OpenAI Secure MCP Tunnel for a private local endpoint.
 
 - Reuses one implementation across LLMs.
 - Keeps command behavior and outputs identical to local CLI semantics.
@@ -155,10 +179,12 @@ Recommendation: ship MCP first, add Actions only when ChatGPT Actions integratio
 
 ## 3) Claude routes
 
-Claude integration should also use the same MCP server.
+Claude integration should also use the same MCP server. The hosted connector
+requires a public HTTPS Streamable HTTP or SSE endpoint; a local Claude client
+or SDK helper can use stdio.
 
 ```bash
-yolozu-mcp
+yolozu-mcp --surface image-service
 ```
 
 - Expose the same tool interface contract and JSON shape used by other clients.
@@ -226,7 +252,8 @@ Generated interface contract reference:
 - `docs/generated/mcp_actions_tool_reference.md`
 
 The JSON reference's `surfaces` object is the machine-readable source for
-`mcp_live`, `guaranteed_ai_safe`, `config_review`, and `actions_public`.
+`mcp_live`, `guaranteed_ai_safe`, `image_service_safe`, `config_review`, and
+`actions_public`.
 The same generated JSON is packaged in the wheel for checkout-independent
 discovery. It provides the exact live input schemas and summaries. Surface
 membership does not infer maturity; filters expose counts for excluded

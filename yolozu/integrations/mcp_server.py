@@ -1,6 +1,13 @@
 from __future__ import annotations
 
+import hmac
+import ipaddress
+from urllib.parse import urlsplit
+
+from mcp.server.auth.provider import AccessToken
+from mcp.server.auth.settings import AuthSettings
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 from .ai_surface import (
     ai_surface_sets,
@@ -11,6 +18,15 @@ from .ai_surface import (
 from .manifest_resources import (
     resolve_workspace_path,
     workspace_root as resolved_workspace_root,
+)
+from .image_service import (
+    cancel_image_job,
+    configure_image_service,
+    get_image_job,
+    image_service_capabilities,
+    public_service_call,
+    put_image_asset,
+    submit_image_job,
 )
 from .tool_runner import (
     ctta_job,
@@ -41,6 +57,98 @@ from .tool_runner import (
 
 
 app = FastMCP("yolozu")
+service_app = FastMCP("yolozu-image-service")
+
+
+class _StaticTokenVerifier:
+    """Verify one deployment token without exposing it through tool state."""
+
+    def __init__(self, token: str) -> None:
+        self._token = token
+
+    async def verify_token(self, token: str) -> AccessToken | None:
+        if not hmac.compare_digest(token, self._token):
+            return None
+        return AccessToken(
+            token=token,
+            client_id="yolozu-image-service-client",
+            scopes=["yolozu:invoke"],
+        )
+
+
+def _is_loopback_bind(host: str) -> bool:
+    if host.lower() == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
+
+
+def _http_server_boundary(
+    *,
+    surface: str,
+    host: str,
+    port: int,
+    streamable_http_path: str,
+    auth_token: str | None,
+    public_url: str | None,
+) -> tuple[list[str], list[str]]:
+    """Validate direct API callers and return DNS-rebinding allowlists."""
+
+    if not 1 <= port <= 65_535:
+        raise ValueError("port must be in 1..65535")
+    if (
+        not streamable_http_path.startswith("/")
+        or ".." in streamable_http_path.split("/")
+        or any(
+            ord(character) < 32 or ord(character) == 127
+            for character in streamable_http_path
+        )
+    ):
+        raise ValueError("streamable_http_path must be an absolute path without traversal")
+    if auth_token is not None and (
+        not 32 <= len(auth_token.encode("utf-8")) <= 4096
+        or any(ord(character) < 32 or ord(character) == 127 for character in auth_token)
+    ):
+        raise ValueError("auth_token must contain 32..4096 bytes without controls")
+
+    parsed = None
+    if public_url is not None:
+        parsed = urlsplit(public_url)
+        if (
+            parsed.scheme != "https"
+            or parsed.hostname is None
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.query
+            or parsed.fragment
+            or parsed.path != streamable_http_path
+        ):
+            raise ValueError("public_url must be the exact external HTTPS MCP URL")
+
+    externally_reachable = not _is_loopback_bind(host) or parsed is not None
+    if externally_reachable:
+        if surface != "image-service":
+            raise ValueError("external HTTP may expose only the image-service surface")
+        if parsed is None:
+            raise ValueError("non-loopback HTTP requires an HTTPS public_url")
+        if auth_token is None:
+            raise ValueError("external HTTP requires bearer authentication")
+
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        bind_authority = f"{host}:{port}"
+    else:
+        bind_host = f"[{host}]" if address.version == 6 else host
+        bind_authority = f"{bind_host}:{port}"
+    allowed_hosts = [bind_authority]
+    allowed_origins: list[str] = []
+    if parsed is not None:
+        allowed_hosts.append(parsed.netloc)
+        allowed_origins.append(f"{parsed.scheme}://{parsed.netloc}")
+    return list(dict.fromkeys(allowed_hosts)), list(dict.fromkeys(allowed_origins))
 
 
 def _rejected_input(
@@ -313,6 +421,58 @@ def process_images_tool(
     )
 
 
+@app.tool(name="image_service_capabilities")
+@service_app.tool(name="image_service_capabilities")
+def image_service_capabilities_tool() -> dict:
+    """Describe the bounded service-safe image interface contract."""
+    return public_service_call(image_service_capabilities)
+
+
+@app.tool(name="put_image_asset")
+@service_app.tool(name="put_image_asset")
+def put_image_asset_tool(content_base64: str, media_type: str) -> dict:
+    """Store one bounded JPEG, PNG, or WebP and return an opaque asset ID."""
+    return public_service_call(
+        put_image_asset,
+        content_base64=content_base64,
+        media_type=media_type,
+    )
+
+
+@app.tool(name="submit_image_job")
+@service_app.tool(name="submit_image_job")
+def submit_image_job_tool(
+    asset_id: str,
+    fixed_classes: list[str],
+    task: str = "object_detection",
+    execute: bool = False,
+    timeout_seconds: int = 300,
+) -> dict:
+    """Queue qualified local CNN selection and optional explicit execution."""
+    return public_service_call(
+        submit_image_job,
+        asset_id=asset_id,
+        fixed_classes=fixed_classes,
+        task=task,
+        execute=execute,
+        timeout_seconds=timeout_seconds,
+    )
+
+
+@app.tool(name="get_image_job")
+@service_app.tool(name="get_image_job")
+def get_image_job_tool(job_id: str) -> dict:
+    """Return bounded status and any completed image-job result."""
+    return public_service_call(get_image_job, job_id=job_id)
+
+
+@app.tool(name="cancel_image_job")
+@service_app.tool(name="cancel_image_job")
+def cancel_image_job_tool(job_id: str) -> dict:
+    """Cancel one queued image job; running inference is not interrupted."""
+    return public_service_call(cancel_image_job, job_id=job_id)
+
+
 @app.tool(name="parity_check")
 def parity_check_tool(
     reference: str,
@@ -561,8 +721,68 @@ def runs_describe_tool(run_id: str) -> dict:
     return runs_describe(run_id)
 
 
+def run_server(
+    *,
+    transport: str = "stdio",
+    surface: str = "full",
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    streamable_http_path: str = "/mcp",
+    tenant_id: str = "local",
+    retention_seconds: int = 86_400,
+    auth_token: str | None = None,
+    public_url: str | None = None,
+) -> None:
+    """Run one explicitly selected MCP surface and transport."""
+
+    if transport not in {"stdio", "streamable-http"}:
+        raise ValueError("transport must be stdio or streamable-http")
+    if surface not in {"full", "image-service"}:
+        raise ValueError("surface must be full or image-service")
+    configure_image_service(
+        workspace=resolved_workspace_root(),
+        tenant_id=tenant_id,
+        retention_seconds=retention_seconds,
+    )
+    selected = service_app if surface == "image-service" else app
+    if transport == "stdio":
+        selected.run(transport="stdio")
+        return
+
+    allowed_hosts, allowed_origins = _http_server_boundary(
+        surface=surface,
+        host=host,
+        port=port,
+        streamable_http_path=streamable_http_path,
+        auth_token=auth_token,
+        public_url=public_url,
+    )
+    selected.settings.host = host
+    selected.settings.port = port
+    selected.settings.streamable_http_path = streamable_http_path
+    selected.settings.stateless_http = True
+    selected.settings.json_response = True
+    selected._token_verifier = None
+    selected.settings.auth = None
+
+    selected.settings.transport_security = TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=allowed_hosts,
+        allowed_origins=allowed_origins,
+    )
+    if auth_token is not None:
+        issuer_url = public_url or f"http://{host}:{port}"
+        selected._token_verifier = _StaticTokenVerifier(auth_token)
+        selected.settings.auth = AuthSettings(
+            issuer_url=issuer_url,
+            resource_server_url=None,
+            required_scopes=["yolozu:invoke"],
+        )
+    selected.run(transport="streamable-http")
+
+
 def main() -> None:
-    app.run()
+    run_server()
 
 
 if __name__ == "__main__":

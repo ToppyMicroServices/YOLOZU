@@ -59,6 +59,7 @@ from .evidence import (
 )
 from .inventory import PinnedDecodedInput, PinnedDecodedInputSet, pin_decoded_inputs
 from .managed_output import ManagedOutputLimits, ManagedOutputTransaction
+from .runners import create_torchvision_runner
 
 __all__ = [
     "QUALIFICATION_PROTOCOL_FINGERPRINT",
@@ -688,7 +689,9 @@ class _ForkedRunnerSession:
 
 # Factories are populated only by repository-owned adapter modules. There are
 # intentionally no generic import strings, entry points, or caller arguments.
-_CODE_OWNED_RUNNER_FACTORIES: dict[str, Callable[[], AlgorithmRunner]] = {}
+_CODE_OWNED_RUNNER_FACTORIES: dict[str, Callable[[], AlgorithmRunner]] = {
+    "torchvision": create_torchvision_runner,
+}
 _CODE_OWNED_EVALUATOR_FACTORIES: dict[
     str, Callable[[Path, Path], QualificationEvaluator]
 ] = {}
