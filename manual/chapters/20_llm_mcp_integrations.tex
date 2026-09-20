@@ -98,6 +98,14 @@ remain the operator's responsibility. See \path{docs/image_service_mcp.md} for t
 exact limits and provider request settings, and
 \path{docs/image_service_candidate_review.md} for the unregistered CNN proposal.
 
+The local OpenAI plugin in \path{plugins/yolozu-image-service} packages this
+same five-tool surface and one scoped skill. Prepare a runtime-specific copy
+with \path{tools/prepare_image_service_plugin.py}; the bundled image client
+transfers a user-selected local file through a separate temporary stdio session.
+Preview is the default, and execution still requires a qualified bundle.
+Plugin packaging does not approve a model or publish a ChatGPT directory entry.
+See \path{docs/openai_image_service_plugin.md} for installation and test boundaries.
+
 Copy-paste sanity checks:
 \begin{lstlisting}[language=bash]
 yolozu-mcp --print-tools --guaranteed --ids-only > reports/mcp_tool_ids.json

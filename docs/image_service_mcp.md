@@ -13,6 +13,10 @@ The service surface contains only these tools:
 - `get_image_job`
 - `cancel_image_job`
 
+A [local OpenAI plugin](openai_image_service_plugin.md) packages this same
+surface and its image-request workflow. Plugin installation does not qualify
+or activate a model.
+
 It does not accept a backend name, model path, local input path, remote URL,
 shell argument, or arbitrary output path.
 

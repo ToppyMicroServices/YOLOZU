@@ -11228,6 +11228,110 @@
       ]
     },
     {
+      "docs": [
+        "docs/openai_image_service_plugin.md",
+        "README.md",
+        "Readme_jp.md",
+        "manual/chapters/20_llm_mcp_integrations.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "temporary_writes": [
+          "OS temporary yolozu-plugin-* workspace; image assets and job data removed on normal exit, may remain after forced termination."
+        ],
+        "writes": []
+      },
+      "entrypoint": "plugins/yolozu-image-service/scripts/image_service_client.py",
+      "examples": [
+        {
+          "command": "python3 plugins/yolozu-image-service/scripts/image_service_client.py --help",
+          "description": "Inspect local client options without loading MCP dependencies."
+        },
+        {
+          "command": "python3 plugins/yolozu-image-service/scripts/image_service_client.py --capabilities",
+          "description": "Check the bounded installed service without an image or provider call."
+        },
+        {
+          "command": "python3 plugins/yolozu-image-service/scripts/image_service_client.py --image data/smoke/images/val/000000000009.jpg --class cat",
+          "description": "Preview selection through a separate temporary local stdio session."
+        }
+      ],
+      "id": "image_service_plugin_client",
+      "inputs": [
+        {
+          "flag": "--help",
+          "kind": "string",
+          "name": "help",
+          "required": false
+        },
+        {
+          "description": "Read capabilities without uploading; mutually exclusive with --image.",
+          "flag": "--capabilities",
+          "kind": "string",
+          "name": "capabilities",
+          "required": false
+        },
+        {
+          "description": "User-selected regular local JPEG/PNG/WebP, at most 8 MiB; never a URL.",
+          "flag": "--image",
+          "kind": "file",
+          "name": "image",
+          "required": false
+        },
+        {
+          "description": "Repeatable target label; required with --image.",
+          "flag": "--class",
+          "kind": "string",
+          "name": "classes",
+          "required": false
+        },
+        {
+          "description": "Opt in to processing; does not qualify or activate a model.",
+          "flag": "--execute",
+          "kind": "string",
+          "name": "execute",
+          "required": false
+        },
+        {
+          "default": 60,
+          "description": "Finite job-wait seconds in 1..120; requests cancellation on expiry, not a hard shutdown deadline.",
+          "flag": "--timeout",
+          "kind": "number",
+          "name": "timeout",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Capability or terminal job response, with abstention preserved; exit 0 is request completion, not proof of inference.",
+          "kind": "stdout",
+          "name": "result_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "PIL",
+          "yolozu"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Send one user-selected local image through a temporary bounded stdio MCP session; preview by default, preserve abstention, and remove temporary image/job data on normal exit.",
+      "tags": [
+        "mcp",
+        "plugin",
+        "image-service"
+      ]
+    },
+    {
       "effects": {
         "fixed_writes": [],
         "writes": [
@@ -12643,6 +12747,89 @@
         "external-runtime",
         "training",
         "experimental"
+      ]
+    },
+    {
+      "docs": [
+        "docs/openai_image_service_plugin.md",
+        "README.md",
+        "Readme_jp.md",
+        "manual/chapters/20_llm_mcp_integrations.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "flag": "--output",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/prepare_image_service_plugin.py",
+      "examples": [
+        {
+          "command": "python3 tools/prepare_image_service_plugin.py --help",
+          "description": "Inspect preparation options."
+        },
+        {
+          "command": "python3 tools/prepare_image_service_plugin.py --python .venv/bin/python --output /tmp/yolozu-staging/plugins/yolozu-image-service",
+          "description": "Prepare a runtime-specific local copy at a new staging destination."
+        }
+      ],
+      "id": "prepare_image_service_plugin",
+      "inputs": [
+        {
+          "flag": "--help",
+          "kind": "string",
+          "name": "help",
+          "required": false
+        },
+        {
+          "description": "New destination ending in yolozu-image-service; existing paths are refused.",
+          "flag": "--output",
+          "kind": "dir",
+          "name": "output",
+          "required": true
+        },
+        {
+          "description": "Trusted interpreter with this source revision of yolozu[mcp] installed; virtualenv symlink identity is preserved.",
+          "flag": "--python",
+          "kind": "file",
+          "name": "python",
+          "required": true
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Manifest, MCP settings with absolute interpreter path, skill, image client, and code license.",
+          "kind": "dir",
+          "name": "plugin_directory"
+        },
+        {
+          "description": "Verified tool list and explicit installed_in_host=false and models_qualified=false markers.",
+          "kind": "stdout",
+          "name": "preparation_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false,
+        "python_packages": []
+      },
+      "runner": "python3",
+      "summary": "Prepare a non-overwriting local OpenAI plugin copy after checking the selected installed runtime's five-tool MCP surface; do not install dependencies, register a marketplace, or qualify a model.",
+      "tags": [
+        "mcp",
+        "plugin",
+        "packaging"
       ]
     },
     {

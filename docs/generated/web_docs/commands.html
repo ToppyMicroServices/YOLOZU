@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">147 manifest entries with declared maturity, inputs,
+  <p class="lead">149 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -1186,6 +1186,22 @@ python3 tools/gpu_validation_preflight.py --strict --output reports/gpu_validati
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/yolozu/integrations/mcp_server.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/image_service_mcp.md" target="_blank" rel="noopener noreferrer">image_service_mcp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/llm_integrations.md" target="_blank" rel="noopener noreferrer">llm_integrations.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/openai_mcp_actions.md" target="_blank" rel="noopener noreferrer">openai_mcp_actions.md</a></p>
 </details>
 
+<details class="card" id="tool-image-service-plugin-client" data-tool-id="image_service_plugin_client"
+  data-search-card data-search-text="image_service_plugin_client Send one user-selected local image through a temporary bounded stdio MCP session; preview by default, preserve abstention, and remove temporary image/job data on normal exit. experimental plugins/yolozu-image-service/scripts/image_service_client.py python3 plugins/yolozu-image-service/scripts/image_service_client.py --help python3 plugins/yolozu-image-service/scripts/image_service_client.py --capabilities python3 plugins/yolozu-image-service/scripts/image_service_client.py --image data/smoke/images/val/000000000009.jpg --class cat">
+  <summary><code>image_service_plugin_client</code> — Send one user-selected local image through a temporary bounded stdio MCP session; preview by default, preserve abstention, and remove temporary image/job data on normal exit.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>plugins/yolozu-image-service/scripts/image_service_client.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--help</code> — string</li><li><code>--capabilities</code> — string</li><li><code>--image</code> — file</li><li><code>--class</code> — string</li><li><code>--execute</code> — string</li><li><code>--timeout</code> — default=60, number</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 plugins/yolozu-image-service/scripts/image_service_client.py --help
+python3 plugins/yolozu-image-service/scripts/image_service_client.py --capabilities
+python3 plugins/yolozu-image-service/scripts/image_service_client.py --image data/smoke/images/val/000000000009.jpg --class cat</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/plugins/yolozu-image-service/scripts/image_service_client.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/openai_image_service_plugin.md" target="_blank" rel="noopener noreferrer">openai_image_service_plugin.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/Readme_jp.md" target="_blank" rel="noopener noreferrer">Readme_jp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/20_llm_mcp_integrations.tex" target="_blank" rel="noopener noreferrer">20_llm_mcp_integrations.tex</a></p>
+</details>
+
 <details class="card" id="tool-import-yolo-data-yaml" data-tool-id="import_yolo_data_yaml"
   data-search-card data-search-text="import_yolo_data_yaml Import YOLO-style data.yaml into a YOLOZU dataset wrapper and classes mapping (classes.json/classes.txt). stable tools/import_yolo_data_yaml.py python3 tools/import_yolo_data_yaml.py --data-yaml data/coco-yolo/data.yaml --split val2017 --output data/yolo_wrapper --force">
   <summary><code>import_yolo_data_yaml</code> — Import YOLO-style data.yaml into a YOLOZU dataset wrapper and classes mapping (classes.json/classes.txt).</summary>
@@ -1387,6 +1403,21 @@ python3 tools/prepare_bop_yolozu.py --help</code></pre>
   <pre><code>python3 tools/prepare_external_runtime_smoke_datasets.py --source data/real_multitask_fewshot --split train --output /tmp/yolozu-runtime-fixtures --max-images 6
 python3 tools/prepare_external_runtime_smoke_datasets.py --help</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/prepare_external_runtime_smoke_datasets.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/compatible_host_external_runtime_qualification.schema.json" target="_blank" rel="noopener noreferrer">compatible_host_external_runtime_qualification.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/training_capability_matrix.md" target="_blank" rel="noopener noreferrer">training_capability_matrix.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/external_finetune_smoke.md" target="_blank" rel="noopener noreferrer">external_finetune_smoke.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/tools_index.md" target="_blank" rel="noopener noreferrer">tools_index.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_evidence_2026-07-30.md" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_evidence_2026-07-30.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_primary_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_primary_2026-07-30.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_primary_dataset_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_primary_dataset_2026-07-30.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_primary_tao_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_primary_tao_2026-07-30.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_primary_workflow_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_primary_workflow_2026-07-30.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_independent_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_independent_2026-07-30.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_independent_dataset_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_independent_dataset_2026-07-30.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_independent_tao_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_independent_tao_2026-07-30.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_independent_workflow_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_independent_workflow_2026-07-30.json</a></p>
+</details>
+
+<details class="card" id="tool-prepare-image-service-plugin" data-tool-id="prepare_image_service_plugin"
+  data-search-card data-search-text="prepare_image_service_plugin Prepare a non-overwriting local OpenAI plugin copy after checking the selected installed runtime&#x27;s five-tool MCP surface; do not install dependencies, register a marketplace, or qualify a model. experimental tools/prepare_image_service_plugin.py python3 tools/prepare_image_service_plugin.py --help python3 tools/prepare_image_service_plugin.py --python .venv/bin/python --output /tmp/yolozu-staging/plugins/yolozu-image-service">
+  <summary><code>prepare_image_service_plugin</code> — Prepare a non-overwriting local OpenAI plugin copy after checking the selected installed runtime&#x27;s five-tool MCP surface; do not install dependencies, register a marketplace, or qualify a model.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>tools/prepare_image_service_plugin.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--help</code> — string</li><li><code>--output</code> — required, dir</li><li><code>--python</code> — required, file</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/prepare_image_service_plugin.py --help
+python3 tools/prepare_image_service_plugin.py --python .venv/bin/python --output /tmp/yolozu-staging/plugins/yolozu-image-service</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/prepare_image_service_plugin.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/openai_image_service_plugin.md" target="_blank" rel="noopener noreferrer">openai_image_service_plugin.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/Readme_jp.md" target="_blank" rel="noopener noreferrer">Readme_jp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/20_llm_mcp_integrations.tex" target="_blank" rel="noopener noreferrer">20_llm_mcp_integrations.tex</a></p>
 </details>
 
 <details class="card" id="tool-prepare-keypoints-dataset" data-tool-id="prepare_keypoints_dataset"

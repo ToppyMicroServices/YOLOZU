@@ -287,6 +287,11 @@ Streamable HTTP, authentication, per-tenant request limits, idle-time retention
 cleanup, and the current abstention boundary. The exact CNN bundle remains an
 [unregistered review proposal](docs/image_service_candidate_review.md).
 
+The [local OpenAI plugin](docs/openai_image_service_plugin.md) packages this
+five-tool surface and a scoped workflow skill, with a local image client and
+runtime-checked preparation command. It does not qualify or activate a model,
+and it is not a public ChatGPT directory release.
+
 See the generated [roadmap report](reports/adaptive_vision_roadmap.md), the packaged [machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json), and the [Beads synchronization rule](docs/roadmap.md).
 
 </details>

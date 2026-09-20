@@ -279,6 +279,11 @@ OpenAIとClaudeからは、filesystemやbackendを操作させない5-toolのMCP
 実CNN bundleはまだ[未登録のレビュー提案](docs/image_service_candidate_review.md)であり、
 qualification・ライセンス承認・promotion済みではありません。
 
+[ローカルOpenAIプラグイン](docs/openai_image_service_plugin.md)は、この5-tool surfaceと
+専用Skillをまとめたものです。ローカル画像用clientとruntime確認付きの準備コマンドを
+含みます。モデルのqualification・有効化は行わず、ChatGPTの公開ディレクトリへ
+掲載されたものでもありません。
+
 生成した[roadmap report](reports/adaptive_vision_roadmap.md)、packagedされた[machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json)、[Beadsの同期規則](docs/roadmap.md)を参照してください。
 
 </details>

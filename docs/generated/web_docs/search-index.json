@@ -581,6 +581,13 @@
     "title": "image_service_capabilities"
   },
   {
+    "href": "commands.html#tool-image-service-plugin-client",
+    "kind": "command",
+    "search_text": "image_service_plugin_client Send one user-selected local image through a temporary bounded stdio MCP session; preview by default, preserve abstention, and remove temporary image/job data on normal exit. experimental plugins/yolozu-image-service/scripts/image_service_client.py --help --capabilities --image --class --execute --timeout python3 plugins/yolozu-image-service/scripts/image_service_client.py --help python3 plugins/yolozu-image-service/scripts/image_service_client.py --capabilities python3 plugins/yolozu-image-service/scripts/image_service_client.py --image data/smoke/images/val/000000000009.jpg --class cat",
+    "summary": "Send one user-selected local image through a temporary bounded stdio MCP session; preview by default, preserve abstention, and remove temporary image/job data on normal exit.",
+    "title": "image_service_plugin_client"
+  },
+  {
     "href": "commands.html#tool-import-yolo-data-yaml",
     "kind": "command",
     "search_text": "import_yolo_data_yaml Import YOLO-style data.yaml into a YOLOZU dataset wrapper and classes mapping (classes.json/classes.txt). stable tools/import_yolo_data_yaml.py --data-yaml --split --output --force python3 tools/import_yolo_data_yaml.py --data-yaml data/coco-yolo/data.yaml --split val2017 --output data/yolo_wrapper --force",
@@ -677,6 +684,13 @@
     "search_text": "prepare_external_runtime_smoke_datasets Prepare bounded native COCO detection/keypoint and Cityscapes-style segmentation layouts plus internal label mirrors for runtime availability tests, with heuristic labels explicitly marked non-efficacy GT. experimental tools/prepare_external_runtime_smoke_datasets.py --source --split --output --max-images python3 tools/prepare_external_runtime_smoke_datasets.py --source data/real_multitask_fewshot --split train --output /tmp/yolozu-runtime-fixtures --max-images 6 python3 tools/prepare_external_runtime_smoke_datasets.py --help",
     "summary": "Prepare bounded native COCO detection/keypoint and Cityscapes-style segmentation layouts plus internal label mirrors for runtime availability tests, with heuristic labels explicitly marked non-efficacy GT.",
     "title": "prepare_external_runtime_smoke_datasets"
+  },
+  {
+    "href": "commands.html#tool-prepare-image-service-plugin",
+    "kind": "command",
+    "search_text": "prepare_image_service_plugin Prepare a non-overwriting local OpenAI plugin copy after checking the selected installed runtime's five-tool MCP surface; do not install dependencies, register a marketplace, or qualify a model. experimental tools/prepare_image_service_plugin.py --help --output --python python3 tools/prepare_image_service_plugin.py --help python3 tools/prepare_image_service_plugin.py --python .venv/bin/python --output /tmp/yolozu-staging/plugins/yolozu-image-service",
+    "summary": "Prepare a non-overwriting local OpenAI plugin copy after checking the selected installed runtime's five-tool MCP surface; do not install dependencies, register a marketplace, or qualify a model.",
+    "title": "prepare_image_service_plugin"
   },
   {
     "href": "commands.html#tool-prepare-keypoints-dataset",

@@ -254,6 +254,7 @@ Contact: develop@toppymicros.com
 | gpu_validation_preflight | experimental | tools/gpu_validation_preflight.py | Generate a preflight report that splits the YOLOZU-zisn GPU sweep into local-executable checks and GPU-runtime checks. |
 | hpo_sweep | stable | tools/hpo_sweep.py | Run a configurable parameter sweep (grid or list) and emit JSONL/CSV/MD results. |
 | image_service_capabilities | experimental | yolozu/integrations/mcp_server.py | Describe image-service capacity, per-60-second request limits, retention, and isolation boundaries without selecting or executing a model. |
+| image_service_plugin_client | experimental | plugins/yolozu-image-service/scripts/image_service_client.py | Send one user-selected local image through a temporary bounded stdio MCP session; preview by default, preserve abstention, and remove temporary image/job data on normal exit. |
 | import_yolo_data_yaml | stable | tools/import_yolo_data_yaml.py | Import YOLO-style data.yaml into a YOLOZU dataset wrapper and classes mapping (classes.json/classes.txt). |
 | list_models | stable | yolozu/cli.py | List fetchable model IDs from the built-in (or custom) model registry. |
 | make_subset_dataset | stable | tools/make_subset_dataset.py | Create a deterministic, provenance-hashed YOLO subset while preserving referenced training sidecars and refusing unowned output replacement. |
@@ -268,6 +269,7 @@ Contact: develop@toppymicros.com
 | prepare_coco_instance_seg | stable | tools/prepare_coco_instance_seg.py | Convert official COCO instances JSON into YOLO-format labels + per-instance PNG masks + sidecar metadata for instance-seg eval. |
 | prepare_coco_yolo | stable | tools/prepare_coco_yolo.py | Convert official COCO instances JSON into YOLO-format labels + (optional) copy images. |
 | prepare_external_runtime_smoke_datasets | experimental | tools/prepare_external_runtime_smoke_datasets.py | Prepare bounded native COCO detection/keypoint and Cityscapes-style segmentation layouts plus internal label mirrors for runtime availability tests, with heuristic labels explicitly marked non-efficacy GT. |
+| prepare_image_service_plugin | experimental | tools/prepare_image_service_plugin.py | Prepare a non-overwriting local OpenAI plugin copy after checking the selected installed runtime's five-tool MCP surface; do not install dependencies, register a marketplace, or qualify a model. |
 | prepare_keypoints_dataset | stable | tools/prepare_keypoints_dataset.py | Prepare keypoints dataset in one command (auto-detect YOLO Pose or COCO keypoints) and emit YOLOZU-ready dataset wrapper. |
 | prepare_real_multitask_fewshot | stable | tools/prepare_real_multitask_fewshot.py | Create a small real-image multitask few-shot dataset (bbox/seg/keypoints/depth/pose sidecars) from COCO instances, with optional tiny COCO auto-download and explicit label provenance metadata. |
 | prepare_ttt_domain_shift_target | research | scripts/prepare_ttt_domain_shift_target.py | Prepare a deterministic, provenance-hashed domain-shift target and recipe while refusing source/output overlap, symlink outputs, protected roots, and unowned replacement. |

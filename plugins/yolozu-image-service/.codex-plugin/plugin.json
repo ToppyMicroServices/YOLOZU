@@ -1,0 +1,23 @@
+{
+  "name": "yolozu-image-service",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "description": "Use the bounded local YOLOZU image service; unqualified models abstain.",
+  "author": {
+    "name": "YOLOZU contributors"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "YOLOZU Image Service",
+    "shortDescription": "Bounded local image jobs with explicit execution.",
+    "longDescription": "Access five local MCP tools for image assets and jobs. Preview selection before execution and report abstention when no qualified model is available. Model licensing, qualification, and activation are separate from this plugin.",
+    "developerName": "YOLOZU contributors",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "defaultPrompt": [
+      "Show the YOLOZU image service capabilities without running inference.",
+      "Preview an object-detection request for my local image."
+    ]
+  },
+  "mcpServers": "./.mcp.json"
+}
