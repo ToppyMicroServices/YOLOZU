@@ -2402,7 +2402,13 @@
         }
       ],
       "effects": {
-        "fixed_writes": [],
+        "fixed_writes": [
+          {
+            "kind": "dir",
+            "path": "runs/mcp_image_service",
+            "scope": "tree"
+          }
+        ],
         "writes": []
       },
       "requires": {

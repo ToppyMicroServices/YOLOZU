@@ -9,8 +9,11 @@ An immutable bundle must pin the exact Torch/Torchvision runtime and one
 from __future__ import annotations
 
 import importlib.metadata
+import hashlib
 import io
+import math
 from decimal import Decimal
+from pathlib import Path
 from typing import Any, Mapping
 
 from PIL import Image
@@ -18,6 +21,7 @@ from PIL import Image
 from ..bundle_registry import RunnerProbeResult
 from ..bundles import AlgorithmBundleSpec
 from ..contracts import EnvironmentProfile
+from ..canonical import canonical_sha256_v1
 
 _DECODER_ID = "pillow_rgb_v1"
 _PREPROCESS_ID = "torchvision_maskrcnn_embedded_v1"
@@ -35,8 +39,34 @@ def _runtime_version(name: str) -> str | None:
 
 
 def _number(value: float) -> str:
+    if not math.isfinite(value):
+        raise ValueError("runner output must be finite")
     text = f"{value:.8f}".rstrip("0").rstrip(".")
     return text or "0"
+
+
+def pipeline_identities() -> dict[str, dict[str, str]]:
+    """Bind component semantics to this adapter's bytes and decoder/runtime versions."""
+    source_digest = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    dependencies = {
+        name: _runtime_version(name) or "unavailable"
+        for name in ("torch", "torchvision", "Pillow", "safetensors")
+    }
+    return {
+        field: {
+            "id": identifier,
+            "version": "1",
+            "digest": canonical_sha256_v1({
+                "id": identifier, "adapter_sha256": source_digest,
+                "dependencies": dependencies,
+            }),
+        }
+        for field, identifier in (
+            ("decoder", _DECODER_ID),
+            ("preprocess", _PREPROCESS_ID),
+            ("postprocess", _POSTPROCESS_ID),
+        )
+    }
 
 
 def _read_artifact(artifacts: Any, artifact_id: str) -> bytes:
@@ -84,7 +114,7 @@ class TorchvisionMaskRCNNRunner:
             or record.get("runner_version") != self.runner_version
         ):
             return RunnerProbeResult("unsupported", "runner_version_mismatch")
-        if _runtime_version("torch") is None or self.runner_version == "unavailable":
+        if any(_runtime_version(name) is None for name in ("torch", "torchvision", "Pillow", "safetensors")):
             return RunnerProbeResult("unsupported", "runtime_unavailable")
         if record.get("loader_format") != "safetensors":
             return RunnerProbeResult("unsupported", "loader_format_unsupported")
@@ -92,16 +122,23 @@ class TorchvisionMaskRCNNRunner:
             return RunnerProbeResult("unsupported", "unsafe_loader_rejected")
         if record.get("tasks") != ["object_detection"]:
             return RunnerProbeResult("unsupported", "task_contract_mismatch")
-        identities = (
-            ("decoder", _DECODER_ID),
-            ("preprocess", _PREPROCESS_ID),
-            ("postprocess", _POSTPROCESS_ID),
-        )
-        if any(record.get(field, {}).get("id") != expected for field, expected in identities):
+        if any(record.get(field) != expected for field, expected in pipeline_identities().items()):
             return RunnerProbeResult("unsupported", "pipeline_identity_mismatch")
+        if record.get("prompt_modes") != ["fixed_classes"]:
+            return RunnerProbeResult("unsupported", "task_contract_mismatch")
         runtime = record.get("runtime") or {}
-        if runtime.get("runtime_id") != "torch" or runtime.get("provider_id") != "cpu":
+        if (
+            runtime.get("runtime_id") != "torch"
+            or runtime.get("runtime_version") != _runtime_version("torch")
+            or runtime.get("provider_id") != "cpu"
+            or runtime.get("provider_version") != "1"
+            or runtime.get("precision") != "fp32"
+            or runtime.get("accelerator_requirement") != "none"
+        ):
             return RunnerProbeResult("unsupported", "runtime_contract_mismatch")
+        options = record.get("runner_options") or {}
+        if "optimization_level" in options:
+            return RunnerProbeResult("unsupported", "runner_options_unsupported")
         observed = environment.to_dict().get("runtimes") or []
         matching = [item for item in observed if item.get("runtime_id") == "torch"]
         if (
@@ -132,10 +169,8 @@ class TorchvisionMaskRCNNRunner:
         options = record.get("runner_options") or {}
         torch.set_num_threads(int(options.get("intra_op_threads", 1)))
         if "inter_op_threads" in options:
-            try:
+            if torch.get_num_interop_threads() != int(options["inter_op_threads"]):
                 torch.set_num_interop_threads(int(options["inter_op_threads"]))
-            except RuntimeError:
-                pass
         state = load_safetensors(raw_weights)
         model = maskrcnn_resnet50_fpn_v2(
             weights=None,
@@ -207,6 +242,8 @@ class TorchvisionMaskRCNNRunner:
             strict=True,
         ):
             score = Decimal(str(float(score_value.detach().cpu().item())))
+            if not score.is_finite() or not 0 <= score <= 1:
+                raise ValueError("runner score is outside the finite unit interval")
             if score < _MIN_SCORE:
                 continue
             category_index = int(category_value.detach().cpu().item())
@@ -219,19 +256,22 @@ class TorchvisionMaskRCNNRunner:
                 float(value)
                 for value in box.detach().cpu().tolist()
             ]
+            if not all(math.isfinite(value) for value in (x1, y1, x2, y2)):
+                raise ValueError("runner box contains a non-finite coordinate")
             normalized = (
                 max(0.0, min(1.0, x1 / width)),
                 max(0.0, min(1.0, y1 / height)),
                 max(0.0, min(1.0, x2 / width)),
                 max(0.0, min(1.0, y2 / height)),
             )
-            if normalized[0] > normalized[2] or normalized[1] > normalized[3]:
+            box_text = [_number(value) for value in normalized]
+            if Decimal(box_text[0]) >= Decimal(box_text[2]) or Decimal(box_text[1]) >= Decimal(box_text[3]):
                 continue
             records.append(
                 {
                     "native_class_index": self._bundle_label_index[category],
                     "score": _number(float(score)),
-                    "bbox": [_number(value) for value in normalized],
+                    "bbox": box_text,
                 }
             )
             if len(records) >= _MAX_RESULTS:

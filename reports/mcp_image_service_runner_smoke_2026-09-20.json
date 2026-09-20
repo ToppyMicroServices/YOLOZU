@@ -14,7 +14,8 @@
     "runner_version": "0.27.0.dev20260330",
     "torch_version": "2.12.0.dev20260330",
     "provider_id": "cpu",
-    "network_during_inference": "denied",
+    "network_policy": "deny",
+    "os_network_isolation_claim": false,
     "loader_format_during_inference": "safetensors"
   },
   "weights": {

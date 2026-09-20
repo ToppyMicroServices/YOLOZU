@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "kind": "unregistered_image_service_candidate_review",
+  "status": "hold",
+  "registered": false,
+  "qualified": false,
+  "promoted": false,
+  "license_review": "unreviewed",
+  "qualification_preflight": {
+    "scope": "exact packaged bundle lookup only",
+    "channel": "Experimental",
+    "result": "bundle_not_found",
+    "full_workload_started": false
+  },
+  "review_date": "2026-09-20",
+  "source_checkpoint": {
+    "sha256": "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e",
+    "size_bytes": 185828065
+  },
+  "conversion": {
+    "format": "safetensors",
+    "source_load_weights_only": true,
+    "sha256": "59f39b25a05a7130ebb754f82451e44b791c684601a15cefc64f79462e1e8187",
+    "size_bytes": 185728220,
+    "redistributed": false,
+    "recipe": "safetensors.torch.save({name: state[name].contiguous() for name in sorted(state)})"
+  },
+  "versions": {
+    "torch": "2.12.0.dev20260330",
+    "torchvision": "0.27.0.dev20260330",
+    "Pillow": "12.2.0",
+    "safetensors": "0.8.0"
+  },
+  "torch_revision": "b59384084780d4b1934382379d3b9dd130cd2c25",
+  "torchvision_revision": "f9718a5b9fa717457cfe15507ca6e48ecdd3858e",
+  "adapter_sha256": "2e102269998d3c1603a12ea5a5e42c2218d986d435e6d7c1b13056d8cb14adb8",
+  "local_smoke": {
+    "input": "data/smoke/images/val/000000000009.jpg",
+    "input_sha256": "3b0bb6bebad60a3329f1e3484434872e86998aeb7750d779b308e4a064868c2c",
+    "retained_predictions": 10,
+    "first_prediction": {
+      "native_class_index": 50,
+      "score": "0.98298037",
+      "bbox": [
+        "0.40181193",
+        "0.4848333",
+        "0.89484558",
+        "0.99868189"
+      ]
+    },
+    "load_and_predict_seconds": 5.69,
+    "os_network_isolation_claim": false,
+    "quality_measured": false,
+    "full_qualification_run": false
+  },
+  "limitations": [
+    "Draft metadata only; not a managed registry entry or approval.",
+    "Artifact source_id identifies the original checkpoint; converted bytes must be prepared locally and are not downloadable at that URL.",
+    "Input shape records only this smoke image, not a qualified resolution range.",
+    "The proposed code-owned trust class is subject to repository review; checksum validation is not an audit.",
+    "Weights permission, dataset permission, screening, quality protocol, support review, qualification, activation, and promotion remain incomplete."
+  ],
+  "proposed_bundle_spec": {
+    "schema_version": 1,
+    "family_id": "torchvision-maskrcnn-r50-fpn-v2",
+    "bundle_id": "torchvision-maskrcnn-r50-fpn-v2-coco-cpu",
+    "bundle_version": "2026-09-20-draft1",
+    "spec_digest": "8c61c9780638a2268f2222e19803ffecd36919b2e127c25caf09bec0222e7569",
+    "provenance_class": "existing_code_owned",
+    "test_only": false,
+    "tasks": [
+      "object_detection"
+    ],
+    "prompt_modes": [
+      "fixed_classes"
+    ],
+    "adapter_backend_id": "torchvision-maskrcnn",
+    "execution_binding": {
+      "status": "bound",
+      "artifact_scope": "runner_consumed",
+      "reason_code": null
+    },
+    "runner_id": "torchvision",
+    "runner_version": "0.27.0.dev20260330",
+    "execution_trust_class": "code_owned_audited",
+    "loader_format": "safetensors",
+    "unsafe_deserialization_required": false,
+    "model_source_id": "https://github.com/pytorch/vision",
+    "model_revision": "f9718a5b9fa717457cfe15507ca6e48ecdd3858e",
+    "runtime": {
+      "runtime_id": "torch",
+      "runtime_version": "2.12.0.dev20260330",
+      "provider_id": "cpu",
+      "provider_version": "1",
+      "precision": "fp32",
+      "architecture": "arm64",
+      "accelerator_requirement": "none"
+    },
+    "model_input_shapes": [
+      {
+        "name": "images",
+        "layout": "NCHW",
+        "dimensions": [
+          1,
+          3,
+          480,
+          640
+        ]
+      }
+    ],
+    "decoder": {
+      "id": "pillow_rgb_v1",
+      "version": "1",
+      "digest": "5c9e8680b40e1467c3534b7577b7f4d96808fa65ccaacab01a56eeaf12a04ebd"
+    },
+    "preprocess": {
+      "id": "torchvision_maskrcnn_embedded_v1",
+      "version": "1",
+      "digest": "aae3debe28fcd5ae2bf33c739a189c375d40e567d0da392277bd45db735fe440"
+    },
+    "postprocess": {
+      "id": "torchvision_coco_xyxy_v1",
+      "version": "1",
+      "digest": "24063d2eb3841954463b84ec1730728e935caf043ff18648f838e0e8124f08d2"
+    },
+    "execution_network_required": false,
+    "runner_options": {
+      "intra_op_threads": 1,
+      "inter_op_threads": 1
+    },
+    "artifacts": [
+      {
+        "artifact_id": "weights",
+        "order": 0,
+        "role": "weight",
+        "source_id": "https://download.pytorch.org/models/maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth",
+        "source_revision": "sha256:73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e",
+        "expected_size_bytes": 185728220,
+        "sha256": "59f39b25a05a7130ebb754f82451e44b791c684601a15cefc64f79462e1e8187",
+        "license_expression": "unknown",
+        "license_source": "https://github.com/pytorch/vision#pre-trained-model-license",
+        "license_revision": "unreviewed",
+        "cache_key": "torchvision/maskrcnn-resnet50-fpn-v2-coco-v1/model.safetensors"
+      }
+    ],
+    "artifact_set_digest": "3d1ab8f2fb47b60d822c62d821ca72b4852db7f1de863d31a46f3f5217759056",
+    "class_vocabulary": {
+      "id": "torchvision-coco80",
+      "digest": "d9fc05d64b1b2d0a52860d8b0e0e95420029f7da6a412af4f1c91e15bfd2a98e",
+      "labels": [
+        "person",
+        "bicycle",
+        "car",
+        "motorcycle",
+        "airplane",
+        "bus",
+        "train",
+        "truck",
+        "boat",
+        "traffic light",
+        "fire hydrant",
+        "stop sign",
+        "parking meter",
+        "bench",
+        "bird",
+        "cat",
+        "dog",
+        "horse",
+        "sheep",
+        "cow",
+        "elephant",
+        "bear",
+        "zebra",
+        "giraffe",
+        "backpack",
+        "umbrella",
+        "handbag",
+        "tie",
+        "suitcase",
+        "frisbee",
+        "skis",
+        "snowboard",
+        "sports ball",
+        "kite",
+        "baseball bat",
+        "baseball glove",
+        "skateboard",
+        "surfboard",
+        "tennis racket",
+        "bottle",
+        "wine glass",
+        "cup",
+        "fork",
+        "knife",
+        "spoon",
+        "bowl",
+        "banana",
+        "apple",
+        "sandwich",
+        "orange",
+        "broccoli",
+        "carrot",
+        "hot dog",
+        "pizza",
+        "donut",
+        "cake",
+        "chair",
+        "couch",
+        "potted plant",
+        "bed",
+        "dining table",
+        "toilet",
+        "tv",
+        "laptop",
+        "mouse",
+        "remote",
+        "keyboard",
+        "cell phone",
+        "microwave",
+        "oven",
+        "toaster",
+        "sink",
+        "refrigerator",
+        "book",
+        "clock",
+        "vase",
+        "scissors",
+        "teddy bear",
+        "hair drier",
+        "toothbrush"
+      ]
+    }
+  }
+}

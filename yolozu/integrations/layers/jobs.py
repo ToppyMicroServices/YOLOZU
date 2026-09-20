@@ -229,11 +229,15 @@ class JobManager:
             job = self._jobs.get(job_id)
             if job is None:
                 return None
+            if job.status in ("completed", "failed", "cancelled"):
+                return {"job_id": job_id, "cancelled": False, "reason": f"already_{job.status}"}
             if job.future and job.future.cancel():
                 job.status = "cancelled"
                 job.finished_at = time.time()
                 self._persist(job)
                 return {"job_id": job_id, "cancelled": True}
-            if job.status in ("completed", "failed", "cancelled"):
-                return {"job_id": job_id, "cancelled": False, "reason": f"already_{job.status}"}
             return {"job_id": job_id, "cancelled": False, "reason": "running"}
+
+    def shutdown(self) -> None:
+        """Stop accepting work without interrupting an already running job."""
+        self._executor.shutdown(wait=False)

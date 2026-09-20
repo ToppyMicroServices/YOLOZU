@@ -283,7 +283,9 @@ real bundle or demonstrate a selected public run.
 OpenAI and Claude clients can use the bounded five-tool MCP image service without
 receiving filesystem or backend controls. See
 [Bounded MCP image service](docs/image_service_mcp.md) for local stdio,
-Streamable HTTP, authentication, retention, and the current abstention boundary.
+Streamable HTTP, authentication, per-tenant request limits, idle-time retention
+cleanup, and the current abstention boundary. The exact CNN bundle remains an
+[unregistered review proposal](docs/image_service_candidate_review.md).
 
 See the generated [roadmap report](reports/adaptive_vision_roadmap.md), the packaged [machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json), and the [Beads synchronization rule](docs/roadmap.md).
 

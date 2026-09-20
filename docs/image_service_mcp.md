@@ -82,6 +82,62 @@ be connected by a local Claude client or SDK helper. Check the current
 [Claude MCP connector documentation](https://platform.claude.com/docs/en/agents-and-tools/mcp-connector),
 including its Beta and data-retention limits, before sending sensitive data.
 
+### Provider request settings
+
+These are request fragments for an application's existing API client, not
+deployment credentials or tested provider connections. Keep the service token in
+the backend secret store. The application must handle image upload and job
+polling; an image attached to a chat does not automatically become an `asset_id`.
+
+For the OpenAI Responses API, configure the MCP tool with explicit approvals:
+
+```python
+yolozu_tool = {
+    "type": "mcp",
+    "server_label": "yolozu",
+    "server_url": service_https_url,
+    "authorization": service_token,
+    "allowed_tools": [
+        "image_service_capabilities", "put_image_asset", "submit_image_job",
+        "get_image_job", "cancel_image_job",
+    ],
+    "require_approval": "always",
+}
+# Pass tools=[yolozu_tool] to your Responses request.
+```
+
+The application handles `mcp_approval_request` before sending its approval
+response. See the [official Responses MCP guide](https://developers.openai.com/api/docs/guides/tools-connectors-mcp).
+
+For Claude Messages, use the current connector toolset format. This initial
+configuration enables only inspection; enable each write tool after the
+application has obtained the user's consent for the intended operation:
+
+```python
+yolozu_settings = {
+    "betas": ["mcp-client-2025-11-20"],
+    "mcp_servers": [{
+        "type": "url", "name": "yolozu", "url": service_https_url,
+        "authorization_token": service_token,
+    }],
+    "tools": [{
+        "type": "mcp_toolset", "mcp_server_name": "yolozu",
+        "default_config": {"enabled": False},
+        "configs": {
+            "image_service_capabilities": {"enabled": True},
+            "get_image_job": {"enabled": True},
+        },
+    }],
+}
+# Pass these fields to your client's beta Messages request.
+```
+
+The service's `execute=true` is a caller instruction, not proof of human
+approval. Access to `submit_image_job` permits execution requests, so the calling
+application owns the approval boundary. The [Claude connector guide](https://platform.claude.com/docs/en/agents-and-tools/mcp-connector)
+defines the beta header and tool allowlist format. These settings were checked
+against official documentation on 2026-09-20; no paid provider request was made.
+
 ## Request flow
 
 1. Call `image_service_capabilities` and check the current bounds.
@@ -99,16 +155,39 @@ the initial bounded MCP path; deployments handling larger payloads should add a
 separate authenticated upload plane rather than increasing tool-argument limits.
 
 Each service process uses a private tenant directory with mode `0700`; image and
-job-state files are written with mode `0600`. Queued jobs use one worker. Assets,
-terminal job state, and managed outputs expire under the configured retention
-policy. Each tenant is capped at 128 retained assets, 16 active jobs, and 1,024
+job-state files are written with mode `0600`. Queued jobs use one worker. A
+background worker checks expiry every 60 seconds while the server is running,
+including when no new requests arrive. Startup and job lookup also check expiry.
+Inactive assets, terminal job state, and managed outputs expire under the configured
+retention policy. A stopped server cannot delete data; expired data is cleaned
+on restart. Each tenant is capped at 128 retained assets, 16 active jobs, and 1,024
 retained job records. An asset referenced by a queued or running job is not
-removed by retention cleanup. Cleanup is restricted to validated service-owned
-directories.
+removed by retention cleanup. Cancellation releases a queued job's asset reference;
+cleanup also preserves active output directories. Cleanup is restricted to validated
+service-owned directories. Symlink ancestors are rejected, including aliases within
+the workspace. Cleanup failure blocks new tool requests until cleanup succeeds or
+an operator repairs the storage.
+
+Per-tenant, per-process sliding 60-second limits are: 12 upload attempts, 12 job
+submissions, 120 capability requests, 120 status lookups, and 30 cancellation
+requests. Invalid attempts also consume the relevant allowance. Rejections return
+`error.code=rate_limited`; wait 60 seconds before retrying. Poll status no faster
+than once per second. These in-memory counters reset on process restart. They are
+not a distributed quota or an HTTP denial-of-service control. The dedicated
+HTTP surface bounds each POST body to 16 MiB and its upload to 30 seconds before
+MCP JSON parsing, including chunked requests (`413` for excess bytes, `408` for
+timeout). The deployment gateway still needs connection-rate and concurrency limits.
+Do not run two service processes against one tenant directory.
 
 `cancel_image_job` cancels a queued job. It does not claim that a model already
 running in the worker was interrupted. The adaptive runner has its own bounded
 child-process timeout when an eligible pipeline reaches execution.
+
+Private directories and a terminable child process are not a container or an OS
+network sandbox. The code-owned runner declares no inference network use; the
+service reports `os_network_isolation=false`. A public deployment still needs its
+own OS/container isolation and egress policy. No public host, TLS termination,
+DNS record, credential, or production container was provisioned by this change.
 
 ## Current model boundary
 
@@ -125,3 +204,8 @@ license review, support profiles, activated qualification evidence, and an
 Experimental or Stable lifecycle assignment. Therefore the default installed
 service still abstains instead of executing a CNN. This boundary must remain in
 place until the existing governance gates are completed for an exact bundle.
+
+The [candidate review](image_service_candidate_review.md) records a validated,
+unregistered bundle proposal, exact runtime/component identities, a repeated
+one-image smoke, and the remaining review gates. It deliberately retains
+`license_expression=unknown` and does not change the packaged registry.

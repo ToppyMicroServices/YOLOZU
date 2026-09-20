@@ -2813,7 +2813,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Cancel one queued image job without claiming interruption of an already running model process.",
+      "summary": "Cancel one queued image job and release its retained asset reference; apply tenant rate and retention limits without interrupting a running model.",
       "tags": [
         "ai-first",
         "image-service",
@@ -10956,7 +10956,13 @@
         "docs/openai_mcp_actions.md"
       ],
       "effects": {
-        "fixed_writes": [],
+        "fixed_writes": [
+          {
+            "kind": "dir",
+            "path": "runs/mcp_image_service",
+            "scope": "tree"
+          }
+        ],
         "writes": []
       },
       "entrypoint": "yolozu/integrations/mcp_server.py",
@@ -10997,7 +11003,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Return bounded status and result data for one opaque image job without exposing internal paths.",
+      "summary": "Return bounded status and result data for one opaque image job, enforcing tenant polling and expiry limits without exposing internal paths.",
       "tags": [
         "ai-first",
         "image-service",
@@ -11212,7 +11218,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Describe the bounded single-tenant image-service interface contract without selecting or executing a model.",
+      "summary": "Describe image-service capacity, per-60-second request limits, retention, and isolation boundaries without selecting or executing a model.",
       "tags": [
         "ai-first",
         "image-service",
@@ -13758,7 +13764,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Decode, validate, and privately store one bounded image without accepting a filesystem path or remote URL.",
+      "summary": "Rate-limit, decode, validate, and privately store one bounded image without accepting a filesystem path or remote URL.",
       "tags": [
         "ai-first",
         "image-service",
@@ -16023,7 +16029,13 @@
         "docs/tools_index.md"
       ],
       "effects": {
-        "fixed_writes": [],
+        "fixed_writes": [
+          {
+            "kind": "dir",
+            "path": "runs/mcp_image_service",
+            "scope": "tree"
+          }
+        ],
         "writes": []
       },
       "entrypoint": "tools/run_mcp_server.py",
@@ -16233,7 +16245,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Run the YOLOZU MCP server over stdio or Streamable HTTP, optionally restrict it to the bounded image-service surface, and expose canonical manifest-backed discovery.",
+      "summary": "Run the YOLOZU MCP server over stdio or Streamable HTTP with optional bounded image-service tools, tenant rate limits, and idle-time retention cleanup.",
       "tags": [
         "mcp",
         "integration",
@@ -18864,7 +18876,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Queue one typed image job that uses only a qualified registered pipeline or explicitly abstains; execution is opt-in.",
+      "summary": "Rate-limit and queue one typed image job using only a qualified registered pipeline or abstention; execution is opt-in and retained assets are released on completion or queued cancellation.",
       "tags": [
         "adaptive-inference",
         "ai-first",

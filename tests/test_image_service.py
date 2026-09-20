@@ -7,6 +7,7 @@ import io
 import json
 import os
 import tempfile
+import threading
 import time
 import unittest
 from argparse import Namespace
@@ -18,6 +19,10 @@ from PIL import Image
 from yolozu.integrations.image_service import (
     ImageService,
     ImageServiceError,
+    REQUEST_LIMITS,
+    close_image_service,
+    configure_image_service,
+    _configured_service,
 )
 from yolozu.integrations.mcp_cli import _server_options
 
@@ -45,13 +50,18 @@ def _options(**overrides: object) -> Namespace:
 
 
 class TestImageService(unittest.TestCase):
+    def service(self, **kwargs) -> ImageService:
+        service = ImageService(**kwargs)
+        self.addCleanup(service.close)
+        return service
+
     def _wait(self, service: ImageService, job_id: str) -> dict:
         deadline = time.monotonic() + 5
         while time.monotonic() < deadline:
             result = service.get_job(job_id=job_id)
             if result["job"]["status"] not in {"queued", "running"}:
                 return result
-            time.sleep(0.01)
+            time.sleep(0.05)
         self.fail("image service job did not finish")
 
     def test_capabilities_are_read_only_and_bounded(self) -> None:
@@ -84,6 +94,7 @@ class TestImageService(unittest.TestCase):
             self.assertEqual(len(stored), 1)
             self.assertEqual(stored[0].read_bytes(), data)
             self.assertEqual(stored[0].stat().st_mode & 0o777, 0o600)
+            self.assertEqual(service.tenant_root.stat().st_mode & 0o777, 0o700)
 
     def test_put_asset_rejects_mime_mismatch_and_invalid_base64(self) -> None:
         data = _png_bytes()
@@ -244,6 +255,126 @@ class TestImageService(unittest.TestCase):
                         fixed_classes=["cat"],
                     )
             self.assertEqual(queue_full.exception.code, "job_capacity_reached")
+
+    def test_rate_limit_counts_rejections_and_recovers_after_window(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            service = self.service(workspace=td)
+            with patch("yolozu.integrations.image_service.time.monotonic", return_value=100):
+                for _ in range(REQUEST_LIMITS["upload"]):
+                    with self.assertRaises(ImageServiceError):
+                        service.put_asset(content_base64="!", media_type="image/png")
+                with self.assertRaises(ImageServiceError) as limited:
+                    service.put_asset(content_base64="!", media_type="image/png")
+                self.assertEqual(limited.exception.code, "rate_limited")
+                self.assertTrue(service.capabilities()["ok"])
+            with patch("yolozu.integrations.image_service.time.monotonic", return_value=160):
+                result = service.put_asset(
+                    content_base64=base64.b64encode(_png_bytes()).decode(), media_type="image/png",
+                )
+                self.assertTrue(result["ok"])
+
+    def test_idle_cleanup_removes_expired_assets_without_new_requests(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            service = self.service(workspace=td, retention_seconds=300)
+            asset = service.put_asset(
+                content_base64=base64.b64encode(_png_bytes()).decode(), media_type="image/png",
+            )["asset"]["asset_id"]
+            directory = service.assets_root / asset
+            service.start_maintenance()
+            # Restart using a short test clock interval, not a shorter retention policy.
+            service.close()
+            with patch("yolozu.integrations.image_service.CLEANUP_INTERVAL_SECONDS", 0.01):
+                service.start_maintenance()
+                old = time.time() - 301
+                os.utime(directory, (old, old))
+                deadline = time.monotonic() + 2
+                while directory.exists() and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                service.close()
+            self.assertFalse(directory.exists())
+
+    def test_cancel_releases_queued_asset_and_does_not_double_release(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            service = self.service(workspace=td, retention_seconds=300)
+            encoded = base64.b64encode(_png_bytes()).decode()
+            asset = service.put_asset(content_base64=encoded, media_type="image/png")["asset"]["asset_id"]
+            manager = service._job_manager()
+            release = threading.Event()
+            blocker = manager.submit("blocker", lambda: (release.wait(5), {"ok": True})[1])
+            try:
+                job = service.submit_job(asset_id=asset, fixed_classes=["cat"])["job"]["job_id"]
+                self.assertTrue(service.cancel_job(job_id=job)["job"]["cancelled"])
+                self.assertFalse(service.cancel_job(job_id=job)["job"]["cancelled"])
+                self.assertEqual(service._active_assets, {})
+                old = time.time() - 301
+                os.utime(service.assets_root / asset, (old, old))
+                self.assertEqual(service.purge_expired()["assets"], 1)
+            finally:
+                release.set()
+                self._wait(service, blocker)
+
+    def test_cleanup_preserves_active_assets_outputs_and_unowned_names(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            service = self.service(workspace=td, retention_seconds=300)
+            asset = service.put_asset(
+                content_base64=base64.b64encode(_png_bytes()).decode(), media_type="image/png",
+            )["asset"]["asset_id"]
+            token = "run_" + "a" * 24
+            output = service.outputs_root / token
+            output.mkdir()
+            unowned = service.assets_root / "asset_not-service-owned"
+            unowned.mkdir()
+            service._active_assets[asset] = 1
+            service._job_assets["job_fixture"] = (asset, token)
+            old = time.time() - 301
+            for path in (service.assets_root / asset, output, unowned):
+                os.utime(path, (old, old))
+            self.assertEqual(service.purge_expired(), {"assets": 0, "outputs": 0, "jobs": 0})
+
+    def test_rejects_symlink_ancestors_even_when_target_is_in_workspace(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "actual").mkdir()
+            (root / "alias").symlink_to(root / "actual", target_is_directory=True)
+            with self.assertRaises(ImageServiceError):
+                ImageService(workspace=root, service_root="alias/service")
+            service = self.service(workspace=root)
+            service.root.mkdir(parents=True)
+            (service.root / "tenants").symlink_to(root / "actual", target_is_directory=True)
+            with self.assertRaises(ImageServiceError):
+                service.put_asset(content_base64="!", media_type="image/png")
+            self.assertEqual(list((root / "actual").iterdir()), [])
+
+    def test_failed_processing_is_not_reported_as_completed(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            service = self.service(workspace=td)
+            asset = service.put_asset(
+                content_base64=base64.b64encode(_png_bytes()).decode(), media_type="image/png",
+            )["asset"]["asset_id"]
+            with (
+                patch("yolozu.integrations.image_service.recommend_image_pipeline", return_value={"decision": {"status": "selected"}}),
+                patch("yolozu.integrations.image_service.process_images", return_value={"ok": False, "exit_code": 1, "executed": False}),
+            ):
+                job = service.submit_job(asset_id=asset, fixed_classes=["cat"], execute=True)["job"]["job_id"]
+                result = self._wait(service, job)["job"]
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(result["result"]["outcome"], "rejected")
+            self.assertFalse(result["result"]["executed"])
+
+    def test_configured_service_closes_maintenance_on_reconfiguration(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            configure_image_service(workspace=td)
+            try:
+                first = _configured_service()
+                first.start_maintenance()
+                worker = first._maintenance_thread
+                self.assertTrue(worker.is_alive())
+                configure_image_service(workspace=td, tenant_id="second")
+                self.assertFalse(worker.is_alive())
+                self.assertIsNot(first, _configured_service())
+            finally:
+                close_image_service()
+                configure_image_service()
 
 
 class TestMcpServerOptions(unittest.TestCase):

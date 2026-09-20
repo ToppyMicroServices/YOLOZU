@@ -273,8 +273,11 @@ selector/executor caseは内部fixtureによるもので、実bundleのqualifica
 public runを示すものではありません。
 
 OpenAIとClaudeからは、filesystemやbackendを操作させない5-toolのMCP image serviceを
-利用できます。local stdio、Streamable HTTP、認証、retention、現在のabstention境界は
+利用できます。local stdio、Streamable HTTP、認証、tenant単位の利用制限、idle時の
+期限切れデータ削除、現在のabstention境界は
 [Bounded MCP image service](docs/image_service_mcp.md)を参照してください。
+実CNN bundleはまだ[未登録のレビュー提案](docs/image_service_candidate_review.md)であり、
+qualification・ライセンス承認・promotion済みではありません。
 
 生成した[roadmap report](reports/adaptive_vision_roadmap.md)、packagedされた[machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json)、[Beadsの同期規則](docs/roadmap.md)を参照してください。
 

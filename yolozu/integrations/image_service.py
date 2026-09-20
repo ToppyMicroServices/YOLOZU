@@ -16,11 +16,12 @@ import json
 import os
 import re
 import shutil
+import stat
 import threading
 import time
 import uuid
 import warnings
-from functools import lru_cache
+from collections import deque
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Mapping
@@ -34,6 +35,7 @@ from yolozu.adaptive.recommendation import (
 )
 
 from .layers.jobs import JobManager
+from .image_service_http import HTTP_UPLOAD_TIMEOUT_SECONDS, MAX_HTTP_BODY_BYTES
 from .manifest_resources import workspace_root as resolved_workspace_root
 
 MAX_ASSET_BYTES = 8 * 1024 * 1024
@@ -47,6 +49,9 @@ MAX_JOB_RECORDS = 1024
 MIN_RETENTION_SECONDS = 300
 MAX_RETENTION_SECONDS = 7 * 24 * 60 * 60
 DEFAULT_RETENTION_SECONDS = 24 * 60 * 60
+CLEANUP_INTERVAL_SECONDS = 60
+RATE_WINDOW_SECONDS = 60
+REQUEST_LIMITS = {"capabilities": 120, "upload": 12, "submit": 12, "get": 120, "cancel": 30}
 
 _TENANT_RE = re.compile(r"[a-z0-9][a-z0-9_-]{0,63}\Z")
 _ASSET_RE = re.compile(r"asset_[0-9a-f]{24}\Z")
@@ -76,10 +81,15 @@ def _utc_now() -> str:
 
 
 def _safe_json_read(path: Path, *, maximum_bytes: int = 2 * 1024 * 1024) -> Any:
-    size = path.stat().st_size
-    if size < 0 or size > maximum_bytes:
-        raise _fail("stored_result_invalid", "stored service data exceeds its bound")
-    return json.loads(path.read_text(encoding="utf-8"))
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    with os.fdopen(descriptor, "rb") as handle:
+        info = os.fstat(handle.fileno())
+        if not stat.S_ISREG(info.st_mode) or not 0 <= info.st_size <= maximum_bytes:
+            raise _fail("stored_result_invalid", "stored service data exceeds its bound")
+        data = handle.read(maximum_bytes + 1)
+        if len(data) != info.st_size:
+            raise _fail("stored_result_invalid", "stored service data changed")
+    return json.loads(data)
 
 
 def _write_private_json(path: Path, payload: Mapping[str, Any]) -> None:
@@ -154,7 +164,9 @@ class ImageService:
         root_value = Path(service_root)
         if root_value.is_absolute():
             raise _fail("invalid_service_root", "service_root must be workspace-relative")
-        root = (self.workspace / root_value).resolve(strict=False)
+        if not root_value.parts or any(part == ".." for part in root_value.parts):
+            raise _fail("invalid_service_root", "service_root must name a workspace subdirectory")
+        root = self.workspace / root_value
         try:
             root.relative_to(self.workspace)
         except ValueError as exc:
@@ -162,7 +174,7 @@ class ImageService:
         current = self.workspace
         for component in root.relative_to(self.workspace).parts:
             current = current / component
-            if current.exists() and current.is_symlink():
+            if current.is_symlink():
                 raise _fail("invalid_service_root", "service_root contains a symlink")
         self.tenant_id = tenant_id
         self.retention_seconds = retention_seconds
@@ -174,25 +186,98 @@ class ImageService:
         self._jobs: JobManager | None = None
         self._state_lock = threading.RLock()
         self._active_assets: dict[str, int] = {}
+        self._job_assets: dict[str, tuple[str, str]] = {}
+        self._request_times: dict[str, deque[float]] = {key: deque() for key in REQUEST_LIMITS}
+        self._maintenance_stop = threading.Event()
+        self._maintenance_thread: threading.Thread | None = None
+        self._maintenance_failed = False
+
+    def _admit(self, operation: str) -> None:
+        with self._state_lock:
+            if self._maintenance_failed:
+                raise _fail("retention_unavailable", "retention cleanup needs operator attention")
+            now = time.monotonic()
+            attempts = self._request_times[operation]
+            while attempts and attempts[0] <= now - RATE_WINDOW_SECONDS:
+                attempts.popleft()
+            if len(attempts) >= REQUEST_LIMITS[operation]:
+                raise _fail("rate_limited", "tenant request limit reached; retry after 60 seconds")
+            attempts.append(now)
+
+    def start_maintenance(self) -> None:
+        """Start one idle-time retention worker; no model or network is used."""
+        with self._state_lock:
+            if self._maintenance_thread is not None:
+                return
+            self.purge_expired()
+            self._maintenance_stop.clear()
+
+            def maintain() -> None:
+                while not self._maintenance_stop.wait(CLEANUP_INTERVAL_SECONDS):
+                    try:
+                        self.purge_expired()
+                        self._maintenance_failed = False
+                    except (OSError, ValueError):
+                        self._maintenance_failed = True
+
+            self._maintenance_thread = threading.Thread(
+                target=maintain, name="yolozu-image-retention", daemon=True,
+            )
+            self._maintenance_thread.start()
+
+    def close(self) -> None:
+        """Stop retention and cancel queued work; running inference keeps its deadline."""
+        self._maintenance_stop.set()
+        if self._maintenance_thread is not None:
+            self._maintenance_thread.join()
+            self._maintenance_thread = None
+        with self._state_lock:
+            if self._jobs is not None:
+                for job_id in list(self._job_assets):
+                    result = self._jobs.cancel(job_id)
+                    if result and result.get("cancelled"):
+                        self._release_job(job_id)
+                self._jobs.shutdown()
 
     def _ensure_storage(self) -> None:
-        if self.tenant_root.exists() and self.tenant_root.is_symlink():
-            raise _fail("unsafe_service_storage", "tenant storage is a symlink")
         for directory in (
+            self.tenant_root,
             self.assets_root,
             self.jobs_root,
             self.outputs_root,
         ):
-            directory.mkdir(parents=True, exist_ok=True, mode=0o700)
-            if directory.is_symlink():
-                raise _fail("unsafe_service_storage", "service storage contains a symlink")
+            current = self.workspace
+            for component in directory.relative_to(self.workspace).parts:
+                current = current / component
+                if current.is_symlink():
+                    raise _fail("unsafe_service_storage", "service storage contains a symlink")
+                current.mkdir(exist_ok=True, mode=0o700)
             os.chmod(directory, 0o700)
 
     def _job_manager(self) -> JobManager:
-        self._ensure_storage()
-        if self._jobs is None:
-            self._jobs = JobManager(max_workers=1, storage_dir=self.jobs_root)
-        return self._jobs
+        with self._state_lock:
+            self._ensure_storage()
+            if self._jobs is None:
+                self._jobs = JobManager(max_workers=1, storage_dir=self.jobs_root)
+            return self._jobs
+
+    def _release_job(self, job_id: str) -> None:
+        with self._state_lock:
+            binding = self._job_assets.pop(job_id, None)
+            if binding is None:
+                return
+            asset_id, _output_token = binding
+            directory = self._asset_directory(asset_id)
+            if directory.is_dir() and not directory.is_symlink():
+                try:
+                    os.utime(directory, None)
+                except OSError:
+                    pass
+            count = self._active_assets.get(asset_id, 0)
+            if count <= 1:
+                self._active_assets.pop(asset_id, None)
+            else:
+                self._active_assets[asset_id] = count - 1
 
     def _asset_directory(self, asset_id: str) -> Path:
         if _ASSET_RE.fullmatch(asset_id) is None:
@@ -229,14 +314,16 @@ class ImageService:
         now = time.time()
         with self._state_lock:
             active_assets = set(self._active_assets)
+            active_outputs = {value[1] for value in self._job_assets.values()}
             removed_assets = sum(
                 self._remove_expired_tree(path, now=now)
                 for path in self.assets_root.glob("asset_*")
-                if path.name not in active_assets
+                if _ASSET_RE.fullmatch(path.name) and path.name not in active_assets
             )
             removed_outputs = sum(
                 self._remove_expired_tree(path, now=now)
                 for path in self.outputs_root.glob("run_*")
+                if re.fullmatch(r"run_[0-9a-f]{24}", path.name) and path.name not in active_outputs
             )
             removed_jobs = self._job_manager().purge_terminal_before(
                 now - self.retention_seconds
@@ -248,6 +335,7 @@ class ImageService:
         }
 
     def capabilities(self) -> dict[str, Any]:
+        self._admit("capabilities")
         return {
             "schema_version": 1,
             "ok": True,
@@ -259,16 +347,21 @@ class ImageService:
                 "prompt_modes": ["fixed_classes"],
                 "input_media_types": sorted(value[0] for value in _MEDIA_BY_FORMAT.values()),
                 "max_asset_bytes": MAX_ASSET_BYTES,
+                "max_http_body_bytes": MAX_HTTP_BODY_BYTES,
+                "http_upload_timeout_seconds": HTTP_UPLOAD_TIMEOUT_SECONDS,
                 "max_image_dimension": MAX_IMAGE_DIMENSION,
                 "max_image_pixels": MAX_IMAGE_PIXELS,
                 "max_images_per_job": 1,
                 "max_assets_per_tenant": MAX_ASSETS_PER_TENANT,
                 "max_active_jobs": MAX_ACTIVE_JOBS,
                 "max_job_records": MAX_JOB_RECORDS,
-                "network_during_inference": "denied",
+                "network_policy": "deny",
+                "os_network_isolation": False,
                 "execution_default": False,
                 "selection_policy": "qualified_registered_pipeline_or_abstain",
                 "retention_seconds": self.retention_seconds,
+                "cleanup_interval_seconds": CLEANUP_INTERVAL_SECONDS,
+                "request_limits_per_60_seconds": dict(REQUEST_LIMITS),
             },
         }
 
@@ -278,6 +371,7 @@ class ImageService:
         content_base64: str,
         media_type: str,
     ) -> dict[str, Any]:
+        self._admit("upload")
         self._ensure_storage()
         self.purge_expired()
         if not isinstance(content_base64, str) or not content_base64:
@@ -417,6 +511,7 @@ class ImageService:
         execute: bool = False,
         timeout_seconds: int = 300,
     ) -> dict[str, Any]:
+        self._admit("submit")
         self._ensure_storage()
         self.purge_expired()
         if task not in {"object_detection", "instance_segmentation"}:
@@ -510,10 +605,13 @@ class ImageService:
             return {
                 "ok": bool(processed.get("ok")),
                 "exit_code": int(processed.get("exit_code", 0)),
-                "outcome": "completed" if execute else "ready",
+                "outcome": (
+                    ("completed" if processed.get("executed") else "ready")
+                    if processed.get("ok") else "rejected"
+                ),
                 "decision": dict(decision),
                 "executed": bool(processed.get("executed")),
-                "_output_token": output_token if execute else None,
+                "_output_token": output_token if processed.get("ok") and processed.get("executed") else None,
             }
 
         def run() -> dict[str, Any]:
@@ -521,17 +619,7 @@ class ImageService:
                 return run_inner()
             finally:
                 with self._state_lock:
-                    directory = self._asset_directory(asset_id)
-                    if directory.is_dir() and not directory.is_symlink():
-                        try:
-                            os.utime(directory, None)
-                        except OSError:
-                            pass
-                    count = self._active_assets.get(asset_id, 0)
-                    if count <= 1:
-                        self._active_assets.pop(asset_id, None)
-                    else:
-                        self._active_assets[asset_id] = count - 1
+                    self._release_job(job_id)
 
         manager = self._job_manager()
         with self._state_lock:
@@ -550,6 +638,7 @@ class ImageService:
             self._active_assets[asset_id] = self._active_assets.get(asset_id, 0) + 1
             try:
                 job_id = manager.submit("image_pipeline", run)
+                self._job_assets[job_id] = (asset_id, output_token)
             except Exception:
                 count = self._active_assets.get(asset_id, 0)
                 if count <= 1:
@@ -609,6 +698,8 @@ class ImageService:
         if result.get("outcome") == "completed" and isinstance(output_token, str):
             output = self._job_output_directory(output_token)
             try:
+                if output.is_symlink():
+                    raise _fail("stored_result_invalid", "managed output is a symlink")
                 public["predictions"] = _safe_json_read(
                     output / "predictions.json",
                     maximum_bytes=16 * 1024 * 1024,
@@ -634,13 +725,17 @@ class ImageService:
         return public
 
     def get_job(self, *, job_id: str) -> dict[str, Any]:
+        self._admit("get")
+        self.purge_expired()
         if _JOB_RE.fullmatch(job_id) is None:
             raise _fail("invalid_job_id", "job_id is invalid")
         if not self.jobs_root.is_dir():
             raise _fail("job_not_found", "job_id was not found")
-        status = self._job_manager().status(job_id)
-        if status is None:
-            raise _fail("job_not_found", "job_id was not found")
+        with self._state_lock:
+            status = self._job_manager().status(job_id)
+            if status is None:
+                raise _fail("job_not_found", "job_id was not found")
+            public_result = self._public_result(status.get("result"))
         return {
             "schema_version": 1,
             "ok": True,
@@ -652,16 +747,21 @@ class ImageService:
                 "created_at": status["created_at"],
                 "started_at": status["started_at"],
                 "finished_at": status["finished_at"],
-                "result": self._public_result(status.get("result")),
+                "result": public_result,
             },
         }
 
     def cancel_job(self, *, job_id: str) -> dict[str, Any]:
+        self._admit("cancel")
+        self.purge_expired()
         if _JOB_RE.fullmatch(job_id) is None:
             raise _fail("invalid_job_id", "job_id is invalid")
         if not self.jobs_root.is_dir():
             raise _fail("job_not_found", "job_id was not found")
-        result = self._job_manager().cancel(job_id)
+        with self._state_lock:
+            result = self._job_manager().cancel(job_id)
+            if result and result.get("cancelled"):
+                self._release_job(job_id)
         if result is None:
             raise _fail("job_not_found", "job_id was not found")
         return {
@@ -679,6 +779,8 @@ _SERVICE_CONFIGURATION: dict[str, Any] = {
     "retention_seconds": DEFAULT_RETENTION_SECONDS,
     "service_root": "runs/mcp_image_service",
 }
+_CONFIGURATION_LOCK = threading.RLock()
+_SERVICE_INSTANCE: ImageService | None = None
 
 
 def configure_image_service(
@@ -688,28 +790,47 @@ def configure_image_service(
     retention_seconds: int = DEFAULT_RETENTION_SECONDS,
     service_root: str | Path = "runs/mcp_image_service",
 ) -> None:
-    _SERVICE_CONFIGURATION.update(
-        {
-            "workspace": workspace,
-            "tenant_id": tenant_id,
-            "retention_seconds": retention_seconds,
-            "service_root": service_root,
-        }
-    )
-    _configured_service.cache_clear()
+    with _CONFIGURATION_LOCK:
+        close_image_service()
+        _SERVICE_CONFIGURATION.update(
+            {
+                "workspace": workspace,
+                "tenant_id": tenant_id,
+                "retention_seconds": retention_seconds,
+                "service_root": service_root,
+            }
+        )
 
 
-@lru_cache(maxsize=1)
+def close_image_service() -> None:
+    global _SERVICE_INSTANCE
+    with _CONFIGURATION_LOCK:
+        if _SERVICE_INSTANCE is not None:
+            _SERVICE_INSTANCE.close()
+            _SERVICE_INSTANCE = None
+
+
 def _configured_service() -> ImageService:
-    workspace = _SERVICE_CONFIGURATION["workspace"]
-    if workspace is None:
-        workspace = resolved_workspace_root()
-    return ImageService(
-        workspace=workspace,
-        tenant_id=_SERVICE_CONFIGURATION["tenant_id"],
-        retention_seconds=_SERVICE_CONFIGURATION["retention_seconds"],
-        service_root=_SERVICE_CONFIGURATION["service_root"],
-    )
+    global _SERVICE_INSTANCE
+    with _CONFIGURATION_LOCK:
+        if _SERVICE_INSTANCE is None:
+            workspace = _SERVICE_CONFIGURATION["workspace"]
+            if workspace is None:
+                workspace = resolved_workspace_root()
+            service = ImageService(
+                workspace=workspace,
+                tenant_id=_SERVICE_CONFIGURATION["tenant_id"],
+                retention_seconds=_SERVICE_CONFIGURATION["retention_seconds"],
+                service_root=_SERVICE_CONFIGURATION["service_root"],
+            )
+            _SERVICE_INSTANCE = service
+        return _SERVICE_INSTANCE
+
+
+def start_image_service() -> ImageService:
+    service = _configured_service()
+    service.start_maintenance()
+    return service
 
 
 def image_service_capabilities() -> dict[str, Any]:
@@ -717,7 +838,7 @@ def image_service_capabilities() -> dict[str, Any]:
 
 
 def put_image_asset(*, content_base64: str, media_type: str) -> dict[str, Any]:
-    return _configured_service().put_asset(
+    return start_image_service().put_asset(
         content_base64=content_base64,
         media_type=media_type,
     )
@@ -731,7 +852,7 @@ def submit_image_job(
     execute: bool = False,
     timeout_seconds: int = 300,
 ) -> dict[str, Any]:
-    return _configured_service().submit_job(
+    return start_image_service().submit_job(
         asset_id=asset_id,
         fixed_classes=fixed_classes,
         task=task,
@@ -741,11 +862,11 @@ def submit_image_job(
 
 
 def get_image_job(*, job_id: str) -> dict[str, Any]:
-    return _configured_service().get_job(job_id=job_id)
+    return start_image_service().get_job(job_id=job_id)
 
 
 def cancel_image_job(*, job_id: str) -> dict[str, Any]:
-    return _configured_service().cancel_job(job_id=job_id)
+    return start_image_service().cancel_job(job_id=job_id)
 
 
 def public_service_call(fn: Any, /, **kwargs: Any) -> dict[str, Any]:

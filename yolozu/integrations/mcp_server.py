@@ -15,17 +15,20 @@ from .ai_surface import (
     generate_config,
     review_config,
 )
+from .image_service_http import ImageServiceHTTPBounds
 from .manifest_resources import (
     resolve_workspace_path,
     workspace_root as resolved_workspace_root,
 )
 from .image_service import (
     cancel_image_job,
+    close_image_service,
     configure_image_service,
     get_image_job,
     image_service_capabilities,
     public_service_call,
     put_image_asset,
+    start_image_service,
     submit_image_job,
 )
 from .tool_runner import (
@@ -57,7 +60,16 @@ from .tool_runner import (
 
 
 app = FastMCP("yolozu")
-service_app = FastMCP("yolozu-image-service")
+
+
+class _ImageServiceMCP(FastMCP):
+    def streamable_http_app(self):
+        application = super().streamable_http_app()
+        application.add_middleware(ImageServiceHTTPBounds)
+        return application
+
+
+service_app = _ImageServiceMCP("yolozu-image-service")
 
 
 class _StaticTokenVerifier:
@@ -67,7 +79,7 @@ class _StaticTokenVerifier:
         self._token = token
 
     async def verify_token(self, token: str) -> AccessToken | None:
-        if not hmac.compare_digest(token, self._token):
+        if not hmac.compare_digest(token.encode("utf-8"), self._token.encode("utf-8")):
             return None
         return AccessToken(
             token=token,
@@ -746,7 +758,11 @@ def run_server(
     )
     selected = service_app if surface == "image-service" else app
     if transport == "stdio":
-        selected.run(transport="stdio")
+        try:
+            start_image_service()
+            selected.run(transport="stdio")
+        finally:
+            close_image_service()
         return
 
     allowed_hosts, allowed_origins = _http_server_boundary(
@@ -778,7 +794,11 @@ def run_server(
             resource_server_url=None,
             required_scopes=["yolozu:invoke"],
         )
-    selected.run(transport="streamable-http")
+    try:
+        start_image_service()
+        selected.run(transport="streamable-http")
+    finally:
+        close_image_service()
 
 
 def main() -> None:

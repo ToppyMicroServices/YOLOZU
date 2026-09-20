@@ -30,7 +30,8 @@ The packaged registry contains the three records already present in the model zo
 and the lifecycle stream registers each only as Candidate. Their weight assets have
 pinned source, revision, size, SHA-256, license metadata, and cache identity. Their
 `execution_binding` is `unbound`, the support/activation streams and qualification
-report directory contain no selectable evidence, and no adaptive runner is registered.
+report directory contain no selectable evidence. The code-owned Torchvision runner
+is registered, but none of these records binds it.
 The package validates and loads this exact registry/lifecycle SSOT without importing
 a model runtime.
 An explicitly supplied workspace catalog is always operator-asserted and fails the
@@ -62,6 +63,9 @@ exact managed tree containing `predictions.json`, `provenance.json`,
 runner is registered for exact safetensors/CPU bundles. No packaged bundle binds
 that runner or passes the required license, qualification, support, evidence, and
 lifecycle gates, so the installed default cannot execute a real adaptive model.
+The exact local Torchvision candidate remains an
+[unregistered review proposal](image_service_candidate_review.md), with unknown
+weight permission and no activated evidence.
 
 The reviewed [candidate isolation threat model and backend decision](candidate_isolation_threat_model.md)
 records `none_supported`. `python3 tools/probe_candidate_isolation.py` reports that
