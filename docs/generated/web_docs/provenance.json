@@ -26,9 +26,9 @@
   "schema_version": 1,
   "source_hashes": {
     "CONTRIBUTING.md": "d80fb82f1e97f616c5e10b15adaf189acf8ede8df631d01e77af5c6526b312f1",
-    "README.md": "c99ecb0327c8570acbb72509ea02298d270633c547c4dd3326fb8a073b1f58c0",
+    "README.md": "3a15563b6ac975add13253b4e5d176db5fe6fc3d91ad321fb4214c20df4f80db",
     "RELEASE.md": "b021e735a55712edc24a7f76e13c3c811a36f04e0bfd4dc7ceb0800e99e80e29",
-    "Readme_jp.md": "8a1a3a137960c7d9364de4c3d949281217abb3b3d65fe5c79f69b6283400c100",
+    "Readme_jp.md": "455e43c471a338c5e12a301fae8977a355a49a3a54e0ca4efe14ec5fc604220c",
     "Readme_zh.md": "1451b19af0cd4a9e3f1a68cc5e4dfd64685d3d7ca27578bc71e531f48d5eadcc",
     "data/smoke/README.md": "8763fbc7545484a77b99a077cded552b03680109cec70fcd4c56bc2ed2cd4284",
     "data/smoke/predictions/predictions_dummy.json": "e028f2d9fb9f567527cd2b38f94ad7ed366665cec840af61bec62c736013e6fe",
@@ -79,7 +79,7 @@
     "docs/generated/mcp_actions_tool_reference.md": "957f6670559876d5e6b17e969736f27ee7157e0042f1fd1c2eb795e1b0dfa6f9",
     "docs/hessian_solver.md": "bbce42c986a3198e520e8589db2c1b76ddcf82ebfc6d97ce90f1fe8a9f7c96a2",
     "docs/hpo_sweep.md": "9016a86caaca5350c7e5b8fb52ff4c9d4fb530a207f808fe3e8d532b1eb5c2f1",
-    "docs/image_service_mcp.md": "63d11e0783027f8bd1b0d9aa89a8aa078b676deea7a048c9a2244543a63f2cf7",
+    "docs/image_service_mcp.md": "148d1f62cc153ee43f5705730e3bef13cca673e8d009d1bac492d7f0cd87f22c",
     "docs/import_adapters.md": "949fab1e475db60250b27debb688e4c0c4378880c0a70915872c28ea8ee4ef6f",
     "docs/install.md": "cef8bc14261454137682c5da8fda064cc0c6580ca4b2f35b85bc037c0c13e07b",
     "docs/interop_detectron2_mmdet.md": "7cdf2e94895ce7dabaad5838fb31b560b260b2839485b3f161bd0f0bdd22daf7",
@@ -95,7 +95,7 @@
     "docs/mcp_extension_architecture.md": "277d15af14f320726da6b93e7dd0545f990f609dfeecaa1e9bf13078badfa54f",
     "docs/migrate.md": "22fd7fbd9ef6a9ccde4def5895da68e901cb2718be23149796f17aa7b272d7f2",
     "docs/onnx_export_parity.md": "b5fe1b2cfc10e48daa89eb3095f1be4e9aeb3b3d11443580af3a67647ef9a998",
-    "docs/openai_image_service_plugin.md": "e8c69e1837f8c347fb6db3c004631dc4f9aad3748cbda52c18a6149e21305547",
+    "docs/openai_image_service_plugin.md": "23e3dfb899b5e5da425bb795c64eba6ec1f7085f9a02db4113520b3a42a510fd",
     "docs/openai_mcp_actions.md": "d1f2780e21f78b9357c0a6749d762da4d637bf0fa0938632fd8b3c2c15915408",
     "docs/opencv_dnn_inference.md": "2c5db1b0a3b4db583eeaddc29bbb9bfd1952aa95169c4932a44fe1f4ca31df5c",
     "docs/predictions_interface_contract_policy.md": "86ef7f11cd33cd54c3585a2c3806eff3ff46001d2abea8ac1bb176c355bcb84e",
@@ -214,8 +214,8 @@
     "manual/chapters/15_ttt_tent_mim.tex": "e44504a6baf4bf7841fba7a2df5d11fbe0d006e25d6071ca24b9e7d190a7aeaf",
     "manual/chapters/16_depth_6dof_symmetry.tex": "1b62af2f581975ebf0915f2268ce4990fd59bf66b74ddf5849401c155e1ed4c7",
     "manual/chapters/17_realtime_batch_inference.tex": "134916ad41988bf6746b7de7937386ab55b0aaafac155376ac43709e94380c34",
-    "manual/chapters/20_llm_mcp_integrations.tex": "f559376afcb9c2912872618ca576422c902217fc6f22110dcc5274432095d38b",
-    "plugins/yolozu-image-service/scripts/image_service_client.py": "5faa1f3368eb2953c4fa581ca21f424ba9f8f22ec0dd0377debc18daac1cd348",
+    "manual/chapters/20_llm_mcp_integrations.tex": "9480d9013cf67f6ceddd17f74b3e78c66a3207c16e7e9b370c5845afb48854b6",
+    "plugins/yolozu-image-service/scripts/image_service_client.py": "c49a85c1551205155a552eea4060d932bff8e455a71180a2e005a16633f7b4b3",
     "recipes/synthgen/README.md": "d957e334a652ef46fc79a8a90c434d7240f4d316abc5a63f202af8204859ae9e",
     "release.sh": "20059faf4c482cc1350c8a6b4041e8c75a972fd1b2fad68cd2cace761a6b097c",
     "reports/adaptive_algorithm_scout_foundation_2026-08-26.md": "c237849a2990c83b64390d7c005b9e084526b86bb13490f876ffa2afa98dac55",
@@ -325,7 +325,7 @@
     "tools/hpo_sweep.py": "969e2747753e7ffec3ee7c52692ed81a7d27f66378401ebbd8eb64840ba206e0",
     "tools/import_yolo_data_yaml.py": "a7e90969b9dd87fd603819ca8104de8d8b65e03eb5b53effdb50fb4da37b80f1",
     "tools/make_subset_dataset.py": "1d964b7f4e04944ad6b8191237861cadeee07c3a744c389e9d7e034cdff540a1",
-    "tools/manifest.json": "480e6d11a224d86993081cc628a94d6788b5241ed163ec81efbdc7c00d38c452",
+    "tools/manifest.json": "edf765057d8f541dc8d49fd4cc7ff123292e688e5a740bb68d90c222a999af45",
     "tools/measure_trt_latency.py": "7495d6e8f443b3ac03eb5e8bb4c411dd939f95d74bbe919f7a1ac6f7c06b97f0",
     "tools/normalize_predictions.py": "cae6eb84307d44defbddc66c5856e9c0f7981db065693a6fa396fcf75125df89",
     "tools/orchestrate_train.py": "5c9d7e0be705a6b0cbee0349872869140fad251bd8a4899a9c077ff30e386f1b",
@@ -385,6 +385,6 @@
     "yolozu/cli.py": "ac34bb541c829d55e999a44e38883dd7a9177531845e6e2f68a14e8428870718",
     "yolozu/data/manifest/README.md": "da9cec2ea3b4bc0aa693d9d5734d0c50ea66f1511af50d0f8ebd7419e5b413b4",
     "yolozu/data/manifest/benchmark_support.json": "a516a17a90ed291bf61bf670570fd244c4f6b047f22c8e245838edf6840b8c7d",
-    "yolozu/integrations/mcp_server.py": "0ef56973056ff070dc6524955dbbf907955b3fdde8863ba32aa8ac3670428489"
+    "yolozu/integrations/mcp_server.py": "bb6d62b6b537783a998c84c3dc83c96575d1388596bac96d055abfb69a9afa1c"
   }
 }

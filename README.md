@@ -281,7 +281,8 @@ positive selector and executor cases use internal fixtures; they do not qualify 
 real bundle or demonstrate a selected public run.
 
 OpenAI and Claude clients can use the bounded five-tool MCP image service without
-receiving filesystem or backend controls. See
+receiving filesystem or backend controls. Jobs have queue-to-completion deadlines,
+running cancellation, and exclusive tenant storage ownership. See
 [Bounded MCP image service](docs/image_service_mcp.md) for local stdio,
 Streamable HTTP, authentication, per-tenant request limits, idle-time retention
 cleanup, and the current abstention boundary. The exact CNN bundle remains an

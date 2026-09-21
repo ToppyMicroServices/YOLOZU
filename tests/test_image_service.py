@@ -50,6 +50,14 @@ def _options(**overrides: object) -> Namespace:
 
 
 class TestImageService(unittest.TestCase):
+    def setUp(self):
+        # Unit-test pipeline routing here; spawned worker ownership is exercised
+        # separately in test_image_service_resources and the live MCP tests.
+        from yolozu.integrations.image_job_execution import execute_image_job
+        isolation = patch("yolozu.integrations.image_service.run_image_job", side_effect=lambda request, cancel, deadline: execute_image_job(request))
+        isolation.start()
+        self.addCleanup(isolation.stop)
+
     def service(self, **kwargs) -> ImageService:
         service = ImageService(**kwargs)
         self.addCleanup(service.close)
@@ -67,7 +75,7 @@ class TestImageService(unittest.TestCase):
     def test_capabilities_are_read_only_and_bounded(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            service = ImageService(workspace=root)
+            service = self.service(workspace=root)
             result = service.capabilities()
             self.assertTrue(result["ok"])
             self.assertEqual(
@@ -80,7 +88,7 @@ class TestImageService(unittest.TestCase):
         data = _png_bytes()
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            service = ImageService(workspace=root, tenant_id="tenant-a")
+            service = self.service(workspace=root, tenant_id="tenant-a")
             result = service.put_asset(
                 content_base64=base64.b64encode(data).decode("ascii"),
                 media_type="image/png",
@@ -99,7 +107,7 @@ class TestImageService(unittest.TestCase):
     def test_put_asset_rejects_mime_mismatch_and_invalid_base64(self) -> None:
         data = _png_bytes()
         with tempfile.TemporaryDirectory() as td:
-            service = ImageService(workspace=td)
+            service = self.service(workspace=td)
             with self.assertRaises(ImageServiceError) as mismatch:
                 service.put_asset(
                     content_base64=base64.b64encode(data).decode("ascii"),
@@ -114,8 +122,8 @@ class TestImageService(unittest.TestCase):
         data = _png_bytes()
         encoded = base64.b64encode(data).decode("ascii")
         with tempfile.TemporaryDirectory() as td:
-            first = ImageService(workspace=td, tenant_id="tenant-a")
-            second = ImageService(workspace=td, tenant_id="tenant-b")
+            first = self.service(workspace=td, tenant_id="tenant-a")
+            second = self.service(workspace=td, tenant_id="tenant-b")
             asset_id = first.put_asset(
                 content_base64=encoded,
                 media_type="image/png",
@@ -127,7 +135,7 @@ class TestImageService(unittest.TestCase):
     def test_submit_abstains_without_executing_fallback(self) -> None:
         data = _png_bytes()
         with tempfile.TemporaryDirectory() as td:
-            service = ImageService(workspace=td)
+            service = self.service(workspace=td)
             asset_id = service.put_asset(
                 content_base64=base64.b64encode(data).decode("ascii"),
                 media_type="image/png",
@@ -140,11 +148,11 @@ class TestImageService(unittest.TestCase):
             }
             with (
                 patch(
-                    "yolozu.integrations.image_service.recommend_image_pipeline",
+                    "yolozu.adaptive.recommendation.recommend_image_pipeline",
                     return_value={"decision": decision},
                 ),
                 patch(
-                    "yolozu.integrations.image_service.process_images"
+                    "yolozu.adaptive.processing.process_images"
                 ) as process,
             ):
                 queued = service.submit_job(
@@ -165,7 +173,7 @@ class TestImageService(unittest.TestCase):
     def test_selected_job_defaults_to_preflight_only(self) -> None:
         data = _png_bytes()
         with tempfile.TemporaryDirectory() as td:
-            service = ImageService(workspace=td)
+            service = self.service(workspace=td)
             asset_id = service.put_asset(
                 content_base64=base64.b64encode(data).decode("ascii"),
                 media_type="image/png",
@@ -179,11 +187,11 @@ class TestImageService(unittest.TestCase):
             }
             with (
                 patch(
-                    "yolozu.integrations.image_service.recommend_image_pipeline",
+                    "yolozu.adaptive.recommendation.recommend_image_pipeline",
                     return_value={"decision": decision},
                 ),
                 patch(
-                    "yolozu.integrations.image_service.process_images",
+                    "yolozu.adaptive.processing.process_images",
                     return_value={"ok": True, "exit_code": 0, "executed": False},
                 ) as process,
             ):
@@ -200,7 +208,7 @@ class TestImageService(unittest.TestCase):
         data = _png_bytes()
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            service = ImageService(
+            service = self.service(
                 workspace=root,
                 tenant_id="tenant-a",
                 retention_seconds=300,
@@ -230,7 +238,7 @@ class TestImageService(unittest.TestCase):
         data = _png_bytes()
         encoded = base64.b64encode(data).decode("ascii")
         with tempfile.TemporaryDirectory() as td:
-            service = ImageService(workspace=td)
+            service = self.service(workspace=td)
             with patch(
                 "yolozu.integrations.image_service.MAX_ASSETS_PER_TENANT",
                 1,
@@ -284,6 +292,7 @@ class TestImageService(unittest.TestCase):
             # Restart using a short test clock interval, not a shorter retention policy.
             service.close()
             with patch("yolozu.integrations.image_service.CLEANUP_INTERVAL_SECONDS", 0.01):
+                service = self.service(workspace=td, retention_seconds=300)
                 service.start_maintenance()
                 old = time.time() - 301
                 os.utime(directory, (old, old))
@@ -352,8 +361,8 @@ class TestImageService(unittest.TestCase):
                 content_base64=base64.b64encode(_png_bytes()).decode(), media_type="image/png",
             )["asset"]["asset_id"]
             with (
-                patch("yolozu.integrations.image_service.recommend_image_pipeline", return_value={"decision": {"status": "selected"}}),
-                patch("yolozu.integrations.image_service.process_images", return_value={"ok": False, "exit_code": 1, "executed": False}),
+                patch("yolozu.adaptive.recommendation.recommend_image_pipeline", return_value={"decision": {"status": "selected"}}),
+                patch("yolozu.adaptive.processing.process_images", return_value={"ok": False, "exit_code": 1, "executed": False}),
             ):
                 job = service.submit_job(asset_id=asset, fixed_classes=["cat"], execute=True)["job"]["job_id"]
                 result = self._wait(service, job)["job"]

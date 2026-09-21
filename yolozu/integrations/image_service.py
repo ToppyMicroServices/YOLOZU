@@ -21,6 +21,7 @@ import threading
 import time
 import uuid
 import warnings
+import fcntl
 from collections import deque
 from io import BytesIO
 from pathlib import Path
@@ -28,11 +29,7 @@ from typing import Any, Mapping
 
 from PIL import Image, UnidentifiedImageError
 
-from yolozu.adaptive.processing import ProcessingError, process_images
-from yolozu.adaptive.recommendation import (
-    RecommendationError,
-    recommend_image_pipeline,
-)
+from .image_job_execution import run_image_job
 
 from .layers.jobs import JobManager
 from .image_service_http import HTTP_UPLOAD_TIMEOUT_SECONDS, MAX_HTTP_BODY_BYTES
@@ -82,7 +79,12 @@ def _utc_now() -> str:
 
 def _safe_json_read(path: Path, *, maximum_bytes: int = 2 * 1024 * 1024) -> Any:
     descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
-    with os.fdopen(descriptor, "rb") as handle:
+    try:
+        handle = os.fdopen(descriptor, "rb")
+    except BaseException:
+        os.close(descriptor)
+        raise
+    with handle:
         info = os.fstat(handle.fileno())
         if not stat.S_ISREG(info.st_mode) or not 0 <= info.st_size <= maximum_bytes:
             raise _fail("stored_result_invalid", "stored service data exceeds its bound")
@@ -101,12 +103,13 @@ def _write_private_json(path: Path, payload: Mapping[str, Any]) -> None:
         0o600,
     )
     try:
-        with os.fdopen(descriptor, "wb") as handle:
+        with os.fdopen(descriptor, "wb", closefd=False) as handle:
             handle.write(data)
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(temporary, path)
     finally:
+        os.close(descriptor)
         try:
             temporary.unlink()
         except FileNotFoundError:
@@ -191,9 +194,13 @@ class ImageService:
         self._maintenance_stop = threading.Event()
         self._maintenance_thread: threading.Thread | None = None
         self._maintenance_failed = False
+        self._ownership = None
+        self._closed = False
 
     def _admit(self, operation: str) -> None:
         with self._state_lock:
+            if self._closed:
+                raise _fail("service_closed", "image service is closed")
             if self._maintenance_failed:
                 raise _fail("retention_unavailable", "retention cleanup needs operator attention")
             now = time.monotonic()
@@ -207,6 +214,8 @@ class ImageService:
     def start_maintenance(self) -> None:
         """Start one idle-time retention worker; no model or network is used."""
         with self._state_lock:
+            if self._closed:
+                raise _fail("service_closed", "image service is closed")
             if self._maintenance_thread is not None:
                 return
             self.purge_expired()
@@ -226,20 +235,33 @@ class ImageService:
             self._maintenance_thread.start()
 
     def close(self) -> None:
-        """Stop retention and cancel queued work; running inference keeps its deadline."""
+        """Stop admission, retention, and queued/running owned jobs before unlocking."""
+        with self._state_lock:
+            self._closed = True
         self._maintenance_stop.set()
         if self._maintenance_thread is not None:
-            self._maintenance_thread.join()
+            self._maintenance_thread.join(timeout=5)
+            if self._maintenance_thread.is_alive():
+                raise RuntimeError("retention shutdown exceeded its cleanup deadline")
             self._maintenance_thread = None
+        # Workers release their asset references under _state_lock. Never wait
+        # for a worker while holding that lock.
+        if self._jobs is not None:
+            self._jobs.shutdown(timeout=5)
         with self._state_lock:
-            if self._jobs is not None:
-                for job_id in list(self._job_assets):
-                    result = self._jobs.cancel(job_id)
-                    if result and result.get("cancelled"):
-                        self._release_job(job_id)
-                self._jobs.shutdown()
+            for job_id in list(self._job_assets):
+                self._release_job(job_id)
+            if self._ownership is not None:
+                self._ownership.close()
+                self._ownership = None
 
     def _ensure_storage(self) -> None:
+        with self._state_lock:
+            if self._closed:
+                raise _fail("service_closed", "image service is closed")
+            self._ensure_owned_storage()
+
+    def _ensure_owned_storage(self) -> None:
         for directory in (
             self.tenant_root,
             self.assets_root,
@@ -253,6 +275,20 @@ class ImageService:
                     raise _fail("unsafe_service_storage", "service storage contains a symlink")
                 current.mkdir(exist_ok=True, mode=0o700)
             os.chmod(directory, 0o700)
+        if self._ownership is None:
+            descriptor = os.open(self.tenant_root / ".owner.lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
+            try:
+                if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+                    raise _fail("unsafe_service_storage", "tenant lock is not a regular file")
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                self._ownership = os.fdopen(descriptor, "rb")
+            except BaseException as exc:
+                os.close(descriptor)
+                if isinstance(exc, BlockingIOError):
+                    raise _fail("tenant_in_use", "another service owns this tenant directory") from exc
+                raise
+            # Keep the lock inode: unlinking it would let two owners lock
+            # different files with the same name.
 
     def _job_manager(self) -> JobManager:
         with self._state_lock:
@@ -268,11 +304,13 @@ class ImageService:
                 return
             asset_id, _output_token = binding
             directory = self._asset_directory(asset_id)
-            if directory.is_dir() and not directory.is_symlink():
-                try:
+            try:
+                if directory.is_dir() and not directory.is_symlink():
                     os.utime(directory, None)
-                except OSError:
-                    pass
+            except OSError:
+                # A failed retention timestamp refresh must not pin an asset
+                # forever after its job has already stopped.
+                pass
             count = self._active_assets.get(asset_id, 0)
             if count <= 1:
                 self._active_assets.pop(asset_id, None)
@@ -325,6 +363,20 @@ class ImageService:
                 for path in self.outputs_root.glob("run_*")
                 if re.fullmatch(r"run_[0-9a-f]{24}", path.name) and path.name not in active_outputs
             )
+            # SIGKILL cannot execute the transaction's Python finally block.
+            # Expire only exact service-owned transaction siblings, protecting
+            # active output tokens just as for their published directories.
+            for path in self.outputs_root.glob(".run_*"):
+                match = re.fullmatch(r"\.(run_[0-9a-f]{24})\.(?:(?:stage|backup)\.[0-9a-f]{32}|yolozu-output-transaction\.json)", path.name)
+                if match is None or match[1] in active_outputs:
+                    continue
+                if path.name.endswith(".json"):
+                    info = path.lstat()
+                    if stat.S_ISREG(info.st_mode) and now - info.st_mtime >= self.retention_seconds:
+                        path.unlink()
+                        removed_outputs += 1
+                else:
+                    removed_outputs += self._remove_expired_tree(path, now=now)
             removed_jobs = self._job_manager().purge_terminal_before(
                 now - self.retention_seconds
             )
@@ -548,78 +600,16 @@ class ImageService:
             "compute_policy": "auto",
         }
 
-        def run_inner() -> dict[str, Any]:
-            try:
-                recommendation = recommend_image_pipeline(
-                    job_spec,
-                    input_relative,
-                    workspace_root=self.workspace,
-                )
-            except RecommendationError as exc:
-                return {
-                    "ok": False,
-                    "exit_code": 1,
-                    "outcome": "rejected",
-                    "error": {
-                        "code": exc.code,
-                        "message": exc.public_message,
-                    },
-                }
-            decision = recommendation.get("decision")
-            if not isinstance(decision, Mapping):
-                return {
-                    "ok": False,
-                    "exit_code": 1,
-                    "outcome": "rejected",
-                    "error": {
-                        "code": "invalid_recommendation",
-                        "message": "qualified selection returned an invalid decision",
-                    },
-                }
-            if decision.get("status") != "selected":
-                return {
-                    "ok": True,
-                    "exit_code": 0,
-                    "outcome": "abstained",
-                    "decision": dict(decision),
-                }
-            try:
-                processed = process_images(
-                    job_spec,
-                    decision,
-                    input_relative,
-                    output_relative,
-                    workspace_root=self.workspace,
-                    dry_run=not execute,
-                )
-            except ProcessingError as exc:
-                return {
-                    "ok": False,
-                    "exit_code": 1,
-                    "outcome": "rejected",
-                    "error": {
-                        "code": exc.code,
-                        "message": exc.public_message,
-                    },
-                }
-            return {
-                "ok": bool(processed.get("ok")),
-                "exit_code": int(processed.get("exit_code", 0)),
-                "outcome": (
-                    ("completed" if processed.get("executed") else "ready")
-                    if processed.get("ok") else "rejected"
-                ),
-                "decision": dict(decision),
-                "executed": bool(processed.get("executed")),
-                "_output_token": output_token if processed.get("ok") and processed.get("executed") else None,
-            }
+        cancel = threading.Event()
+        deadline = time.monotonic() + timeout_seconds
+        request = {
+            "job_spec": job_spec, "workspace": str(self.workspace),
+            "input": input_relative, "output": output_relative,
+            "output_token": output_token, "execute": execute,
+        }
 
         def run() -> dict[str, Any]:
-            try:
-                return run_inner()
-            finally:
-                with self._state_lock:
-                    self._release_job(job_id)
+            return run_image_job(request, cancel, deadline)
 
         manager = self._job_manager()
         with self._state_lock:
@@ -637,7 +627,7 @@ class ImageService:
                 )
             self._active_assets[asset_id] = self._active_assets.get(asset_id, 0) + 1
             try:
-                job_id = manager.submit("image_pipeline", run)
+                job_id = manager.submit("image_pipeline", run, on_done=self._release_job, cancel_event=cancel, deadline=deadline)
                 self._job_assets[job_id] = (asset_id, output_token)
             except Exception:
                 count = self._active_assets.get(asset_id, 0)

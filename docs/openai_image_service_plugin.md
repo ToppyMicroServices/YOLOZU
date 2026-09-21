@@ -55,6 +55,9 @@ Only `image_service_capabilities`, `put_image_asset`, `submit_image_job`,
 `get_image_job`, and `cancel_image_job` should be available. No full-surface tool
 is added. The long-lived connection uses the host's working directory and the
 existing `runs/mcp_image_service` retention rules; it is not an OS sandbox.
+Only one service may own a workspace/tenant at a time. A second connection is
+rejected with `tenant_in_use` when it tries to access storage; the bundled
+temporary-session client uses a separate workspace and does not share this lock.
 
 For a local image, the bundled client avoids copying base64 through chat:
 
@@ -72,15 +75,19 @@ transfer is not implemented.
 
 The client starts a separate temporary stdio session, uploads one bounded image,
 submits the job, and polls no faster than once per second. `--timeout` is 1..120
-seconds (default 60); expiry requests cancellation. It is a job-wait limit, not
-a hard wall-clock guarantee for child-process shutdown. Original images are
+seconds (default 60); expiry requests termination of queued or running work.
+The client also sets the server deadline (minimum 30 seconds). Server deadlines
+include queueing and selection, and terminal `timed_out` is an unsuccessful result.
+Transport initialization and cleanup have separate bounds; `--timeout` is not
+a hard wall-clock guarantee for the entire command. Independent guards reclaim
+owned process groups after owner death. Original images are
 unchanged, and temporary copies/job records are removed on normal exit. Forced
 termination can leave an OS temporary directory. IDs from this session cannot
 be reused on the plugin's long-lived connection.
 
 Exit 0 means the request returned successfully, **not that inference ran**:
 inspect `job.result.outcome` and reason codes for abstention. Exit 2 means invalid
-input, protocol/runtime failure, failed/cancelled job, or timeout; exit 130 means
+input, protocol/runtime failure, failed/cancelled/timed-out job; exit 130 means
 interruption. The client rejects symlinks at the input filename, non-regular
 files, images over 8 MiB, unsupported formats, and oversized dimensions.
 

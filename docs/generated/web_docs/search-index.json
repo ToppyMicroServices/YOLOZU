@@ -156,8 +156,8 @@
   {
     "href": "commands.html#tool-cancel-image-job",
     "kind": "command",
-    "search_text": "cancel_image_job Cancel one queued image job and release its retained asset reference; apply tenant rate and retention limits without interrupting a running model. experimental yolozu/integrations/mcp_server.py  Call the cancel_image_job MCP tool with a queued job_id.",
-    "summary": "Cancel one queued image job and release its retained asset reference; apply tenant rate and retention limits without interrupting a running model.",
+    "search_text": "cancel_image_job Cancel queued image work or stop a running owned process; release retained assets after termination and preserve tenant rate limits. experimental yolozu/integrations/mcp_server.py  Call the cancel_image_job MCP tool with a queued or running job_id.",
+    "summary": "Cancel queued image work or stop a running owned process; release retained assets after termination and preserve tenant rate limits.",
     "title": "cancel_image_job"
   },
   {
@@ -877,8 +877,8 @@
   {
     "href": "commands.html#tool-run-mcp-server",
     "kind": "command",
-    "search_text": "run_mcp_server Run the YOLOZU MCP server over stdio or Streamable HTTP with optional bounded image-service tools, tenant rate limits, and idle-time retention cleanup. stable tools/run_mcp_server.py --transport --surface --host --port --http-path --public-url --auth-token-env --tenant-id --retention-seconds --manifest --print-tools --guaranteed --supported --maturity --tag --ids-only --sample-generate-config --sample-review-config --workspace-root yolozu-mcp yolozu-mcp --transport streamable-http --surface image-service --host 127.0.0.1 --port 8000 --http-path /mcp yolozu-mcp --print-tools --guaranteed --ids-only yolozu-mcp --print-tools --supported --ids-only yolozu-mcp --print-tools --ids-only --maturity stable --tag validation yolozu-mcp --sample-generate-config > reports/ai_generate_config.json && yolozu-mcp --sample-review-config reports/ai_generate_config.json",
-    "summary": "Run the YOLOZU MCP server over stdio or Streamable HTTP with optional bounded image-service tools, tenant rate limits, and idle-time retention cleanup.",
+    "search_text": "run_mcp_server Run the YOLOZU MCP server over stdio or Streamable HTTP with bounded image-service tools, exclusive tenant ownership, cancellable process jobs, rate limits, and idle-time retention cleanup. stable tools/run_mcp_server.py --transport --surface --host --port --http-path --public-url --auth-token-env --tenant-id --retention-seconds --manifest --print-tools --guaranteed --supported --maturity --tag --ids-only --sample-generate-config --sample-review-config --workspace-root yolozu-mcp yolozu-mcp --transport streamable-http --surface image-service --host 127.0.0.1 --port 8000 --http-path /mcp yolozu-mcp --print-tools --guaranteed --ids-only yolozu-mcp --print-tools --supported --ids-only yolozu-mcp --print-tools --ids-only --maturity stable --tag validation yolozu-mcp --sample-generate-config > reports/ai_generate_config.json && yolozu-mcp --sample-review-config reports/ai_generate_config.json",
+    "summary": "Run the YOLOZU MCP server over stdio or Streamable HTTP with bounded image-service tools, exclusive tenant ownership, cancellable process jobs, rate limits, and idle-time retention cleanup.",
     "title": "run_mcp_server"
   },
   {
@@ -954,8 +954,8 @@
   {
     "href": "commands.html#tool-submit-image-job",
     "kind": "command",
-    "search_text": "submit_image_job Rate-limit and queue one typed image job using only a qualified registered pipeline or abstention; execution is opt-in and retained assets are released on completion or queued cancellation. experimental yolozu/integrations/mcp_server.py      Call the submit_image_job MCP tool with an asset_id, fixed_classes, and execute=false. Call the submit_image_job MCP tool with execute=true only after approving model execution.",
-    "summary": "Rate-limit and queue one typed image job using only a qualified registered pipeline or abstention; execution is opt-in and retained assets are released on completion or queued cancellation.",
+    "search_text": "submit_image_job Queue a deadline-bounded cancellable image process using only a qualified registered pipeline or abstention; execution is opt-in and terminal paths release retained assets. experimental yolozu/integrations/mcp_server.py      Call the submit_image_job MCP tool with an asset_id, fixed_classes, and execute=false. Call the submit_image_job MCP tool with execute=true only after approving model execution.",
+    "summary": "Queue a deadline-bounded cancellable image process using only a qualified registered pipeline or abstention; execution is opt-in and terminal paths release retained assets.",
     "title": "submit_image_job"
   },
   {

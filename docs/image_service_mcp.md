@@ -159,18 +159,22 @@ the initial bounded MCP path; deployments handling larger payloads should add a
 separate authenticated upload plane rather than increasing tool-argument limits.
 
 Each service process uses a private tenant directory with mode `0700`; image and
-job-state files are written with mode `0600`. Queued jobs use one worker. A
+job-state files are written with mode `0600`. Queued jobs use one supervisor worker;
+each image pipeline runs in a separately spawned process. A
 background worker checks expiry every 60 seconds while the server is running,
 including when no new requests arrive. Startup and job lookup also check expiry.
 Inactive assets, terminal job state, and managed outputs expire under the configured
 retention policy. A stopped server cannot delete data; expired data is cleaned
 on restart. Each tenant is capped at 128 retained assets, 16 active jobs, and 1,024
 retained job records. An asset referenced by a queued or running job is not
-removed by retention cleanup. Cancellation releases a queued job's asset reference;
+removed by retention cleanup. Terminal paths release the asset reference, including
+exceptions before the worker body starts and cancellation of queued or running work;
 cleanup also preserves active output directories. Cleanup is restricted to validated
 service-owned directories. Symlink ancestors are rejected, including aliases within
 the workspace. Cleanup failure blocks new tool requests until cleanup succeeds or
 an operator repairs the storage.
+Exact service-owned staging/backup directories and transaction markers left by
+forced termination also expire after retention; active job tokens remain protected.
 
 Per-tenant, per-process sliding 60-second limits are: 12 upload attempts, 12 job
 submissions, 120 capability requests, 120 status lookups, and 30 cancellation
@@ -181,11 +185,22 @@ not a distributed quota or an HTTP denial-of-service control. The dedicated
 HTTP surface bounds each POST body to 16 MiB and its upload to 30 seconds before
 MCP JSON parsing, including chunked requests (`413` for excess bytes, `408` for
 timeout). The deployment gateway still needs connection-rate and concurrency limits.
-Do not run two service processes against one tenant directory.
+An OS advisory lock rejects a second service using the same tenant directory with
+`tenant_in_use`. The owner holds the lock until workers and cleanup have stopped.
+The lock file is intentionally retained; do not unlink it to bypass ownership.
+Use a local filesystem with working POSIX advisory locks.
 
-`cancel_image_job` cancels a queued job. It does not claim that a model already
-running in the worker was interrupted. The adaptive runner has its own bounded
-child-process timeout when an eligible pipeline reaches execution.
+`cancel_image_job` cancels queued work immediately. For running work it returns
+`cancelled=false, reason=cancellation_requested`; poll until the job is terminal.
+The supervisor stops and reaps the owned process before releasing its asset.
+`timeout_seconds` (30..3600) starts at queue admission and includes selection,
+preflight, and execution. Expiry reports `timed_out`, including in the queue.
+Independent lifetime guards stop job, probe, and inference process groups if
+their owner dies, even when native code blocks the owner's threads. Shutdown
+rejects new work and bounds retention/job cleanup waits to five seconds each;
+a cleanup failure raises rather than claiming that storage ownership was released.
+These are application-level bounds, not a guarantee against an uninterruptible
+OS/filesystem operation or an OS scheduling stall. No OS network sandbox is added.
 
 Private directories and a terminable child process are not a container or an OS
 network sandbox. The code-owned runner declares no inference network use; the

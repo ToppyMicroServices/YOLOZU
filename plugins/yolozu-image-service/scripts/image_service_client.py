@@ -37,7 +37,13 @@ def read_image(path: Path) -> dict[str, str]:
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
     if path.is_symlink():
         raise ValueError("image must not be a symlink")
-    with os.fdopen(os.open(path, flags), "rb") as stream:
+    descriptor = os.open(path, flags)
+    try:
+        stream = os.fdopen(descriptor, "rb")
+    except BaseException:
+        os.close(descriptor)
+        raise
+    with stream:
         info = os.fstat(stream.fileno())
         if not stat.S_ISREG(info.st_mode) or not 0 < info.st_size <= MAX_IMAGE_BYTES:
             raise ValueError("image must be a regular file of 1..8388608 bytes")
@@ -81,6 +87,7 @@ async def request(session, args: argparse.Namespace, image: dict | None) -> dict
         "asset_id": uploaded["asset"]["asset_id"],
         "fixed_classes": args.classes,
         "execute": args.execute,
+        "timeout_seconds": max(30, math.ceil(args.timeout)),
     })
     job_id = submitted["job"]["job_id"]
     deadline = asyncio.get_running_loop().time() + args.timeout
@@ -117,7 +124,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     source.add_argument("--image", type=Path, help="User-selected local PNG/JPEG/WebP; at most 8 MiB.")
     parser.add_argument("--class", dest="classes", action="append", default=[], help="Target class; repeat for multiple labels. Required with --image.")
     parser.add_argument("--execute", action="store_true", help="Request actual processing after user authorization; still abstains without a qualified model.")
-    parser.add_argument("--timeout", type=float, default=60, help="Job wait in seconds, 1..120 (default: 60); cancel on expiry.")
+    parser.add_argument("--timeout", type=float, default=60, help="Job wait in seconds, 1..120 (default: 60); stop queued/running work on expiry. Transport/cleanup have separate bounds.")
     args = parser.parse_args(argv)
     if not math.isfinite(args.timeout) or not 1 <= args.timeout <= 120:
         parser.error("--timeout must be finite and in 1..120")
@@ -140,7 +147,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     print(json.dumps(result, ensure_ascii=False))
     job = result.get("job", {})
-    if result.get("ok") is not True or job.get("status") in {"failed", "cancelled"}:
+    if result.get("ok") is not True or job.get("status") in {"failed", "cancelled", "timed_out"}:
         return 2
     return 0  # Transport success can still contain result.outcome == abstained.
 

@@ -481,7 +481,7 @@ def get_image_job_tool(job_id: str) -> dict:
 @app.tool(name="cancel_image_job")
 @service_app.tool(name="cancel_image_job")
 def cancel_image_job_tool(job_id: str) -> dict:
-    """Cancel one queued image job; running inference is not interrupted."""
+    """Cancel queued work or request termination of a running owned image job."""
     return public_service_call(cancel_image_job, job_id=job_id)
 
 

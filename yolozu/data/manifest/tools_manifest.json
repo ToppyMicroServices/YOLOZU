@@ -2778,8 +2778,8 @@
       "entrypoint": "yolozu/integrations/mcp_server.py",
       "examples": [
         {
-          "command": "Call the cancel_image_job MCP tool with a queued job_id.",
-          "description": "Cancel a queued job; a running model process is not represented as safely interruptible by this control."
+          "command": "Call the cancel_image_job MCP tool with a queued or running job_id.",
+          "description": "Cancel queued work or request termination of the running owned process; poll until terminal."
         }
       ],
       "id": "cancel_image_job",
@@ -2794,7 +2794,7 @@
       "maturity": "experimental",
       "outputs": [
         {
-          "description": "Structured cancellation result stating whether the queued job was cancelled.",
+          "description": "Structured result: cancelled=true for stopped queued work, or reason=cancellation_requested while running work is stopping.",
           "kind": "json",
           "name": "cancellation_json"
         }
@@ -2813,7 +2813,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Cancel one queued image job and release its retained asset reference; apply tenant rate and retention limits without interrupting a running model.",
+      "summary": "Cancel queued image work or stop a running owned process; release retained assets after termination and preserve tenant rate limits.",
       "tags": [
         "ai-first",
         "image-service",
@@ -11294,7 +11294,7 @@
         },
         {
           "default": 60,
-          "description": "Finite job-wait seconds in 1..120; requests cancellation on expiry, not a hard shutdown deadline.",
+          "description": "Finite job-wait seconds in 1..120; expiry stops queued/running work. Transport and process cleanup have separate bounded waits.",
           "flag": "--timeout",
           "kind": "number",
           "name": "timeout",
@@ -16432,7 +16432,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Run the YOLOZU MCP server over stdio or Streamable HTTP with optional bounded image-service tools, tenant rate limits, and idle-time retention cleanup.",
+      "summary": "Run the YOLOZU MCP server over stdio or Streamable HTTP with bounded image-service tools, exclusive tenant ownership, cancellable process jobs, rate limits, and idle-time retention cleanup.",
       "tags": [
         "mcp",
         "integration",
@@ -19035,7 +19035,7 @@
         },
         {
           "default": 300,
-          "description": "Bounded whole-job timeout in seconds.",
+          "description": "30..3600 seconds from queue admission, including selection and execution; expiry stops owned processes and reports timed_out.",
           "kind": "number",
           "name": "timeout_seconds",
           "required": false
@@ -19063,7 +19063,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Rate-limit and queue one typed image job using only a qualified registered pipeline or abstention; execution is opt-in and retained assets are released on completion or queued cancellation.",
+      "summary": "Queue a deadline-bounded cancellable image process using only a qualified registered pipeline or abstention; execution is opt-in and terminal paths release retained assets.",
       "tags": [
         "adaptive-inference",
         "ai-first",

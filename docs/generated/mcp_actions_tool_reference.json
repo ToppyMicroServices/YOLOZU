@@ -2423,7 +2423,7 @@
     {
       "name": "cancel_image_job",
       "function": "cancel_image_job_tool",
-      "summary": "Cancel one queued image job; running inference is not interrupted.",
+      "summary": "Cancel queued work or request termination of a running owned image job.",
       "category": "image-service",
       "surface_tiers": [
         "mcp_live",
@@ -2479,8 +2479,8 @@
       },
       "examples": [
         {
-          "command": "Call the cancel_image_job MCP tool with a queued job_id.",
-          "description": "Cancel a queued job; a running model process is not represented as safely interruptible by this control."
+          "command": "Call the cancel_image_job MCP tool with a queued or running job_id.",
+          "description": "Cancel queued work or request termination of the running owned process; poll until terminal."
         }
       ],
       "effects": {

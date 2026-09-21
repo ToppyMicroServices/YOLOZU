@@ -273,7 +273,8 @@ selector/executor caseは内部fixtureによるもので、実bundleのqualifica
 public runを示すものではありません。
 
 OpenAIとClaudeからは、filesystemやbackendを操作させない5-toolのMCP image serviceを
-利用できます。local stdio、Streamable HTTP、認証、tenant単位の利用制限、idle時の
+利用できます。待ち行列を含む処理期限、実行中のキャンセル、tenant保存先の排他を備えます。
+local stdio、Streamable HTTP、認証、tenant単位の利用制限、idle時の
 期限切れデータ削除、現在のabstention境界は
 [Bounded MCP image service](docs/image_service_mcp.md)を参照してください。
 実CNN bundleはまだ[未登録のレビュー提案](docs/image_service_candidate_review.md)であり、

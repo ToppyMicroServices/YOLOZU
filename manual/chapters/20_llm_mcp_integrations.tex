@@ -92,7 +92,10 @@ token loaded from an environment variable. Actual execution remains opt-in and
 requires a qualified selected bundle.
 Per-tenant sliding-window limits bound upload, submission, polling, and cancellation.
 A background worker removes expired inactive data every 60 seconds while the server
-runs; queued cancellation releases retained assets. This process boundary does not
+runs. Queue-to-completion deadlines and running cancellation stop owned processes
+before releasing assets. Lifetime guards reclaim process groups after owner death,
+and a POSIX lock rejects a second owner of the same tenant directory.
+This process boundary does not
 provide an OS network sandbox. Deployment isolation and HTTP connection/body limits
 remain the operator's responsibility. See \path{docs/image_service_mcp.md} for the
 exact limits and provider request settings, and
