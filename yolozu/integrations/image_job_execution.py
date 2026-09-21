@@ -78,11 +78,14 @@ def _worker(connection: Any, request: dict[str, Any]) -> None:
             raise ValueError("image job result exceeds its bound")
         connection.send_bytes(data)
     except BaseException:
+        # This isolated child must report even SystemExit as a terminal failure;
+        # it does not intercept interrupts in the host application's main thread.
         try:
             connection.send_bytes(
                 b'{"ok":false,"exit_code":1,"outcome":"failed","error":"image job failed"}'
             )
         except (OSError, EOFError):
+            # The supervisor may have closed the pipe during cancellation.
             pass
     finally:
         connection.close()

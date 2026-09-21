@@ -787,7 +787,7 @@ def run_server(
         allowed_origins=allowed_origins,
     )
     if auth_token is not None:
-        issuer_url = public_url or f"http://{host}:{port}"
+        issuer_url = public_url or f"http://{allowed_hosts[0]}"
         selected._token_verifier = _StaticTokenVerifier(auth_token)
         selected.settings.auth = AuthSettings(
             issuer_url=issuer_url,

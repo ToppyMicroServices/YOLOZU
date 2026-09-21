@@ -85,6 +85,7 @@ class JobManager:
             try:
                 temporary.unlink()
             except FileNotFoundError:
+                # A successful replace has already consumed the temporary file.
                 pass
 
     def _load_from_disk(self) -> None:
@@ -133,6 +134,7 @@ class JobManager:
                 try:
                     path.unlink()
                 except FileNotFoundError:
+                    # Missing persisted records are already purged.
                     pass
                 self._jobs.pop(job_id, None)
                 removed += 1

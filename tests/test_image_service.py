@@ -70,7 +70,7 @@ class TestImageService(unittest.TestCase):
             if result["job"]["status"] not in {"queued", "running"}:
                 return result
             time.sleep(0.05)
-        self.fail("image service job did not finish")
+        raise AssertionError("image service job did not finish")
 
     def test_capabilities_are_read_only_and_bounded(self) -> None:
         with tempfile.TemporaryDirectory() as td:
@@ -130,6 +130,30 @@ class TestImageService(unittest.TestCase):
             )["asset"]["asset_id"]
             with self.assertRaises(ImageServiceError) as missing:
                 second.submit_job(asset_id=asset_id, fixed_classes=["cat"])
+            self.assertEqual(missing.exception.code, "asset_not_found")
+
+    def test_invalid_asset_metadata_has_stable_not_found_error(self) -> None:
+        from yolozu.integrations.image_service import _safe_json_read
+
+        with tempfile.TemporaryDirectory() as td:
+            service = self.service(workspace=td)
+            asset_id = service.put_asset(
+                content_base64=base64.b64encode(_png_bytes()).decode("ascii"),
+                media_type="image/png",
+            )["asset"]["asset_id"]
+            path = service._asset_directory(asset_id) / "asset.json"
+            path.write_bytes(b" " * (32 * 1024 + 1))
+            with self.assertRaises(ImageServiceError) as missing:
+                service.submit_job(asset_id=asset_id, fixed_classes=["cat"])
+            self.assertEqual(missing.exception.code, "asset_not_found")
+            path.unlink()
+            outside = Path(td) / "outside.json"
+            outside.write_text('{"private": true}', encoding="utf-8")
+            path.symlink_to(outside)
+            with self.assertRaises(OSError):
+                _safe_json_read(path)
+            with self.assertRaises(ImageServiceError) as missing:
+                service.submit_job(asset_id=asset_id, fixed_classes=["cat"])
             self.assertEqual(missing.exception.code, "asset_not_found")
 
     def test_submit_abstains_without_executing_fallback(self) -> None:
@@ -481,6 +505,28 @@ class TestMcpServerOptions(unittest.TestCase):
                 auth_token="x" * 32,
                 public_url="https://vision.example/mcp",
             )
+
+    @unittest.skipUnless(
+        importlib.util.find_spec("mcp") is not None,
+        "optional mcp dependency is not installed",
+    )
+    def test_authenticated_ipv6_server_uses_valid_issuer_url(self) -> None:
+        from unittest.mock import MagicMock
+        from yolozu.integrations import mcp_server
+
+        selected = MagicMock()
+        with (
+            patch.object(mcp_server, "service_app", selected),
+            patch.object(mcp_server, "configure_image_service"),
+            patch.object(mcp_server, "start_image_service"),
+            patch.object(mcp_server, "close_image_service"),
+        ):
+            mcp_server.run_server(
+                transport="streamable-http", surface="image-service",
+                host="::1", port=8000, auth_token="x" * 32,
+            )
+        self.assertEqual(str(selected.settings.auth.issuer_url), "http://[::1]:8000/")
+        selected.run.assert_called_once_with(transport="streamable-http")
 
     @unittest.skipUnless(
         importlib.util.find_spec("mcp") is not None,

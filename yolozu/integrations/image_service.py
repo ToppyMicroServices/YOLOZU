@@ -113,6 +113,7 @@ def _write_private_json(path: Path, payload: Mapping[str, Any]) -> None:
         try:
             temporary.unlink()
         except FileNotFoundError:
+            # A successful replace has already consumed the temporary file.
             pass
 
 
@@ -532,7 +533,7 @@ class ImageService:
             raise _fail("asset_not_found", "asset_id was not found")
         try:
             metadata = _safe_json_read(directory / "asset.json", maximum_bytes=32 * 1024)
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ImageServiceError) as exc:
             raise _fail("asset_not_found", "asset metadata is unavailable") from exc
         if not isinstance(metadata, dict) or metadata.get("asset_id") != asset_id:
             raise _fail("asset_not_found", "asset metadata is invalid")

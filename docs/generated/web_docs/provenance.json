@@ -385,6 +385,6 @@
     "yolozu/cli.py": "ac34bb541c829d55e999a44e38883dd7a9177531845e6e2f68a14e8428870718",
     "yolozu/data/manifest/README.md": "da9cec2ea3b4bc0aa693d9d5734d0c50ea66f1511af50d0f8ebd7419e5b413b4",
     "yolozu/data/manifest/benchmark_support.json": "a516a17a90ed291bf61bf670570fd244c4f6b047f22c8e245838edf6840b8c7d",
-    "yolozu/integrations/mcp_server.py": "bb6d62b6b537783a998c84c3dc83c96575d1388596bac96d055abfb69a9afa1c"
+    "yolozu/integrations/mcp_server.py": "093f9bf04c89fd088f82e4e377743a87b98cd231ba4cad7fdf1555031954a12d"
   }
 }

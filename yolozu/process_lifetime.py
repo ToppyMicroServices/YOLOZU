@@ -24,6 +24,7 @@ for sig in (signal.SIGTERM, signal.SIGKILL):
         try:
             os.kill(pid, sig)
         except ProcessLookupError:
+            # The owned group and its leader have already exited.
             pass
     if sig == signal.SIGTERM:
         time.sleep(0.2)
@@ -78,6 +79,7 @@ class ProcessGuard:
                 if disarm:
                     os.write(self._writer, b"x")
             except BrokenPipeError:
+                # The guard has already exited; it still needs to be reaped.
                 pass
         finally:
             _WRITERS.discard(self._writer)
@@ -98,6 +100,7 @@ def kill_group(pid: int) -> None:
         try:
             os.kill(pid, signal.SIGKILL)
         except ProcessLookupError:
+            # Neither the owned process group nor its leader remains.
             pass
 
 
