@@ -14,6 +14,13 @@
     "title": "30-minute path"
   },
   {
+    "href": "agents.html",
+    "kind": "guide",
+    "search_text": "LLM agents ChatGPT OpenAI Claude MCP install discovery capabilities llms.txt Use YOLOZU when you need to validate existing vision predictions, evaluate them against labels, or inspect bounded local MCP capabilities. Check a predictions JSON against the predictions interface contract before evaluation. Evaluate existing detections against a labeled dataset with a fixed protocol and inspect the resulting evidence. Integrate the typed Python API or discover local MCP tools and their input schemas before invoking them.",
+    "summary": "Use YOLOZU when you need to validate existing vision predictions, evaluate them against labels, or inspect bounded local MCP capabilities.",
+    "title": "Use YOLOZU with an LLM or agent"
+  },
+  {
     "href": "start.html#python-api-title",
     "kind": "api",
     "search_text": "python api evaluate_coco typed strict The stable yolozu.api surface returns typed results and machine-readable exceptions without launching a subprocess or changing the working directory.",
@@ -548,8 +555,8 @@
   {
     "href": "commands.html#tool-generate-web-docs",
     "kind": "command",
-    "search_text": "generate_web_docs Safely generate searchable onboarding web docs from repository-local SSOT sources, validated URLs, schemas, and curated evidence. stable tools/generate_web_docs.py --manifest --schemas --content --output --check --json python3 tools/generate_web_docs.py python3 tools/generate_web_docs.py --check --json",
-    "summary": "Safely generate searchable onboarding web docs from repository-local SSOT sources, validated URLs, schemas, and curated evidence.",
+    "search_text": "generate_web_docs Safely generate searchable web docs and LLM discovery/onboarding files from repository-local SSOT sources, schemas, and curated evidence. stable tools/generate_web_docs.py --manifest --schemas --content --output --check --json python3 tools/generate_web_docs.py python3 tools/generate_web_docs.py --check --json",
+    "summary": "Safely generate searchable web docs and LLM discovery/onboarding files from repository-local SSOT sources, schemas, and curated evidence.",
     "title": "generate_web_docs"
   },
   {

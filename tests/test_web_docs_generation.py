@@ -264,6 +264,8 @@ class TestWebDocsGeneration(TestCase):
             )
         )
         expected_sources = {
+            "yolozu/__init__.py",
+            "docs/generated/mcp_actions_tool_reference.json",
             "tools/generate_web_docs.py",
             "tools/manifest.json",
             "docs/web_docs_content.json",
@@ -280,6 +282,8 @@ class TestWebDocsGeneration(TestCase):
         }
         expected_sources.update(lane["source"] for lane in content["lanes"])
         expected_sources.add(content["python_api"]["source"])
+        for key in ("workflows", "resources"):
+            expected_sources.update(entry["source"] for entry in content["agent_guide"][key])
         for group_name in ("examples", "glossary", "failures"):
             for entry in content[group_name]:
                 expected_sources.add(entry["source"])
@@ -546,7 +550,7 @@ class TestWebDocsGeneration(TestCase):
 
     def test_generated_text_has_no_trailing_whitespace(self) -> None:
         for path in self.output.rglob("*"):
-            if path.suffix not in {".css", ".html", ".js", ".json"}:
+            if path.suffix not in {".css", ".html", ".js", ".json", ".txt", ".md", ".xml"}:
                 continue
             for line_number, line in enumerate(
                 path.read_text(encoding="utf-8").splitlines(),

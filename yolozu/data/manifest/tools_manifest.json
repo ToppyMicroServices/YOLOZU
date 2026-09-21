@@ -10846,6 +10846,7 @@
     {
       "docs": [
         "docs/python_api.md",
+        "docs/llm_discovery.md",
         "docs/web_docs_content.json",
         "docs/web_docs_plan.md",
         "docs/generated/web_docs/index.html"
@@ -10865,7 +10866,7 @@
       "examples": [
         {
           "command": "python3 tools/generate_web_docs.py",
-          "description": "Regenerate the checked-in searchable web-docs bundle after validating repository-local sources and safe HTTPS/internal links."
+          "description": "Regenerate searchable HTML, agent Markdown, llms.txt, capability JSON, and sitemap.xml after validating repository-local sources and safe HTTPS/internal links."
         },
         {
           "command": "python3 tools/generate_web_docs.py --check --json",
@@ -10919,7 +10920,7 @@
       "outputs": [
         {
           "default": "docs/generated/web_docs",
-          "description": "Generated static onboarding web-docs bundle with hashes for every referenced SSOT source and a complete generated-file inventory in provenance.json.",
+          "description": "Generated static web-docs bundle: HTML with JSON-LD, start.md, agents.md, llms.txt, capabilities.json, sitemap.xml, search/assets, and provenance.json with source hashes and a complete file inventory.",
           "kind": "dir",
           "name": "web_docs_bundle"
         },
@@ -10939,7 +10940,7 @@
         "network": false
       },
       "runner": "python3",
-      "summary": "Safely generate searchable onboarding web docs from repository-local SSOT sources, validated URLs, schemas, and curated evidence.",
+      "summary": "Safely generate searchable web docs and LLM discovery/onboarding files from repository-local SSOT sources, schemas, and curated evidence.",
       "tags": [
         "docs",
         "generated-docs",

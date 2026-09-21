@@ -43,11 +43,10 @@ config-review tools, the five-tool `image_service_safe` surface, and the 21
 canonical Actions operations. Registration does not promote
 environment-dependent tools into the guaranteed set.
 
-Installed MCP quickstart (copy-paste):
+Installed MCP discovery and sample I/O (run separately from the server):
 
 ```bash
-# Start MCP server (stdio)
-yolozu-mcp
+mkdir -p reports
 
 # Inspect the four guaranteed AI-safe tools as JSON
 yolozu-mcp --print-tools --guaranteed --ids-only > reports/mcp_tool_ids.json
@@ -58,8 +57,11 @@ yolozu-mcp --print-tools --supported --ids-only > reports/mcp_live_tool_ids.json
 # Deterministic sample I/O (useful for client wiring tests)
 yolozu-mcp --sample-generate-config > reports/ai_generate_config.json
 yolozu-mcp --sample-review-config reports/ai_generate_config.json > reports/ai_review_config.json
+```
 
-# MCP settings check (manifest + generated reference sync)
+From a source checkout, also check manifest and generated-reference sync:
+
+```bash
 python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.json
 ```
 

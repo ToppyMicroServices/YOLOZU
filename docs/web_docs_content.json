@@ -3,7 +3,131 @@
     "title": "YOLOZU Docs",
     "description": "Searchable onboarding for validating and fairly evaluating existing vision predictions.",
     "canonical_base": "https://www.toppymicros.com/yolozu/docs/",
-    "repository_base": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/"
+    "repository_base": "https://github.com/ToppyMicroServices/YOLOZU/blob/main/",
+    "raw_repository_base": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/"
+  },
+  "agent_guide": {
+    "title": "Use YOLOZU with an LLM or agent",
+    "summary": "Use YOLOZU when you need to validate existing vision predictions, evaluate them against labels, or inspect bounded local MCP capabilities.",
+    "use_when": [
+      "Check a predictions JSON against the predictions interface contract before evaluation.",
+      "Evaluate existing detections against a labeled dataset with a fixed protocol and inspect the resulting evidence.",
+      "Integrate the typed Python API or discover local MCP tools and their input schemas before invoking them."
+    ],
+    "not_for": [
+      "Do not infer model quality from a synthetic proof or a successful dry run. Real COCO metrics require the coco extra and labeled inputs.",
+      "Do not treat registered MCP tools as guaranteed execution. Runtime, dependency, data, and permission requirements still apply.",
+      "The packaged adaptive image service abstains until CNN license review, quality qualification, and activation are completed separately. It is not a ready-to-run hosted detector.",
+      "The local OpenAI plugin is not a public ChatGPT directory listing. Provider authentication, hosting, and attachment handoff are separate deployment work."
+    ],
+    "workflows": [
+      {
+        "id": "mcp-inspect",
+        "title": "Inspect before connecting an MCP client",
+        "description": "After the isolated installation in the 30-minute path, install the optional MCP extra in that same environment. These commands exit after writing local discovery and sample files; they do not call a provider API or download a model.",
+        "commands": [
+          "python -m pip install \"yolozu[mcp]\"",
+          "mkdir -p reports",
+          "yolozu-mcp --help",
+          "yolozu-mcp --print-tools --guaranteed --ids-only > reports/mcp_tool_ids.json",
+          "yolozu-mcp --sample-generate-config > reports/ai_generate_config.json",
+          "yolozu-mcp --sample-review-config reports/ai_generate_config.json > reports/ai_review_config.json"
+        ],
+        "expected": "Inspect the returned IDs and review result. The guaranteed-tool filter narrows this discovery output, not the server's runtime surface or filesystem permissions.",
+        "source": "docs/ai_first.md"
+      },
+      {
+        "id": "mcp-connect",
+        "title": "Connect an authorized local client",
+        "description": "Configure the client to launch one of these alternatives with the installed environment's executable and an explicitly chosen workspace. These are long-running stdio servers, not one-shot validation commands. Stop the server when the session ends.",
+        "commands": [
+          "yolozu-mcp --transport stdio",
+          "yolozu-mcp --transport stdio --surface image-service"
+        ],
+        "expected": "Use the full surface only when the broader tools are intended. The image-service alternative exposes only capabilities, asset upload, submission, status, and cancellation. Ask for capabilities first; never reinterpret abstention as successful inference.",
+        "source": "docs/image_service_mcp.md"
+      }
+    ],
+    "prompts": [
+      {
+        "prompt": "Validate my existing detection predictions strictly with YOLOZU; report errors without repairing the input.",
+        "expected": "Confirm the user-selected local input, inspect the installed schema, then use strict validation. Do not invent a path or enable repair."
+      },
+      {
+        "prompt": "Show me a local YOLOZU evaluation example without downloading model weights.",
+        "expected": "Use the self-contained 30-minute path and its generated toy inputs; label the proof as synthetic, not model-quality evidence."
+      },
+      {
+        "prompt": "Show the YOLOZU image service capabilities without running inference.",
+        "expected": "Use image_service_capabilities on the image-service connection. Do not upload an image or submit execution."
+      },
+      {
+        "prompt": "Use YOLOZU to select the best CNN and guarantee its accuracy on my images.",
+        "expected": "Explain that this guarantee is unavailable and that the default adaptive service abstains. Do not activate a model or fabricate a quality result."
+      }
+    ],
+    "resources": [
+      {
+        "id": "install",
+        "title": "Installation and dependencies",
+        "description": "Choose a package extra and distinguish installed commands from repository scripts.",
+        "source": "docs/install.md"
+      },
+      {
+        "id": "cli_manifest",
+        "title": "CLI tool manifest",
+        "description": "Command inputs, examples, side effects, dependencies, and maturity.",
+        "source": "tools/manifest.json"
+      },
+      {
+        "id": "mcp_reference",
+        "title": "MCP and Actions reference JSON",
+        "description": "Exact generated tool surfaces and MCP input schemas; registration is not execution qualification.",
+        "source": "docs/generated/mcp_actions_tool_reference.json"
+      },
+      {
+        "id": "predictions_schema",
+        "title": "Predictions validation result schema",
+        "description": "Machine-readable strict validation results, errors, and repair disclosure.",
+        "source": "docs/schemas/predictions_validation_result.schema.json"
+      },
+      {
+        "id": "python_api",
+        "title": "Stable Python API",
+        "description": "Typed input, result, and error interfaces for local validation and evaluation.",
+        "source": "docs/python_api.md"
+      },
+      {
+        "id": "mcp_clients",
+        "title": "LLM and MCP integration",
+        "description": "Client connection options and workspace boundaries.",
+        "source": "docs/llm_integrations.md"
+      },
+      {
+        "id": "image_service",
+        "title": "Bounded image service",
+        "description": "Capabilities, opaque assets and jobs, limits, and abstention semantics.",
+        "source": "docs/image_service_mcp.md"
+      },
+      {
+        "id": "local_plugin",
+        "title": "Local OpenAI plugin",
+        "description": "Prepare a local plugin from a reviewed checkout; not a public app listing.",
+        "source": "docs/openai_image_service_plugin.md"
+      },
+      {
+        "id": "readiness",
+        "title": "Readiness and maturity",
+        "description": "Keep Stable, Bridge, Benchmark, and Research claims separate.",
+        "source": "docs/production_readiness.md"
+      },
+      {
+        "id": "publishing",
+        "title": "Discovery publishing and measurement",
+        "description": "Publish the bundle, verify access, and measure successful use without inferring adoption from crawler traffic.",
+        "source": "docs/llm_discovery.md"
+      }
+    ]
   },
   "lanes": [
     {

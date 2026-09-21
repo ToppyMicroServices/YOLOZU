@@ -17,6 +17,7 @@ Published surface: <https://www.toppymicros.com/yolozu/docs/>
 | Glossary | Stable terms such as predictions interface contract, protocol hash, lane | `docs/predictions_schema.md`, `docs/production_readiness.md` |
 | What can go wrong | Common failures and how to verify | `manual/chapters/11_troubleshooting.tex`, `docs/doctor_diagnostics.md` |
 | Report reading guides | How to compare outputs and skipped lanes | `docs/benchmark_support_matrix.md`, `docs/evaluation_protocol_template.md` |
+| Agent entry points | Task fit, install/use routes, exact tool-surface discovery | `docs/web_docs_content.json`, `docs/generated/mcp_actions_tool_reference.json`, `docs/llm_discovery.md` |
 
 ## Tutorial Path
 
@@ -51,6 +52,8 @@ Published surface: <https://www.toppymicros.com/yolozu/docs/>
 | Schema browser | `docs/schema_governance.md` plus `docs/schemas/*.json` | schema governance tests |
 | Examples gallery | checked-in demo reports and assets | golden/report validation |
 | Glossary | curated Markdown source | link checker / docs drift test |
+| Agent guide and discovery metadata | curated `agent_guide`, generated MCP reference, package version | generation, link, surface-parity, and provenance tests |
+| Markdown first-run guide | the same tutorial and Python example used by HTML | tutorial parity and candidate-wheel journey |
 
 ## Acceptance Checklist
 
@@ -67,6 +70,9 @@ Published surface: <https://www.toppymicros.com/yolozu/docs/>
 - The CI candidate-wheel journey must execute real COCOeval. Missing
   `pycocotools` is a failure in that gate.
 - No web page should be the only source for CLI flags or schema fields.
+- Agent-facing metadata must preserve maturity and execution boundaries; a live
+  MCP registration is not an execution guarantee.
+- `llms.txt` is an optional discovery convention, not an indexing guarantee.
 
 ## Implemented Surface
 
@@ -81,10 +87,21 @@ The bundle includes:
 4. a schema browser generated from every `docs/schemas/*.json` file;
 5. a repository-backed example gallery and report-reading checklist;
 6. a curated glossary;
-7. an evidence-first failure guide; and
-8. a stable typed-Python example sourced from `docs/python_api.md`; and
+7. an evidence-first failure guide;
+8. a stable typed-Python example sourced from `docs/python_api.md`;
 9. a search index spanning commands, schemas, lanes, examples, terms, and
-   troubleshooting entries.
+   troubleshooting entries; and
+10. an agent guide in HTML and Markdown, a Markdown tutorial, `llms.txt`,
+    `capabilities.json`, and an HTML-page sitemap.
+
+`agents.html` and `agents.md` share curated content from `agent_guide` in
+`docs/web_docs_content.json`. `start.md` reuses the HTML tutorial commands and
+Python example. `capabilities.json` copies surface membership from the
+generated MCP reference and links to raw source documents, manifests, and
+schemas using the configured `site.raw_repository_base`.
+The metadata's documentation version describes its source revision, not a live
+claim about the latest published wheel. The installed package's own discovery
+response remains the execution reference.
 
 Stable, Bridge, Benchmark, and Research cards use separate visual states.
 Research examples link back to a Stable artifact or the Stable tutorial.
@@ -128,7 +145,11 @@ referenced by the rendered pages, including all manifested implementation/docs
 links, schemas, curated content, stable artifacts, and copied images. The
 generator accepts source inputs only from inside the repository and refuses to
 delete a non-empty directory whose complete inventory is not generator-owned.
-The generated bundle is published unchanged under `/yolozu/docs/` on the
-ToppyMicroServices site. Repository Markdown, JSON Schemas, manifests, and
-report artifacts remain the source of truth; the web pages link back to them
-and do not define new flags or fields.
+The publication target is `/yolozu/docs/` on the ToppyMicroServices site. This
+repository does not contain the site's deployment workflow. Publish the whole
+bundle unchanged and follow the [publisher checklist](llm_discovery.md#publisher-checklist)
+to verify public bytes, content types, entry links, and root discovery files.
+Repository Markdown, JSON Schemas, manifests, and report artifacts remain the
+source of truth; the web pages link back to them and do not define new flags or
+fields. Generation, publication, indexing, and live-provider use are separate
+verification states.

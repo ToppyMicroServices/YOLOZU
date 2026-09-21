@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import html
 import json
@@ -21,10 +22,19 @@ DEFAULT_CONTENT = REPO_ROOT / "docs" / "web_docs_content.json"
 DEFAULT_OUTPUT = REPO_ROOT / "docs" / "generated" / "web_docs"
 LANE_IDS = ("stable", "bridge", "benchmark", "research")
 GENERATOR_PATH = "tools/generate_web_docs.py"
+VERSION_PATH = "yolozu/__init__.py"
+MCP_REFERENCE_PATH = "docs/generated/mcp_actions_tool_reference.json"
+VERSION_SCOPE = (
+    "docs_version identifies the source checkout, not the installed package or "
+    "latest PyPI release. Source URLs follow a mutable branch; check source_sha256 "
+    "and provenance.json for this build. Inspect the installed CLI and MCP schemas "
+    "before invoking tools."
+)
 SAFE_IMAGE_SUFFIXES = {".jpeg", ".jpg", ".png", ".webp"}
 PAGE_NAV = (
     ("index", "Overview", "index.html"),
     ("start", "30-minute path", "start.html"),
+    ("agents", "LLM / agents", "agents.html"),
     ("commands", "Commands", "commands.html"),
     ("schemas", "Schemas", "schemas.html"),
     ("examples", "Examples", "examples.html"),
@@ -37,7 +47,8 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Generate the searchable YOLOZU onboarding web-docs bundle from "
-            "the tool manifest, JSON Schemas, and curated source content."
+            "the tool manifest, JSON Schemas, and curated source content, including "
+            "LLM discovery, Markdown onboarding, and a sitemap."
         )
     )
     parser.add_argument(
@@ -244,6 +255,28 @@ def _source_link(content: dict[str, Any], rel: str, label: str = "Source") -> st
     )
 
 
+def _raw_source_url(content: dict[str, Any], rel: str) -> str:
+    safe_rel = _repo_relative_path(rel, where="raw source link").relative_to(
+        REPO_ROOT
+    ).as_posix()
+    return content["site"]["raw_repository_base"].rstrip("/") + "/" + safe_rel
+
+
+def _doc_url(content: dict[str, Any], filename: str) -> str:
+    return content["site"]["canonical_base"].rstrip("/") + "/" + filename
+
+
+def _docs_version() -> str:
+    path = _repo_relative_path(VERSION_PATH, where="version source")
+    for node in ast.parse(path.read_text(encoding="utf-8")).body:
+        if isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == "__version__"
+            for target in node.targets
+        ):
+            return _as_nonempty_string(ast.literal_eval(node.value), where="__version__")
+    raise SystemExit("version source must define __version__")
+
+
 def _nav(active: str) -> str:
     links = []
     for page_id, label, href in PAGE_NAV:
@@ -285,6 +318,19 @@ def _layout(
     filename = "index.html" if page_id == "index" else f"{page_id}.html"
     canonical = f"{canonical_base}/" if page_id == "index" else f"{canonical_base}/{filename}"
     full_title = f"{title} — YOLOZU Docs"
+    structured = json.dumps({
+        "@context": "https://schema.org",
+        "@type": "TechArticle",
+        "headline": title,
+        "description": description,
+        "url": canonical,
+        "inLanguage": "en",
+        "isPartOf": {"@type": "WebSite", "name": site["title"], "url": f"{canonical_base}/"},
+    }, ensure_ascii=True).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+    markdown_link = (
+        f'<link rel="alternate" type="text/markdown" href="{page_id}.md" />'
+        if page_id in {"start", "agents"} else ""
+    )
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -295,6 +341,9 @@ def _layout(
   <meta name="robots" content="index,follow" />
   <meta name="theme-color" content="#07111f" />
   <link rel="canonical" href="{html.escape(canonical, quote=True)}" />
+  <link rel="describedby" href="llms.txt" />
+  {markdown_link}
+  <script type="application/ld+json">{structured}</script>
   <meta property="og:type" content="website" />
   <meta property="og:title" content="{html.escape(full_title, quote=True)}" />
   <meta property="og:description" content="{html.escape(description, quote=True)}" />
@@ -327,6 +376,8 @@ def _layout(
       <a href="https://github.com/ToppyMicroServices/YOLOZU"
         target="_blank" rel="noopener noreferrer">Repository</a>
       <a href="/privacy-policy.html">Privacy</a>
+      <a href="llms.txt">LLM index</a>
+      <a href="capabilities.json">Capability JSON</a>
     </div>
   </footer>
 </body>
@@ -571,6 +622,176 @@ def _render_start(content: dict[str, Any]) -> str:
         description="Self-contained proof artifacts, strict validation, real evaluation, and a typed Python API.",
         body=body,
     )
+
+
+def _markdown_code(commands: list[str], language: str = "bash") -> str:
+    code = "\n".join(commands)
+    # A source example containing backticks must not close its own code block.
+    fence = "`" * max(3, 1 + max((len(x) for x in re.findall(r"`+", code)), default=0))
+    return f"{fence}{language}\n{code}\n{fence}"
+
+
+def _render_start_markdown(content: dict[str, Any]) -> str:
+    parts = [
+        "# A 30-minute path to a checked report",
+        "Create all tutorial inputs locally, then validate and evaluate existing predictions. "
+        "This is a synthetic proof of the tooling, not model-quality evidence.",
+        f"[HTML version]({_doc_url(content, 'start.html')})",
+    ]
+    for step in content["tutorial"]["thirty_minute"]:
+        parts.append(f"## {step['minutes']} minutes: {step['title']}")
+        if step["commands"]:
+            parts.append(_markdown_code(step["commands"]))
+        parts.append(f"Expected: {step['expected']}")
+    fallback = content["tutorial"]["dry_run_fallback"]
+    parts.extend([
+        f"## {fallback['title']}", fallback["description"],
+        _markdown_code([fallback["command"]]),
+    ])
+    api = content["python_api"]
+    parts.extend([
+        f"## {api['title']}", api["description"],
+        _markdown_code([api["example"]], "python"), f"Expected: {api['expected']}",
+        f"[Stable Python API]({_raw_source_url(content, api['source'])})",
+        "## Continue to the two-hour path",
+        "\n".join(f"{i}. {item}" for i, item in enumerate(content["tutorial"]["two_hour"], 1)),
+        f"[Evaluation protocol template]({_raw_source_url(content, 'docs/evaluation_protocol_template.md')})",
+        f"[CPU-only procedure]({_raw_source_url(content, 'docs/cpu_only_dod.md')})",
+        f"[Examples]({_doc_url(content, 'examples.html')}) · "
+        f"[Troubleshooting]({_doc_url(content, 'troubleshooting.html')}) · "
+        f"[Agent guide]({_doc_url(content, 'agents.md')})",
+    ])
+    return "\n\n".join(parts)
+
+
+def _agent_blocks(content: dict[str, Any]) -> list[tuple[str, Any]]:
+    guide = content["agent_guide"]
+    blocks: list[tuple[str, Any]] = [
+        ("h1", guide["title"]), ("p", guide["summary"]),
+        ("p", f"Source docs version: {_docs_version()}. {VERSION_SCOPE}"),
+        ("h2", "When to use YOLOZU"), ("ul", guide["use_when"]),
+        ("h2", "Limits and when not to use it"), ("ul", guide["not_for"]),
+        ("h2", "First successful evaluation"),
+        ("p", "Start with the self-contained CPU evaluation tutorial. It creates its own "
+         "inputs before strict validation and real COCOeval. Installation needs package "
+         "network access; the subsequent toy workflow needs no model or dataset download."),
+        ("links", [("30-minute tutorial", _doc_url(content, "start.html")),
+                   ("Tutorial Markdown", _doc_url(content, "start.md"))]),
+    ]
+    for workflow in guide["workflows"]:
+        blocks.extend([
+            ("h2", workflow["title"]), ("p", workflow["description"]),
+            ("code", workflow["commands"]), ("p", workflow["expected"]),
+            ("links", [("Workflow source", _raw_source_url(content, workflow["source"]))]),
+        ])
+    blocks.append(("h2", "Starter prompts and expected boundaries"))
+    for prompt in guide["prompts"]:
+        blocks.extend([("p", f"Prompt: {prompt['prompt']}"),
+                       ("p", f"Expected: {prompt['expected']}")])
+    blocks.extend([
+        ("h2", "Machine-readable references"),
+        ("links", [("Capability catalog", _doc_url(content, "capabilities.json")),
+                   ("LLM index", _doc_url(content, "llms.txt"))]),
+    ])
+    for resource in guide["resources"]:
+        blocks.extend([
+            ("links", [(resource["title"], _raw_source_url(content, resource["source"]))]),
+            ("p", resource["description"]),
+        ])
+    return blocks
+
+
+def _render_agents(content: dict[str, Any], *, markdown: bool) -> str:
+    parts = []
+    for kind, value in _agent_blocks(content):
+        if kind == "code":
+            parts.append(_markdown_code(value) if markdown else _commands_block(value))
+        elif kind == "links":
+            if markdown:
+                parts.append("\n".join(f"- [{html.escape(label)}]({url})" for label, url in value))
+            else:
+                links = "".join(
+                    f'<li><a href="{html.escape(url, quote=True)}">{html.escape(label)}</a></li>'
+                    for label, url in value
+                )
+                parts.append(f"<ul>{links}</ul>")
+        elif kind == "ul":
+            parts.append(
+                "\n".join(f"- {item}" for item in value) if markdown else
+                "<ul>" + "".join(f"<li>{html.escape(item)}</li>" for item in value) + "</ul>"
+            )
+        elif markdown:
+            parts.append({"h1": "# ", "h2": "## ", "p": ""}[kind] + value)
+        else:
+            parts.append(f"<{kind}>{html.escape(value)}</{kind}>")
+    body = "\n\n".join(parts)
+    if markdown:
+        return body
+    return _layout(
+        content=content, page_id="agents", title=content["agent_guide"]["title"],
+        description=content["agent_guide"]["summary"],
+        body=f'<section class="section">{body}</section>',
+    )
+
+
+def _capabilities(content: dict[str, Any]) -> dict[str, Any]:
+    reference = _load_json(
+        _repo_relative_path(MCP_REFERENCE_PATH, where="MCP reference"), label="MCP reference"
+    )
+    return {
+        "schema_version": 1,
+        "project": "YOLOZU",
+        "docs_version": _docs_version(),
+        "version_scope": VERSION_SCOPE,
+        "entrypoints": {
+            "overview": _doc_url(content, ""),
+            "quickstart": _doc_url(content, "start.md"),
+            "agent_guide": _doc_url(content, "agents.md"),
+            "llms": _doc_url(content, "llms.txt"),
+        },
+        "use_when": content["agent_guide"]["use_when"],
+        "limitations": content["agent_guide"]["not_for"],
+        "surfaces": reference["surfaces"],
+        "resources": [
+            {
+                "id": resource["id"], "title": resource["title"],
+                "description": resource["description"],
+                "url": _raw_source_url(content, resource["source"]),
+                "source_sha256": _sha256(_repo_relative_path(
+                    resource["source"], where="discovery resource"
+                ).read_bytes()),
+            } for resource in content["agent_guide"]["resources"]
+        ],
+    }
+
+
+def _render_llms(content: dict[str, Any]) -> str:
+    parts = [
+        "# YOLOZU", f"> {content['agent_guide']['summary']}",
+        "A compact, optional documentation index for agents. It grants no permissions "
+        "and does not guarantee search visibility, ranking, or tool selection.",
+        "## Start here",
+        f"- [Agent guide]({_doc_url(content, 'agents.md')}): When to use YOLOZU, limits, local MCP setup, and starter prompts.",
+        f"- [Evaluation quickstart]({_doc_url(content, 'start.md')}): Isolated install, generated inputs, strict checks, and real COCOeval.",
+        f"- [Capabilities JSON]({_doc_url(content, 'capabilities.json')}): Source version, exact MCP surface sets, source links, and hashes.",
+        "## Reference",
+    ]
+    parts.extend(
+        f"- [{r['title']}]({_raw_source_url(content, r['source'])}): {r['description']}"
+        for r in content["agent_guide"]["resources"]
+    )
+    parts.extend(["## Boundaries", *content["agent_guide"]["not_for"], VERSION_SCOPE])
+    return "\n\n".join(parts)
+
+
+def _render_sitemap(content: dict[str, Any]) -> str:
+    urls = "\n".join(
+        f"  <url><loc>{html.escape(_doc_url(content, '' if page == 'index' else filename))}</loc></url>"
+        for page, _, filename in PAGE_NAV
+    )
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            f"{urls}\n</urlset>")
 
 
 def _render_input_list(inputs: Any) -> str:
@@ -931,6 +1152,17 @@ def _search_index(
             "search_text": "install candidate wheel doctor proof validate eval coco tutorial",
         },
         {
+            "title": content["agent_guide"]["title"],
+            "kind": "guide",
+            "summary": content["agent_guide"]["summary"],
+            "href": "agents.html",
+            "search_text": " ".join([
+                "LLM agents ChatGPT OpenAI Claude MCP install discovery capabilities llms.txt",
+                content["agent_guide"]["summary"],
+                *content["agent_guide"]["use_when"],
+            ]),
+        },
+        {
             "title": content["python_api"]["title"],
             "kind": "api",
             "summary": content["python_api"]["description"],
@@ -1026,24 +1258,69 @@ def _search_index(
     return entries
 
 
+def _validate_agent_guide(guide: Any) -> None:
+    if not isinstance(guide, dict):
+        raise SystemExit("web docs content requires agent_guide object")
+
+    def text(value: Any, where: str) -> str:
+        value = _as_nonempty_string(value, where=where)
+        if _contains_control(value):
+            raise SystemExit(f"{where} must not contain control characters")
+        return value
+
+    for key in ("title", "summary"):
+        text(guide.get(key), f"agent_guide.{key}")
+    for key in ("use_when", "not_for"):
+        values = _as_list(guide.get(key), where=f"agent_guide.{key}")
+        if not values:
+            raise SystemExit(f"agent_guide.{key} must not be empty")
+        for value in values:
+            text(value, f"agent_guide.{key}[]")
+    for key, fields in (
+        ("workflows", ("id", "title", "description", "expected", "source")),
+        ("prompts", ("prompt", "expected")),
+        ("resources", ("id", "title", "description", "source")),
+    ):
+        entries = _as_object_list(guide.get(key), where=f"agent_guide.{key}")
+        if not entries:
+            raise SystemExit(f"agent_guide.{key} must not be empty")
+        ids: set[str] = set()
+        for entry in entries:
+            where = f"agent_guide.{key}[]"
+            for field in fields:
+                text(entry.get(field), f"{where}.{field}")
+            if "id" in fields:
+                entry_id = entry["id"]
+                if not re.fullmatch(r"[a-z][a-z0-9_-]*", entry_id) or entry_id in ids:
+                    raise SystemExit(f"{where}.id must be a unique lowercase identifier")
+                ids.add(entry_id)
+            if "source" in fields:
+                _repo_relative_path(entry["source"], where=f"{where}.source")
+            if key == "workflows":
+                for command in _as_list(entry.get("commands"), where=f"{where}.commands"):
+                    text(command, f"{where}.commands[]")
+    if not any(
+        r["id"] == "mcp_reference" and r["source"] == MCP_REFERENCE_PATH
+        for r in guide["resources"]
+    ):
+        raise SystemExit("agent_guide.resources requires the canonical mcp_reference source")
+
+
 def _validate_content(content: Any) -> dict[str, Any]:
     if not isinstance(content, dict):
         raise SystemExit("web docs content root must be an object")
     site = content.get("site")
     if not isinstance(site, dict):
         raise SystemExit("web docs content requires site object")
-    for key in ("title", "description", "canonical_base", "repository_base"):
+    for key in ("title", "description", "canonical_base", "repository_base", "raw_repository_base"):
         _as_nonempty_string(site.get(key), where=f"site.{key}")
-    _safe_href(
-        site.get("canonical_base"),
-        where="site.canonical_base",
-        https_only=True,
-    )
-    _safe_href(
-        site.get("repository_base"),
-        where="site.repository_base",
-        https_only=True,
-    )
+    for key in ("canonical_base", "repository_base", "raw_repository_base"):
+        value = _safe_href(site.get(key), where=f"site.{key}", https_only=True)
+        parsed = urlsplit(value)
+        if parsed.query or parsed.fragment:
+            raise SystemExit(f"site.{key} must not contain a query or fragment")
+        site[key] = value
+    _validate_agent_guide(content.get("agent_guide"))
 
     lanes = _as_object_list(content.get("lanes"), where="lanes")
     lane_ids = [
@@ -1261,6 +1538,8 @@ def _text_bytes(value: str) -> bytes:
 
 def _content_source_paths(content: dict[str, Any]) -> set[Path]:
     relative_paths: set[str] = {
+        VERSION_PATH,
+        MCP_REFERENCE_PATH,
         "docs/cpu_only_dod.md",
         "docs/evaluation_protocol_template.md",
         "docs/schema_governance.md",
@@ -1268,6 +1547,8 @@ def _content_source_paths(content: dict[str, Any]) -> set[Path]:
     }
     relative_paths.update(str(lane["source"]) for lane in content["lanes"])
     relative_paths.add(str(content["python_api"]["source"]))
+    for key in ("workflows", "resources"):
+        relative_paths.update(entry["source"] for entry in content["agent_guide"][key])
     for group_name in ("examples", "glossary", "failures"):
         for entry in content[group_name]:
             relative_paths.add(str(entry["source"]))
@@ -1328,6 +1609,12 @@ def _build_bundle(
     bundle: dict[str, bytes] = {
         "index.html": _text_bytes(_render_index(content)),
         "start.html": _text_bytes(_render_start(content)),
+        "start.md": _text_bytes(_render_start_markdown(content)),
+        "agents.html": _text_bytes(_render_agents(content, markdown=False)),
+        "agents.md": _text_bytes(_render_agents(content, markdown=True)),
+        "llms.txt": _text_bytes(_render_llms(content)),
+        "capabilities.json": _json_bytes(_capabilities(content)),
+        "sitemap.xml": _text_bytes(_render_sitemap(content)),
         "commands.html": _text_bytes(_render_commands(content, tools)),
         "schemas.html": _text_bytes(_render_schemas(content, schemas)),
         "examples.html": _text_bytes(_render_examples(content)),

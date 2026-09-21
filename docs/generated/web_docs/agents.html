@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Use YOLOZU with an LLM or agent — YOLOZU Docs</title>
+  <meta name="description" content="Use YOLOZU when you need to validate existing vision predictions, evaluate them against labels, or inspect bounded local MCP capabilities." />
+  <meta name="robots" content="index,follow" />
+  <meta name="theme-color" content="#07111f" />
+  <link rel="canonical" href="https://www.toppymicros.com/yolozu/docs/agents.html" />
+  <link rel="describedby" href="llms.txt" />
+  <link rel="alternate" type="text/markdown" href="agents.md" />
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "TechArticle", "headline": "Use YOLOZU with an LLM or agent", "description": "Use YOLOZU when you need to validate existing vision predictions, evaluate them against labels, or inspect bounded local MCP capabilities.", "url": "https://www.toppymicros.com/yolozu/docs/agents.html", "inLanguage": "en", "isPartOf": {"@type": "WebSite", "name": "YOLOZU Docs", "url": "https://www.toppymicros.com/yolozu/docs/"}}</script>
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Use YOLOZU with an LLM or agent — YOLOZU Docs" />
+  <meta property="og:description" content="Use YOLOZU when you need to validate existing vision predictions, evaluate them against labels, or inspect bounded local MCP capabilities." />
+  <meta property="og:url" content="https://www.toppymicros.com/yolozu/docs/agents.html" />
+  <meta property="og:site_name" content="ToppyMicroServices" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script defer data-domain="toppymicros.com" data-auto="false"
+    src="https://plausible.io/js/script.tag"></script>
+  <script defer src="assets/docs.js"></script>
+</head>
+<body data-page="agents">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <nav class="container nav" aria-label="YOLOZU docs">
+      <a class="brand" href="/yolozu/">YOLOZU · ToppyMicroServices</a>
+      <div class="nav-links">
+        <a href="index.html">Overview</a>
+<a href="start.html">30-minute path</a>
+<a href="agents.html" aria-current="page">LLM / agents</a>
+<a href="commands.html">Commands</a>
+<a href="schemas.html">Schemas</a>
+<a href="examples.html">Examples</a>
+<a href="glossary.html">Glossary</a>
+<a href="troubleshooting.html">What can go wrong</a>
+      </div>
+    </nav>
+  </header>
+  <main id="main" class="container">
+    <section class="section"><h1>Use YOLOZU with an LLM or agent</h1>
+
+<p>Use YOLOZU when you need to validate existing vision predictions, evaluate them against labels, or inspect bounded local MCP capabilities.</p>
+
+<p>Source docs version: 4.9.0. docs_version identifies the source checkout, not the installed package or latest PyPI release. Source URLs follow a mutable branch; check source_sha256 and provenance.json for this build. Inspect the installed CLI and MCP schemas before invoking tools.</p>
+
+<h2>When to use YOLOZU</h2>
+
+<ul><li>Check a predictions JSON against the predictions interface contract before evaluation.</li><li>Evaluate existing detections against a labeled dataset with a fixed protocol and inspect the resulting evidence.</li><li>Integrate the typed Python API or discover local MCP tools and their input schemas before invoking them.</li></ul>
+
+<h2>Limits and when not to use it</h2>
+
+<ul><li>Do not infer model quality from a synthetic proof or a successful dry run. Real COCO metrics require the coco extra and labeled inputs.</li><li>Do not treat registered MCP tools as guaranteed execution. Runtime, dependency, data, and permission requirements still apply.</li><li>The packaged adaptive image service abstains until CNN license review, quality qualification, and activation are completed separately. It is not a ready-to-run hosted detector.</li><li>The local OpenAI plugin is not a public ChatGPT directory listing. Provider authentication, hosting, and attachment handoff are separate deployment work.</li></ul>
+
+<h2>First successful evaluation</h2>
+
+<p>Start with the self-contained CPU evaluation tutorial. It creates its own inputs before strict validation and real COCOeval. Installation needs package network access; the subsequent toy workflow needs no model or dataset download.</p>
+
+<ul><li><a href="https://www.toppymicros.com/yolozu/docs/start.html">30-minute tutorial</a></li><li><a href="https://www.toppymicros.com/yolozu/docs/start.md">Tutorial Markdown</a></li></ul>
+
+<h2>Inspect before connecting an MCP client</h2>
+
+<p>After the isolated installation in the 30-minute path, install the optional MCP extra in that same environment. These commands exit after writing local discovery and sample files; they do not call a provider API or download a model.</p>
+
+<pre><code>python -m pip install &quot;yolozu[mcp]&quot;
+mkdir -p reports
+yolozu-mcp --help
+yolozu-mcp --print-tools --guaranteed --ids-only &gt; reports/mcp_tool_ids.json
+yolozu-mcp --sample-generate-config &gt; reports/ai_generate_config.json
+yolozu-mcp --sample-review-config reports/ai_generate_config.json &gt; reports/ai_review_config.json</code></pre>
+
+<p>Inspect the returned IDs and review result. The guaranteed-tool filter narrows this discovery output, not the server&#x27;s runtime surface or filesystem permissions.</p>
+
+<ul><li><a href="https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/ai_first.md">Workflow source</a></li></ul>
+
+<h2>Connect an authorized local client</h2>
+
+<p>Configure the client to launch one of these alternatives with the installed environment&#x27;s executable and an explicitly chosen workspace. These are long-running stdio servers, not one-shot validation commands. Stop the server when the session ends.</p>
+
+<pre><code>yolozu-mcp --transport stdio
+yolozu-mcp --transport stdio --surface image-service</code></pre>
+
+<p>Use the full surface only when the broader tools are intended. The image-service alternative exposes only capabilities, asset upload, submission, status, and cancellation. Ask for capabilities first; never reinterpret abstention as successful inference.</p>
+
+<ul><li><a href="https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/image_service_mcp.md">Workflow source</a></li></ul>
+
+<h2>Starter prompts and expected boundaries</h2>
+
+<p>Prompt: Validate my existing detection predictions strictly with YOLOZU; report errors without repairing the input.</p>
+
+<p>Expected: Confirm the user-selected local input, inspect the installed schema, then use strict validation. Do not invent a path or enable repair.</p>
+
+<p>Prompt: Show me a local YOLOZU evaluation example without downloading model weights.</p>
+
+<p>Expected: Use the self-contained 30-minute path and its generated toy inputs; label the proof as synthetic, not model-quality evidence.</p>
+
+<p>Prompt: Show the YOLOZU image service capabilities without running inference.</p>
+
+<p>Expected: Use image_service_capabilities on the image-service connection. Do not upload an image or submit execution.</p>
+
+<p>Prompt: Use YOLOZU to select the best CNN and guarantee its accuracy on my images.</p>
+
+<p>Expected: Explain that this guarantee is unavailable and that the default adaptive service abstains. Do not activate a model or fabricate a quality result.</p>
+
+<h2>Machine-readable references</h2>
+
+<ul><li><a href="https://www.toppymicros.com/yolozu/docs/capabilities.json">Capability catalog</a></li><li><a href="https://www.toppymicros.com/yolozu/docs/llms.txt">LLM index</a></li></ul>
+
+<ul><li><a href="https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/install.md">Installation and dependencies</a></li></ul>
+
+<p>Choose a package extra and distinguish installed commands from repository scripts.</p>
+
+<ul><li><a href="https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/tools/manifest.json">CLI tool manifest</a></li></ul>
+
+<p>Command inputs, examples, side effects, dependencies, and maturity.</p>
+
+<ul><li><a href="https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/generated/mcp_actions_tool_reference.json">MCP and Actions reference JSON</a></li></ul>
+
+<p>Exact generated tool surfaces and MCP input schemas; registration is not execution qualification.</p>
+
+<ul><li><a href="https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/schemas/predictions_validation_result.schema.json">Predictions validation result schema</a></li></ul>
+
+<p>Machine-readable strict validation results, errors, and repair disclosure.</p>
+
+<ul><li><a href="https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/python_api.md">Stable Python API</a></li></ul>
+
+<p>Typed input, result, and error interfaces for local validation and evaluation.</p>
+
+<ul><li><a href="https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/llm_integrations.md">LLM and MCP integration</a></li></ul>
+
+<p>Client connection options and workspace boundaries.</p>
+
+<ul><li><a href="https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/image_service_mcp.md">Bounded image service</a></li></ul>
+
+<p>Capabilities, opaque assets and jobs, limits, and abstention semantics.</p>
+
+<ul><li><a href="https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/openai_image_service_plugin.md">Local OpenAI plugin</a></li></ul>
+
+<p>Prepare a local plugin from a reviewed checkout; not a public app listing.</p>
+
+<ul><li><a href="https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/production_readiness.md">Readiness and maturity</a></li></ul>
+
+<p>Keep Stable, Bridge, Benchmark, and Research claims separate.</p>
+
+<ul><li><a href="https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/llm_discovery.md">Discovery publishing and measurement</a></li></ul>
+
+<p>Publish the bundle, verify access, and measure successful use without inferring adoption from crawler traffic.</p></section>
+  </main>
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <span>YOLOZU is a free-of-charge commercial ToppyMicroServices product.</span>
+      <a href="/yolozu/">Product page</a>
+      <a href="https://github.com/ToppyMicroServices/YOLOZU"
+        target="_blank" rel="noopener noreferrer">Repository</a>
+      <a href="/privacy-policy.html">Privacy</a>
+      <a href="llms.txt">LLM index</a>
+      <a href="capabilities.json">Capability JSON</a>
+    </div>
+  </footer>
+</body>
+</html>

@@ -43,6 +43,7 @@ yolozu doctor --proof
 - [`predictions_schema.md`](predictions_schema.md): the predictions interface contract
 - [`python_api.md`](python_api.md): typed in-process validation/evaluation API and stable error policy
 - [`install.md`](install.md): install, `doctor`, and environment setup
+- [`llm_discovery.md`](llm_discovery.md): agent-readable discovery, installation and usage routes, and publication checks
 - [`cpu_only_dod.md`](cpu_only_dod.md): CPU-only proof/demo/validate/eval DoD path
 - [`external_inference.md`](external_inference.md): evaluate predictions exported elsewhere
 - [`byop_quickstarts.md`](byop_quickstarts.md): checked Ultralytics, Detectron2, MMDetection, and YOLOX paths

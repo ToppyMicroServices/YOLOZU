@@ -1,0 +1,186 @@
+{
+  "docs_version": "4.9.0",
+  "entrypoints": {
+    "agent_guide": "https://www.toppymicros.com/yolozu/docs/agents.md",
+    "llms": "https://www.toppymicros.com/yolozu/docs/llms.txt",
+    "overview": "https://www.toppymicros.com/yolozu/docs/",
+    "quickstart": "https://www.toppymicros.com/yolozu/docs/start.md"
+  },
+  "limitations": [
+    "Do not infer model quality from a synthetic proof or a successful dry run. Real COCO metrics require the coco extra and labeled inputs.",
+    "Do not treat registered MCP tools as guaranteed execution. Runtime, dependency, data, and permission requirements still apply.",
+    "The packaged adaptive image service abstains until CNN license review, quality qualification, and activation are completed separately. It is not a ready-to-run hosted detector.",
+    "The local OpenAI plugin is not a public ChatGPT directory listing. Provider authentication, hosting, and attachment handoff are separate deployment work."
+  ],
+  "project": "YOLOZU",
+  "resources": [
+    {
+      "description": "Choose a package extra and distinguish installed commands from repository scripts.",
+      "id": "install",
+      "source_sha256": "cef8bc14261454137682c5da8fda064cc0c6580ca4b2f35b85bc037c0c13e07b",
+      "title": "Installation and dependencies",
+      "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/install.md"
+    },
+    {
+      "description": "Command inputs, examples, side effects, dependencies, and maturity.",
+      "id": "cli_manifest",
+      "source_sha256": "3380693badb474989bf140273a781c4053ea2874e8ebd60349744c033826c4f6",
+      "title": "CLI tool manifest",
+      "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/tools/manifest.json"
+    },
+    {
+      "description": "Exact generated tool surfaces and MCP input schemas; registration is not execution qualification.",
+      "id": "mcp_reference",
+      "source_sha256": "c985e553f7f3c29a56de39f8485045bdf7225146aa86e3edb22b3b5f284727c9",
+      "title": "MCP and Actions reference JSON",
+      "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/generated/mcp_actions_tool_reference.json"
+    },
+    {
+      "description": "Machine-readable strict validation results, errors, and repair disclosure.",
+      "id": "predictions_schema",
+      "source_sha256": "6318bc8d11bbc7c61ee93bafd0829126a9a6a2484291eadf63f0009c151967f1",
+      "title": "Predictions validation result schema",
+      "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/schemas/predictions_validation_result.schema.json"
+    },
+    {
+      "description": "Typed input, result, and error interfaces for local validation and evaluation.",
+      "id": "python_api",
+      "source_sha256": "e7255fac4be5d7d44ab6f2ca39984022408b3dd839b44c7091940648bea7dd7a",
+      "title": "Stable Python API",
+      "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/python_api.md"
+    },
+    {
+      "description": "Client connection options and workspace boundaries.",
+      "id": "mcp_clients",
+      "source_sha256": "1dc7a780bea9649f78a21fb6002a813d4765d24710d46e3d0aa70e12a2633592",
+      "title": "LLM and MCP integration",
+      "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/llm_integrations.md"
+    },
+    {
+      "description": "Capabilities, opaque assets and jobs, limits, and abstention semantics.",
+      "id": "image_service",
+      "source_sha256": "148d1f62cc153ee43f5705730e3bef13cca673e8d009d1bac492d7f0cd87f22c",
+      "title": "Bounded image service",
+      "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/image_service_mcp.md"
+    },
+    {
+      "description": "Prepare a local plugin from a reviewed checkout; not a public app listing.",
+      "id": "local_plugin",
+      "source_sha256": "23e3dfb899b5e5da425bb795c64eba6ec1f7085f9a02db4113520b3a42a510fd",
+      "title": "Local OpenAI plugin",
+      "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/openai_image_service_plugin.md"
+    },
+    {
+      "description": "Keep Stable, Bridge, Benchmark, and Research claims separate.",
+      "id": "readiness",
+      "source_sha256": "0ad0c76fe6b83be1a911014d495b8dd1c88d305f5c56eba281c41ceb4f83e522",
+      "title": "Readiness and maturity",
+      "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/production_readiness.md"
+    },
+    {
+      "description": "Publish the bundle, verify access, and measure successful use without inferring adoption from crawler traffic.",
+      "id": "publishing",
+      "source_sha256": "d67498d561c8012a8f070ccd83ec0f8e0fd5302ed3a5dab8179c2ce1a36611df",
+      "title": "Discovery publishing and measurement",
+      "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/llm_discovery.md"
+    }
+  ],
+  "schema_version": 1,
+  "surfaces": {
+    "actions_public": {
+      "availability": "requires optional actions dependencies",
+      "tool_ids": [
+        "doctor",
+        "validate_predictions",
+        "validate_dataset",
+        "eval_coco",
+        "predict_images",
+        "parity_check",
+        "calibrate_predictions",
+        "eval_instance_seg",
+        "eval_long_tail",
+        "run_scenarios",
+        "convert_dataset",
+        "train_job",
+        "export_predictions_job",
+        "test_job",
+        "ttt_job",
+        "ctta_job",
+        "jobs_list",
+        "jobs_status",
+        "jobs_cancel",
+        "runs_list",
+        "runs_describe"
+      ]
+    },
+    "config_review": {
+      "availability": "in-process config generation and review",
+      "tool_ids": [
+        "generate_config",
+        "review_config"
+      ]
+    },
+    "guaranteed_ai_safe": {
+      "availability": "deterministic lightweight guarantee",
+      "tool_ids": [
+        "doctor",
+        "generate_config",
+        "review_config",
+        "validate_predictions"
+      ]
+    },
+    "image_service_safe": {
+      "availability": "bounded single-tenant MCP image service",
+      "tool_ids": [
+        "image_service_capabilities",
+        "put_image_asset",
+        "submit_image_job",
+        "get_image_job",
+        "cancel_image_job"
+      ]
+    },
+    "mcp_live": {
+      "availability": "requires optional mcp dependency",
+      "tool_ids": [
+        "ai_tools",
+        "generate_config",
+        "review_config",
+        "doctor",
+        "validate_predictions",
+        "validate_dataset",
+        "eval_coco",
+        "predict_images",
+        "recommend_image_pipeline",
+        "process_images",
+        "image_service_capabilities",
+        "put_image_asset",
+        "submit_image_job",
+        "get_image_job",
+        "cancel_image_job",
+        "parity_check",
+        "calibrate_predictions",
+        "eval_instance_seg",
+        "eval_long_tail",
+        "run_scenarios",
+        "convert_dataset",
+        "train_job",
+        "export_predictions_job",
+        "export_onnx_job",
+        "test_job",
+        "ttt_job",
+        "ctta_job",
+        "jobs_list",
+        "jobs_status",
+        "jobs_cancel",
+        "runs_list",
+        "runs_describe"
+      ]
+    }
+  },
+  "use_when": [
+    "Check a predictions JSON against the predictions interface contract before evaluation.",
+    "Evaluate existing detections against a labeled dataset with a fixed protocol and inspect the resulting evidence.",
+    "Integrate the typed Python API or discover local MCP tools and their input schemas before invoking them."
+  ],
+  "version_scope": "docs_version identifies the source checkout, not the installed package or latest PyPI release. Source URLs follow a mutable branch; check source_sha256 and provenance.json for this build. Inspect the installed CLI and MCP schemas before invoking tools."
+}
