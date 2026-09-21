@@ -536,7 +536,7 @@ print(json.dumps({{
                     "validate_predictions",
                 ],
             )
-            self.assertEqual(len(payload["supported_ids"]), 27)
+            self.assertEqual(len(payload["supported_ids"]), 32)
             self.assertIn("recommend_image_pipeline", payload["supported_ids"])
             self.assertIn("process_images", payload["supported_ids"])
             self.assertTrue(payload["relative"]["ok"])

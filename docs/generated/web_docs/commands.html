@@ -41,7 +41,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">142 manifest entries with declared maturity, inputs,
+  <p class="lead">149 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -294,6 +294,20 @@ python3 tools/benchmark_model.py --model runs/example/model.pt --data data/coco8
   <h3>Examples</h3>
   <pre><code>python3 tools/calibrate_scores.py --dataset data/coco128 --predictions reports/predictions.json --output reports/predictions_calibrated.json --output-report reports/calibration_report.json</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/calibrate_scores.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/score_calibration.md" target="_blank" rel="noopener noreferrer">score_calibration.md</a></p>
+</details>
+
+<details class="card" id="tool-cancel-image-job" data-tool-id="cancel_image_job"
+  data-search-card data-search-text="cancel_image_job Cancel queued image work or stop a running owned process; release retained assets after termination and preserve tenant rate limits. experimental yolozu/integrations/mcp_server.py Call the cancel_image_job MCP tool with a queued or running job_id.">
+  <summary><code>cancel_image_job</code> — Cancel queued image work or stop a running owned process; release retained assets after termination and preserve tenant rate limits.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>yolozu/integrations/mcp_server.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>job_id</code> — required, string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>Call the cancel_image_job MCP tool with a queued or running job_id.</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/yolozu/integrations/mcp_server.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/image_service_mcp.md" target="_blank" rel="noopener noreferrer">image_service_mcp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/llm_integrations.md" target="_blank" rel="noopener noreferrer">llm_integrations.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/openai_mcp_actions.md" target="_blank" rel="noopener noreferrer">openai_mcp_actions.md</a></p>
 </details>
 
 <details class="card" id="tool-check-golden-compatibility" data-tool-id="check_golden_compatibility"
@@ -1115,6 +1129,20 @@ python3 tools/generate_web_docs.py --check --json</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/generate_web_docs.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/python_api.md" target="_blank" rel="noopener noreferrer">python_api.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/web_docs_content.json" target="_blank" rel="noopener noreferrer">web_docs_content.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/web_docs_plan.md" target="_blank" rel="noopener noreferrer">web_docs_plan.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/generated/web_docs/index.html" target="_blank" rel="noopener noreferrer">index.html</a></p>
 </details>
 
+<details class="card" id="tool-get-image-job" data-tool-id="get_image_job"
+  data-search-card data-search-text="get_image_job Return bounded status and result data for one opaque image job, enforcing tenant polling and expiry limits without exposing internal paths. experimental yolozu/integrations/mcp_server.py Call the get_image_job MCP tool with the opaque job_id returned by submit_image_job.">
+  <summary><code>get_image_job</code> — Return bounded status and result data for one opaque image job, enforcing tenant polling and expiry limits without exposing internal paths.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>yolozu/integrations/mcp_server.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>job_id</code> — required, string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>Call the get_image_job MCP tool with the opaque job_id returned by submit_image_job.</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/yolozu/integrations/mcp_server.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/image_service_mcp.md" target="_blank" rel="noopener noreferrer">image_service_mcp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/llm_integrations.md" target="_blank" rel="noopener noreferrer">llm_integrations.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/openai_mcp_actions.md" target="_blank" rel="noopener noreferrer">openai_mcp_actions.md</a></p>
+</details>
+
 <details class="card" id="tool-gpu-validation-preflight" data-tool-id="gpu_validation_preflight"
   data-search-card data-search-text="gpu_validation_preflight Generate a preflight report that splits the YOLOZU-zisn GPU sweep into local-executable checks and GPU-runtime checks. experimental tools/gpu_validation_preflight.py python3 tools/gpu_validation_preflight.py --output reports/gpu_validation_preflight.json python3 tools/gpu_validation_preflight.py --strict --output reports/gpu_validation_preflight.json">
   <summary><code>gpu_validation_preflight</code> — Generate a preflight report that splits the YOLOZU-zisn GPU sweep into local-executable checks and GPU-runtime checks.</summary>
@@ -1142,6 +1170,36 @@ python3 tools/gpu_validation_preflight.py --strict --output reports/gpu_validati
   <h3>Examples</h3>
   <pre><code>python3 tools/hpo_sweep.py --config docs/hpo_sweep_example.json --dry-run</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/hpo_sweep.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/hpo_sweep.md" target="_blank" rel="noopener noreferrer">hpo_sweep.md</a></p>
+</details>
+
+<details class="card" id="tool-image-service-capabilities" data-tool-id="image_service_capabilities"
+  data-search-card data-search-text="image_service_capabilities Describe image-service capacity, per-60-second request limits, retention, and isolation boundaries without selecting or executing a model. experimental yolozu/integrations/mcp_server.py Call the image_service_capabilities MCP tool before uploading an image.">
+  <summary><code>image_service_capabilities</code> — Describe image-service capacity, per-60-second request limits, retention, and isolation boundaries without selecting or executing a model.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>yolozu/integrations/mcp_server.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <p>No declared CLI inputs.</p>
+  <h3>Examples</h3>
+  <pre><code>Call the image_service_capabilities MCP tool before uploading an image.</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/yolozu/integrations/mcp_server.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/image_service_mcp.md" target="_blank" rel="noopener noreferrer">image_service_mcp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/llm_integrations.md" target="_blank" rel="noopener noreferrer">llm_integrations.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/openai_mcp_actions.md" target="_blank" rel="noopener noreferrer">openai_mcp_actions.md</a></p>
+</details>
+
+<details class="card" id="tool-image-service-plugin-client" data-tool-id="image_service_plugin_client"
+  data-search-card data-search-text="image_service_plugin_client Send one user-selected local image through a temporary bounded stdio MCP session; preview by default, preserve abstention, and remove temporary image/job data on normal exit. experimental plugins/yolozu-image-service/scripts/image_service_client.py python3 plugins/yolozu-image-service/scripts/image_service_client.py --help python3 plugins/yolozu-image-service/scripts/image_service_client.py --capabilities python3 plugins/yolozu-image-service/scripts/image_service_client.py --image data/smoke/images/val/000000000009.jpg --class cat">
+  <summary><code>image_service_plugin_client</code> — Send one user-selected local image through a temporary bounded stdio MCP session; preview by default, preserve abstention, and remove temporary image/job data on normal exit.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>plugins/yolozu-image-service/scripts/image_service_client.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--help</code> — string</li><li><code>--capabilities</code> — string</li><li><code>--image</code> — file</li><li><code>--class</code> — string</li><li><code>--execute</code> — string</li><li><code>--timeout</code> — default=60, number</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 plugins/yolozu-image-service/scripts/image_service_client.py --help
+python3 plugins/yolozu-image-service/scripts/image_service_client.py --capabilities
+python3 plugins/yolozu-image-service/scripts/image_service_client.py --image data/smoke/images/val/000000000009.jpg --class cat</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/plugins/yolozu-image-service/scripts/image_service_client.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/openai_image_service_plugin.md" target="_blank" rel="noopener noreferrer">openai_image_service_plugin.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/Readme_jp.md" target="_blank" rel="noopener noreferrer">Readme_jp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/20_llm_mcp_integrations.tex" target="_blank" rel="noopener noreferrer">20_llm_mcp_integrations.tex</a></p>
 </details>
 
 <details class="card" id="tool-import-yolo-data-yaml" data-tool-id="import_yolo_data_yaml"
@@ -1347,6 +1405,21 @@ python3 tools/prepare_external_runtime_smoke_datasets.py --help</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/prepare_external_runtime_smoke_datasets.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/compatible_host_external_runtime_qualification.schema.json" target="_blank" rel="noopener noreferrer">compatible_host_external_runtime_qualification.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/training_capability_matrix.md" target="_blank" rel="noopener noreferrer">training_capability_matrix.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/external_finetune_smoke.md" target="_blank" rel="noopener noreferrer">external_finetune_smoke.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/tools_index.md" target="_blank" rel="noopener noreferrer">tools_index.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_evidence_2026-07-30.md" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_evidence_2026-07-30.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_primary_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_primary_2026-07-30.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_primary_dataset_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_primary_dataset_2026-07-30.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_primary_tao_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_primary_tao_2026-07-30.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_primary_workflow_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_primary_workflow_2026-07-30.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_independent_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_independent_2026-07-30.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_independent_dataset_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_independent_dataset_2026-07-30.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_independent_tao_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_independent_tao_2026-07-30.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/external_runtime_compatible_host_independent_workflow_2026-07-30.json" target="_blank" rel="noopener noreferrer">external_runtime_compatible_host_independent_workflow_2026-07-30.json</a></p>
 </details>
 
+<details class="card" id="tool-prepare-image-service-plugin" data-tool-id="prepare_image_service_plugin"
+  data-search-card data-search-text="prepare_image_service_plugin Prepare a non-overwriting local OpenAI plugin copy after checking the selected installed runtime&#x27;s five-tool MCP surface; do not install dependencies, register a marketplace, or qualify a model. experimental tools/prepare_image_service_plugin.py python3 tools/prepare_image_service_plugin.py --help python3 tools/prepare_image_service_plugin.py --python .venv/bin/python --output /tmp/yolozu-staging/plugins/yolozu-image-service">
+  <summary><code>prepare_image_service_plugin</code> — Prepare a non-overwriting local OpenAI plugin copy after checking the selected installed runtime&#x27;s five-tool MCP surface; do not install dependencies, register a marketplace, or qualify a model.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>tools/prepare_image_service_plugin.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--help</code> — string</li><li><code>--output</code> — required, dir</li><li><code>--python</code> — required, file</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/prepare_image_service_plugin.py --help
+python3 tools/prepare_image_service_plugin.py --python .venv/bin/python --output /tmp/yolozu-staging/plugins/yolozu-image-service</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/prepare_image_service_plugin.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/openai_image_service_plugin.md" target="_blank" rel="noopener noreferrer">openai_image_service_plugin.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/Readme_jp.md" target="_blank" rel="noopener noreferrer">Readme_jp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/20_llm_mcp_integrations.tex" target="_blank" rel="noopener noreferrer">20_llm_mcp_integrations.tex</a></p>
+</details>
+
 <details class="card" id="tool-prepare-keypoints-dataset" data-tool-id="prepare_keypoints_dataset"
   data-search-card data-search-text="prepare_keypoints_dataset Prepare keypoints dataset in one command (auto-detect YOLO Pose or COCO keypoints) and emit YOLOZU-ready dataset wrapper. stable tools/prepare_keypoints_dataset.py python3 tools/prepare_keypoints_dataset.py --source /path/to/export --format auto --out data/keypoints_dataset python3 tools/prepare_keypoints_dataset.py --source /path/to/cvat_export --format cvat_xml --out data/keypoints_dataset">
   <summary><code>prepare_keypoints_dataset</code> — Prepare keypoints dataset in one command (auto-detect YOLO Pose or COCO keypoints) and emit YOLOZU-ready dataset wrapper.</summary>
@@ -1461,6 +1534,20 @@ python3 tools/promote_image_pipeline.py --help</code></pre>
   <h3>Examples</h3>
   <pre><code>python3 tools/publish_benchmark_table.py --report reports/benchmark_latency.json --output-json reports/benchmark_table.json --output-md reports/benchmark_table.md --source-command &quot;python3 tools/benchmark_latency.py --config configs/benchmark_latency_example.json&quot;</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/publish_benchmark_table.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/benchmark_publication.md" target="_blank" rel="noopener noreferrer">benchmark_publication.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/yolo26_eval_protocol.md" target="_blank" rel="noopener noreferrer">yolo26_eval_protocol.md</a></p>
+</details>
+
+<details class="card" id="tool-put-image-asset" data-tool-id="put_image_asset"
+  data-search-card data-search-text="put_image_asset Rate-limit, decode, validate, and privately store one bounded image without accepting a filesystem path or remote URL. experimental yolozu/integrations/mcp_server.py Call the put_image_asset MCP tool with strict base64 and its decoded JPEG, PNG, or WebP media type.">
+  <summary><code>put_image_asset</code> — Rate-limit, decode, validate, and privately store one bounded image without accepting a filesystem path or remote URL.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>yolozu/integrations/mcp_server.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>content_base64</code> — required, string</li><li><code>media_type</code> — required, string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>Call the put_image_asset MCP tool with strict base64 and its decoded JPEG, PNG, or WebP media type.</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/yolozu/integrations/mcp_server.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/image_service_mcp.md" target="_blank" rel="noopener noreferrer">image_service_mcp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/llm_integrations.md" target="_blank" rel="noopener noreferrer">llm_integrations.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/openai_mcp_actions.md" target="_blank" rel="noopener noreferrer">openai_mcp_actions.md</a></p>
 </details>
 
 <details class="card" id="tool-qualify-artifact-research" data-tool-id="qualify_artifact_research"
@@ -1715,21 +1802,22 @@ bash scripts/run_external_runtime_gpu_qualification.sh --help</code></pre>
 </details>
 
 <details class="card" id="tool-run-mcp-server" data-tool-id="run_mcp_server"
-  data-search-card data-search-text="run_mcp_server Run the YOLOZU MCP stdio server, expose canonical live tool ids and filtered packaged discovery, and provide typed TTT/CTTA export jobs that reject arbitrary extra args and require status=full checkpoint preflight. stable tools/run_mcp_server.py yolozu-mcp yolozu-mcp --print-tools --guaranteed --ids-only yolozu-mcp --print-tools --supported --ids-only yolozu-mcp --print-tools --ids-only --maturity stable --tag validation yolozu-mcp --sample-generate-config &gt; reports/ai_generate_config.json &amp;&amp; yolozu-mcp --sample-review-config reports/ai_generate_config.json">
-  <summary><code>run_mcp_server</code> — Run the YOLOZU MCP stdio server, expose canonical live tool ids and filtered packaged discovery, and provide typed TTT/CTTA export jobs that reject arbitrary extra args and require status=full checkpoint preflight.</summary>
+  data-search-card data-search-text="run_mcp_server Run the YOLOZU MCP server over stdio or Streamable HTTP with bounded image-service tools, exclusive tenant ownership, cancellable process jobs, rate limits, and idle-time retention cleanup. stable tools/run_mcp_server.py yolozu-mcp yolozu-mcp --transport streamable-http --surface image-service --host 127.0.0.1 --port 8000 --http-path /mcp yolozu-mcp --print-tools --guaranteed --ids-only yolozu-mcp --print-tools --supported --ids-only yolozu-mcp --print-tools --ids-only --maturity stable --tag validation yolozu-mcp --sample-generate-config &gt; reports/ai_generate_config.json &amp;&amp; yolozu-mcp --sample-review-config reports/ai_generate_config.json">
+  <summary><code>run_mcp_server</code> — Run the YOLOZU MCP server over stdio or Streamable HTTP with bounded image-service tools, exclusive tenant ownership, cancellable process jobs, rate limits, and idle-time retention cleanup.</summary>
   <div class="meta">
     <span class="badge badge-stable">stable</span>
     <span><code>tools/run_mcp_server.py</code></span>
   </div>
   <h3>Inputs</h3>
-  <ul class="check-list"><li><code>--transport</code> — default=stdio, string</li><li><code>--manifest</code> — file</li><li><code>--print-tools</code> — string</li><li><code>--guaranteed</code> — string</li><li><code>--supported</code> — string</li><li><code>--maturity</code> — string</li><li><code>--tag</code> — string</li><li><code>--ids-only</code> — string</li><li><code>--sample-generate-config</code> — string</li><li><code>--sample-review-config</code> — file</li><li><code>--workspace-root</code> — default=., dir</li></ul>
+  <ul class="check-list"><li><code>--transport</code> — default=stdio, string</li><li><code>--surface</code> — default=full, string</li><li><code>--host</code> — default=127.0.0.1, string</li><li><code>--port</code> — default=8000, number</li><li><code>--http-path</code> — default=/mcp, string</li><li><code>--public-url</code> — string</li><li><code>--auth-token-env</code> — default=YOLOZU_MCP_AUTH_TOKEN, string</li><li><code>--tenant-id</code> — default=local, string</li><li><code>--retention-seconds</code> — default=86400, number</li><li><code>--manifest</code> — file</li><li><code>--print-tools</code> — string</li><li><code>--guaranteed</code> — string</li><li><code>--supported</code> — string</li><li><code>--maturity</code> — string</li><li><code>--tag</code> — string</li><li><code>--ids-only</code> — string</li><li><code>--sample-generate-config</code> — string</li><li><code>--sample-review-config</code> — file</li><li><code>--workspace-root</code> — default=., dir</li></ul>
   <h3>Examples</h3>
   <pre><code>yolozu-mcp
+yolozu-mcp --transport streamable-http --surface image-service --host 127.0.0.1 --port 8000 --http-path /mcp
 yolozu-mcp --print-tools --guaranteed --ids-only
 yolozu-mcp --print-tools --supported --ids-only
 yolozu-mcp --print-tools --ids-only --maturity stable --tag validation
 yolozu-mcp --sample-generate-config &gt; reports/ai_generate_config.json &amp;&amp; yolozu-mcp --sample-review-config reports/ai_generate_config.json</code></pre>
-  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/run_mcp_server.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/llm_integrations.md" target="_blank" rel="noopener noreferrer">llm_integrations.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/mcp_extension_architecture.md" target="_blank" rel="noopener noreferrer">mcp_extension_architecture.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/copilot_mcp_integration.md" target="_blank" rel="noopener noreferrer">copilot_mcp_integration.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/openai_mcp_actions.md" target="_blank" rel="noopener noreferrer">openai_mcp_actions.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/20_llm_mcp_integrations.tex" target="_blank" rel="noopener noreferrer">20_llm_mcp_integrations.tex</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/ai_first.md" target="_blank" rel="noopener noreferrer">ai_first.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/tools_index.md" target="_blank" rel="noopener noreferrer">tools_index.md</a></p>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/run_mcp_server.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/image_service_mcp.md" target="_blank" rel="noopener noreferrer">image_service_mcp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/llm_integrations.md" target="_blank" rel="noopener noreferrer">llm_integrations.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/mcp_extension_architecture.md" target="_blank" rel="noopener noreferrer">mcp_extension_architecture.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/copilot_mcp_integration.md" target="_blank" rel="noopener noreferrer">copilot_mcp_integration.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/openai_mcp_actions.md" target="_blank" rel="noopener noreferrer">openai_mcp_actions.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/20_llm_mcp_integrations.tex" target="_blank" rel="noopener noreferrer">20_llm_mcp_integrations.tex</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/ai_first.md" target="_blank" rel="noopener noreferrer">ai_first.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/tools_index.md" target="_blank" rel="noopener noreferrer">tools_index.md</a></p>
 </details>
 
 <details class="card" id="tool-run-real-multitask-finetune-demo" data-tool-id="run_real_multitask_finetune_demo"
@@ -1884,6 +1972,21 @@ bash scripts/smoke.sh --profile deep --torch-device cuda</code></pre>
   <pre><code>python3 tools/smoke_synthgen.py --dataset-root data/smoke/synthgen_minishard --output-dir reports
 ./.venv/bin/python tools/smoke_synthgen.py --synthgen-repo ../YOLOZU-synthgen --output-dir /tmp/yolozu-synthgen-qualification</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/smoke_synthgen.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/synthgen_intake.md" target="_blank" rel="noopener noreferrer">synthgen_intake.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/synthgen_repo_integration.md" target="_blank" rel="noopener noreferrer">synthgen_repo_integration.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/synthgen_contract.md" target="_blank" rel="noopener noreferrer">synthgen_contract.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/reports/synthgen_handoff_2026-07-28.md" target="_blank" rel="noopener noreferrer">synthgen_handoff_2026-07-28.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/data/smoke/synthgen_minishard/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/production_readiness.md" target="_blank" rel="noopener noreferrer">production_readiness.md</a></p>
+</details>
+
+<details class="card" id="tool-submit-image-job" data-tool-id="submit_image_job"
+  data-search-card data-search-text="submit_image_job Queue a deadline-bounded cancellable image process using only a qualified registered pipeline or abstention; execution is opt-in and terminal paths release retained assets. experimental yolozu/integrations/mcp_server.py Call the submit_image_job MCP tool with an asset_id, fixed_classes, and execute=false. Call the submit_image_job MCP tool with execute=true only after approving model execution.">
+  <summary><code>submit_image_job</code> — Queue a deadline-bounded cancellable image process using only a qualified registered pipeline or abstention; execution is opt-in and terminal paths release retained assets.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>yolozu/integrations/mcp_server.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>asset_id</code> — required, string</li><li><code>fixed_classes</code> — required, json</li><li><code>task</code> — default=object_detection, string</li><li><code>execute</code> — default=False, string</li><li><code>timeout_seconds</code> — default=300, number</li></ul>
+  <h3>Examples</h3>
+  <pre><code>Call the submit_image_job MCP tool with an asset_id, fixed_classes, and execute=false.
+Call the submit_image_job MCP tool with execute=true only after approving model execution.</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/yolozu/integrations/mcp_server.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/adaptive_image_routing.md" target="_blank" rel="noopener noreferrer">adaptive_image_routing.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/image_service_mcp.md" target="_blank" rel="noopener noreferrer">image_service_mcp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/llm_integrations.md" target="_blank" rel="noopener noreferrer">llm_integrations.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/openai_mcp_actions.md" target="_blank" rel="noopener noreferrer">openai_mcp_actions.md</a></p>
 </details>
 
 <details class="card" id="tool-summarize-bop19-pose-evidence" data-tool-id="summarize_bop19_pose_evidence"

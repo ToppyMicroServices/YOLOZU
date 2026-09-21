@@ -213,6 +213,25 @@ class TestIntegrationLayers(unittest.TestCase):
             self.assertIsNotNone(status)
             self.assertEqual(status["status"], "unknown")
 
+    def test_jobs_manager_ignores_mismatched_persisted_job_id(self):
+        with tempfile.TemporaryDirectory() as td:
+            payload = {
+                "job_id": "job_other",
+                "name": "stale",
+                "status": "completed",
+                "created_at": time.time(),
+                "started_at": time.time(),
+                "finished_at": time.time(),
+                "result": {"ok": True},
+                "error": None,
+            }
+            Path(td, "job_safe.json").write_text(
+                json.dumps(payload),
+                encoding="utf-8",
+            )
+            manager = JobManager(max_workers=1, storage_dir=td)
+            self.assertIsNone(manager.status("job_other"))
+
     def test_failed_result_marks_job_and_status_response_failed(self):
         with tempfile.TemporaryDirectory() as td:
             manager = JobManager(max_workers=1, storage_dir=td)

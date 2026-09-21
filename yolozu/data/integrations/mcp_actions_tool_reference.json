@@ -14,6 +14,11 @@
         "predict_images",
         "recommend_image_pipeline",
         "process_images",
+        "image_service_capabilities",
+        "put_image_asset",
+        "submit_image_job",
+        "get_image_job",
+        "cancel_image_job",
         "parity_check",
         "calibrate_predictions",
         "eval_instance_seg",
@@ -75,6 +80,16 @@
         "runs_describe"
       ],
       "availability": "requires optional actions dependencies"
+    },
+    "image_service_safe": {
+      "tool_ids": [
+        "image_service_capabilities",
+        "put_image_asset",
+        "submit_image_job",
+        "get_image_job",
+        "cancel_image_job"
+      ],
+      "availability": "bounded single-tenant MCP image service"
     }
   },
   "mcp_live_tools": [
@@ -1973,6 +1988,510 @@
             "scope": "tree"
           }
         ]
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "Pillow"
+        ]
+      },
+      "metadata_source": "tools_manifest+mcp_ast"
+    },
+    {
+      "name": "image_service_capabilities",
+      "function": "image_service_capabilities_tool",
+      "summary": "Describe the bounded service-safe image interface contract.",
+      "category": "image-service",
+      "surface_tiers": [
+        "mcp_live",
+        "image_service_safe"
+      ],
+      "maturity": "experimental",
+      "maturity_source": "tools_manifest",
+      "tags": [
+        "ai-first",
+        "image-service",
+        "mcp",
+        "read-only",
+        "security"
+      ],
+      "tags_source": "tools_manifest",
+      "params": [],
+      "inputs": [],
+      "input_schema": {
+        "properties": {},
+        "title": "image_service_capabilities_toolArguments",
+        "type": "object"
+      },
+      "parameter_schema": {
+        "properties": {},
+        "required": []
+      },
+      "examples": [
+        {
+          "command": "Call the image_service_capabilities MCP tool before uploading an image.",
+          "description": "Inspect the bounded media, task, execution, and retention limits without creating service storage."
+        }
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": []
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "Pillow"
+        ]
+      },
+      "metadata_source": "tools_manifest+mcp_ast"
+    },
+    {
+      "name": "put_image_asset",
+      "function": "put_image_asset_tool",
+      "summary": "Store one bounded JPEG, PNG, or WebP and return an opaque asset ID.",
+      "category": "image-service",
+      "surface_tiers": [
+        "mcp_live",
+        "image_service_safe"
+      ],
+      "maturity": "experimental",
+      "maturity_source": "tools_manifest",
+      "tags": [
+        "ai-first",
+        "image-service",
+        "mcp",
+        "security"
+      ],
+      "tags_source": "tools_manifest",
+      "params": [
+        {
+          "name": "content_base64",
+          "required": true
+        },
+        {
+          "name": "media_type",
+          "required": true
+        }
+      ],
+      "inputs": [
+        {
+          "name": "content_base64",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Content Base64"
+          }
+        },
+        {
+          "name": "media_type",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Media Type"
+          }
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "content_base64": {
+            "type": "string",
+            "title": "Content Base64"
+          },
+          "media_type": {
+            "type": "string",
+            "title": "Media Type"
+          }
+        },
+        "title": "put_image_asset_toolArguments",
+        "type": "object",
+        "required": [
+          "content_base64",
+          "media_type"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "content_base64": {
+            "type": "string"
+          },
+          "media_type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "content_base64",
+          "media_type"
+        ]
+      },
+      "examples": [
+        {
+          "command": "Call the put_image_asset MCP tool with strict base64 and its decoded JPEG, PNG, or WebP media type.",
+          "description": "Store one bounded private image and receive an opaque asset_id; caller paths and URLs are not accepted."
+        }
+      ],
+      "effects": {
+        "fixed_writes": [
+          {
+            "kind": "dir",
+            "path": "runs/mcp_image_service",
+            "scope": "tree"
+          }
+        ],
+        "writes": []
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "Pillow"
+        ]
+      },
+      "metadata_source": "tools_manifest+mcp_ast"
+    },
+    {
+      "name": "submit_image_job",
+      "function": "submit_image_job_tool",
+      "summary": "Queue qualified local CNN selection and optional explicit execution.",
+      "category": "image-service",
+      "surface_tiers": [
+        "mcp_live",
+        "image_service_safe"
+      ],
+      "maturity": "experimental",
+      "maturity_source": "tools_manifest",
+      "tags": [
+        "adaptive-inference",
+        "ai-first",
+        "image-service",
+        "mcp",
+        "qualification",
+        "security"
+      ],
+      "tags_source": "tools_manifest",
+      "params": [
+        {
+          "name": "asset_id",
+          "required": true
+        },
+        {
+          "name": "fixed_classes",
+          "required": true
+        },
+        {
+          "name": "task",
+          "required": false,
+          "default": "object_detection"
+        },
+        {
+          "name": "execute",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "timeout_seconds",
+          "required": false,
+          "default": 300
+        }
+      ],
+      "inputs": [
+        {
+          "name": "asset_id",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Asset Id"
+          }
+        },
+        {
+          "name": "fixed_classes",
+          "required": true,
+          "schema": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fixed Classes"
+          }
+        },
+        {
+          "name": "task",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Task",
+            "default": "object_detection"
+          }
+        },
+        {
+          "name": "execute",
+          "required": false,
+          "schema": {
+            "type": "boolean",
+            "title": "Execute",
+            "default": false
+          }
+        },
+        {
+          "name": "timeout_seconds",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "title": "Timeout Seconds",
+            "default": 300
+          }
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "fixed_classes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Fixed Classes"
+          },
+          "task": {
+            "type": "string",
+            "title": "Task",
+            "default": "object_detection"
+          },
+          "execute": {
+            "type": "boolean",
+            "title": "Execute",
+            "default": false
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "title": "Timeout Seconds",
+            "default": 300
+          }
+        },
+        "title": "submit_image_job_toolArguments",
+        "type": "object",
+        "required": [
+          "asset_id",
+          "fixed_classes"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "asset_id": {
+            "type": "string"
+          },
+          "fixed_classes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "task": {
+            "type": "string",
+            "default": "object_detection"
+          },
+          "execute": {
+            "type": "boolean",
+            "default": false
+          },
+          "timeout_seconds": {
+            "type": "integer",
+            "default": 300
+          }
+        },
+        "required": [
+          "asset_id",
+          "fixed_classes"
+        ]
+      },
+      "examples": [
+        {
+          "command": "Call the submit_image_job MCP tool with an asset_id, fixed_classes, and execute=false.",
+          "description": "Queue a qualified selection request; the service abstains when no eligible pipeline exists."
+        },
+        {
+          "command": "Call the submit_image_job MCP tool with execute=true only after approving model execution.",
+          "description": "Execute only a selected qualified pipeline with network denied and managed output."
+        }
+      ],
+      "effects": {
+        "fixed_writes": [
+          {
+            "kind": "dir",
+            "path": "runs/mcp_image_service",
+            "scope": "tree"
+          }
+        ],
+        "writes": []
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "Pillow"
+        ]
+      },
+      "metadata_source": "tools_manifest+mcp_ast"
+    },
+    {
+      "name": "get_image_job",
+      "function": "get_image_job_tool",
+      "summary": "Return bounded status and any completed image-job result.",
+      "category": "image-service",
+      "surface_tiers": [
+        "mcp_live",
+        "image_service_safe"
+      ],
+      "maturity": "experimental",
+      "maturity_source": "tools_manifest",
+      "tags": [
+        "ai-first",
+        "image-service",
+        "mcp",
+        "read-only",
+        "security"
+      ],
+      "tags_source": "tools_manifest",
+      "params": [
+        {
+          "name": "job_id",
+          "required": true
+        }
+      ],
+      "inputs": [
+        {
+          "name": "job_id",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Job Id"
+          }
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          }
+        },
+        "title": "get_image_job_toolArguments",
+        "type": "object",
+        "required": [
+          "job_id"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "job_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id"
+        ]
+      },
+      "examples": [
+        {
+          "command": "Call the get_image_job MCP tool with the opaque job_id returned by submit_image_job.",
+          "description": "Read bounded status, abstention, or completed predictions without exposing service storage paths."
+        }
+      ],
+      "effects": {
+        "fixed_writes": [
+          {
+            "kind": "dir",
+            "path": "runs/mcp_image_service",
+            "scope": "tree"
+          }
+        ],
+        "writes": []
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "Pillow"
+        ]
+      },
+      "metadata_source": "tools_manifest+mcp_ast"
+    },
+    {
+      "name": "cancel_image_job",
+      "function": "cancel_image_job_tool",
+      "summary": "Cancel queued work or request termination of a running owned image job.",
+      "category": "image-service",
+      "surface_tiers": [
+        "mcp_live",
+        "image_service_safe"
+      ],
+      "maturity": "experimental",
+      "maturity_source": "tools_manifest",
+      "tags": [
+        "ai-first",
+        "image-service",
+        "mcp",
+        "security"
+      ],
+      "tags_source": "tools_manifest",
+      "params": [
+        {
+          "name": "job_id",
+          "required": true
+        }
+      ],
+      "inputs": [
+        {
+          "name": "job_id",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Job Id"
+          }
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          }
+        },
+        "title": "cancel_image_job_toolArguments",
+        "type": "object",
+        "required": [
+          "job_id"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "job_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id"
+        ]
+      },
+      "examples": [
+        {
+          "command": "Call the cancel_image_job MCP tool with a queued or running job_id.",
+          "description": "Cancel queued work or request termination of the running owned process; poll until terminal."
+        }
+      ],
+      "effects": {
+        "fixed_writes": [
+          {
+            "kind": "dir",
+            "path": "runs/mcp_image_service",
+            "scope": "tree"
+          }
+        ],
+        "writes": []
       },
       "requires": {
         "network": false,

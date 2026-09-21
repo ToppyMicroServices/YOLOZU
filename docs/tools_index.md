@@ -43,6 +43,8 @@ Compatibility note:
 ## AI/MCP entrypoints
 
 - MCP server (stdio): `yolozu-mcp` (install with `python3 -m pip install 'yolozu[mcp]'`)
+- Local OpenAI image plugin: `python3 tools/prepare_image_service_plugin.py --help` (requires an already installed source runtime; see [setup and boundaries](openai_image_service_plugin.md))
+- Local image transfer client: `python3 plugins/yolozu-image-service/scripts/image_service_client.py --help` (temporary stdio session; preview by default)
 - Guaranteed AI-safe ids: `yolozu-mcp --print-tools --guaranteed --ids-only`
 - All registered MCP ids: `yolozu-mcp --print-tools --supported --ids-only`
 - MCP settings check (manifest + generated reference parity): `python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.json`

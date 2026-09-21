@@ -30,11 +30,12 @@ class TestAiFirstMcpSurface(unittest.TestCase):
             ],
         )
         supported = list_manifest_tools(supported=True, ids_only=True)
-        self.assertEqual(len(supported), 27)
+        self.assertEqual(len(supported), 32)
         self.assertIn("eval_coco", supported)
         self.assertIn("validate_predictions", supported)
         self.assertIn("recommend_image_pipeline", supported)
         self.assertIn("process_images", supported)
+        self.assertIn("submit_image_job", supported)
         supported_records = list_manifest_tools(supported=True)
         self.assertEqual(
             {item["id"] for item in supported_records},
@@ -101,6 +102,16 @@ class TestAiFirstMcpSurface(unittest.TestCase):
         self.assertIn("guaranteed_ai_safe", surfaces)
         self.assertIn("config_review", surfaces)
         self.assertIn("actions_public", surfaces)
+        self.assertEqual(
+            surfaces["image_service_safe"]["tool_ids"],
+            [
+                "image_service_capabilities",
+                "put_image_asset",
+                "submit_image_job",
+                "get_image_job",
+                "cancel_image_job",
+            ],
+        )
         self.assertNotIn(
             "generate_config",
             surfaces["actions_public"]["tool_ids"],
@@ -320,7 +331,11 @@ class TestAiFirstMcpSurface(unittest.TestCase):
                 compact["manifest_tools"],
                 compact["selected_tool_ids"],
             )
-            self.assertEqual(compact["surface_counts"]["mcp_live"], 27)
+            self.assertEqual(compact["surface_counts"]["mcp_live"], 32)
+            self.assertEqual(
+                compact["surface_counts"]["image_service_safe"],
+                5,
+            )
             self.assertNotIn("surfaces", compact)
             self.assertLess(len(compact_proc.stdout.encode("utf-8")), 1_500)
             self.assertEqual(compact_proc.stdout.count("\n"), 1)

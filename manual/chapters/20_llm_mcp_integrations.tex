@@ -57,9 +57,9 @@ Guaranteed AI-safe surface (deterministic/lightweight):
   \item \cmd{validate_predictions}
 \end{itemize}
 
-The live MCP server registers a broader 27-tool surface. The generated JSON
+The live MCP server registers a broader 32-tool surface. The generated JSON
 reference separates \cmd{mcp_live}, \cmd{guaranteed_ai_safe},
-\cmd{config_review}, and \cmd{actions_public}; registration alone does not
+\cmd{image_service_safe}, \cmd{config_review}, and \cmd{actions_public}; registration alone does not
 promote environment-dependent operations into the guaranteed set.
 The generated JSON reference is also packaged in the wheel and supplies a
 summary plus exact JSON input schema for every live id. Surface membership does
@@ -73,10 +73,41 @@ The Experimental \cmd{recommend\_image\_pipeline} tool accepts a typed image job
 and workspace-confined input. Optional registry, candidate-screening, evidence,
 and artifact roots are also confined to that workspace. A custom screening stream
 is always \cmd{operator\_asserted}; JSON content cannot promote it to a
-repository-managed pass. The packaged screening stream is empty, so this
+repository-managed pass. The packaged screening stream has no pass record, so this
 interface contract does not make a candidate model available. Recommendation is
 read-only and separate from the explicit, dry-run-by-default
 \cmd{process\_images} operation.
+
+OpenAI and Claude clients can use the dedicated five-tool image surface over
+stdio or Streamable HTTP:
+\begin{lstlisting}[language=bash]
+yolozu-mcp --surface image-service
+yolozu-mcp --transport streamable-http --surface image-service \
+  --host 127.0.0.1 --port 8000 --http-path /mcp
+\end{lstlisting}
+It accepts bounded image bytes and opaque asset/job ids, not model names,
+backends, filesystem paths, URLs, shell arguments, or output destinations.
+External HTTP requires the dedicated surface, an HTTPS public URL, and a bearer
+token loaded from an environment variable. Actual execution remains opt-in and
+requires a qualified selected bundle.
+Per-tenant sliding-window limits bound upload, submission, polling, and cancellation.
+A background worker removes expired inactive data every 60 seconds while the server
+runs. Queue-to-completion deadlines and running cancellation stop owned processes
+before releasing assets. Lifetime guards reclaim process groups after owner death,
+and a POSIX lock rejects a second owner of the same tenant directory.
+This process boundary does not
+provide an OS network sandbox. Deployment isolation and HTTP connection/body limits
+remain the operator's responsibility. See \path{docs/image_service_mcp.md} for the
+exact limits and provider request settings, and
+\path{docs/image_service_candidate_review.md} for the unregistered CNN proposal.
+
+The local OpenAI plugin in \path{plugins/yolozu-image-service} packages this
+same five-tool surface and one scoped skill. Prepare a runtime-specific copy
+with \path{tools/prepare_image_service_plugin.py}; the bundled image client
+transfers a user-selected local file through a separate temporary stdio session.
+Preview is the default, and execution still requires a qualified bundle.
+Plugin packaging does not approve a model or publish a ChatGPT directory entry.
+See \path{docs/openai_image_service_plugin.md} for installation and test boundaries.
 
 Copy-paste sanity checks:
 \begin{lstlisting}[language=bash]

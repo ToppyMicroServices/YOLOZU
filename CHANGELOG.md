@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.9.0] - 2026-09-21
+
+### Added
+- Add a bounded five-tool MCP image service for OpenAI and Claude clients, with
+  authenticated Streamable HTTP, private tenant storage, and fail-closed
+  qualified-pipeline selection.
+- Add a code-owned Torchvision Mask R-CNN safetensors runner while keeping the
+  default service abstaining until an exact bundle passes the existing gates.
+- Add per-tenant request limits, bounded HTTP uploads, idle-time retention cleanup, provider request
+  examples, and a local authenticated five-tool MCP protocol test.
+- Add a local image-service plugin with bounded file handling and job polling.
+
+### Fixed
+- Release retained assets after queued cancellation, reject symlink ancestors,
+  protect active outputs during cleanup, and keep failed processing distinct
+  from completed inference.
+- Require exact runner component digests and local dependency versions; retain
+  unreviewed CNN weights as an unregistered proposal.
+- Bound image-job and probe process lifetimes, cancel running work, enforce
+  single-owner tenant storage, and reclaim resources after failures and timeouts.
+- Reject symlinked managed JSON, normalize invalid asset metadata errors, and
+  format authenticated IPv6 issuer URLs correctly.
+
 ## [4.8.0] - 2026-09-10
 
 ### Added

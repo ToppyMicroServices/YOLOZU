@@ -16,7 +16,7 @@ Inspect the compact registry and exact public surface sets:
 yolozu-mcp --print-tools --guaranteed --ids-only
 ```
 
-Use `yolozu-mcp --print-tools --supported --ids-only` to inspect all 27
+Use `yolozu-mcp --print-tools --supported --ids-only` to inspect all 32
 registered MCP operations.
 
 Use these tools:
@@ -34,10 +34,10 @@ Why MCP first:
 - same JSON response shape as other integrations
 - minimal glue code
 
-The generated machine-readable reference separates the 27 live MCP tool ids,
-the four guaranteed AI-safe ids, the two config-review ids, and the 21
-canonical Actions operations. A live registration is not by itself a
-deterministic or dependency-free guarantee.
+The generated machine-readable reference separates the 32 live MCP tool ids,
+the four guaranteed AI-safe ids, the five bounded image-service ids, the two
+config-review ids, and the 21 canonical Actions operations. A live registration
+is not by itself a deterministic or dependency-free guarantee.
 
 The MCP-only `recommend_image_pipeline` operation is Experimental and read-only.
 It can return a selected or abstained SelectionDecision for a structured local
@@ -51,8 +51,24 @@ self-assign a repository-managed pass.
 The paired MCP-only `process_images` operation is also Experimental and not
 exposed through Actions. It requires a complete selected decision, defaults to a
 no-write dry-run, rejects local-state drift, and uses only registered code-owned
-network-free execution. No adaptive runner is bound to the registered Candidate
-baselines, so it does not make a current runnable-model claim.
+network-free execution. A code-owned Torchvision runner exists, but no packaged
+bundle binds it and completes the license, qualification, support, evidence, and
+lifecycle gates. The default call therefore abstains and does not make a current
+runnable-model claim.
+
+For OpenAI image requests, expose only the five-tool service surface:
+
+```bash
+yolozu-mcp --transport streamable-http --surface image-service \
+  --host 127.0.0.1 --port 8000 --http-path /mcp
+```
+
+The service accepts bounded image bytes and returns opaque asset and job IDs. It
+does not accept a model name, backend, local path, remote URL, shell argument, or
+output destination. A public URL also requires the dedicated surface, HTTPS at
+the proxy, and a bearer token loaded from an environment variable. See
+[`image_service_mcp.md`](image_service_mcp.md) for the exact setup and current
+model-qualification boundary.
 
 ## Route B: GPT Actions (OpenAPI)
 

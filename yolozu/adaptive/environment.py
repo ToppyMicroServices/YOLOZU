@@ -16,6 +16,7 @@ import re
 import selectors
 import signal
 import subprocess
+from yolozu.process_lifetime import ProcessGuard, kill_group
 import sys
 import time
 import unicodedata
@@ -347,17 +348,21 @@ def _run_bounded_probe(spec: _ProbeSpec, timeout_seconds: float) -> _ProbeRun:
     except (OSError, ValueError):
         return _ProbeRun("failed", code="spawn_failed")
 
-    stdout = bytearray()
-    stderr = bytearray()
-    selector = selectors.DefaultSelector()
-    assert process.stdout is not None
-    assert process.stderr is not None
-    for stream, label in ((process.stdout, "stdout"), (process.stderr, "stderr")):
-        os.set_blocking(stream.fileno(), False)
-        selector.register(stream, selectors.EVENT_READ, label)
     deadline = time.monotonic() + timeout_seconds
-    failure_code: str | None = None
+    guard = None
+    selector = None
     try:
+        if os.name == "posix":
+            guard = ProcessGuard(process.pid, deadline)
+        stdout = bytearray()
+        stderr = bytearray()
+        selector = selectors.DefaultSelector()
+        assert process.stdout is not None
+        assert process.stderr is not None
+        for stream, label in ((process.stdout, "stdout"), (process.stderr, "stderr")):
+            os.set_blocking(stream.fileno(), False)
+            selector.register(stream, selectors.EVENT_READ, label)
+        failure_code: str | None = None
         while selector.get_map():
             remaining = deadline - time.monotonic()
             if remaining <= 0.0:
@@ -391,13 +396,20 @@ def _run_bounded_probe(spec: _ProbeSpec, timeout_seconds: float) -> _ProbeRun:
             _terminate_process_group(process)
             return _ProbeRun("failed", code="timeout")
         if return_code != 0:
-            return _ProbeRun("failed", code="subprocess_exit")
+            return _ProbeRun("failed", code="timeout" if time.monotonic() >= deadline else "subprocess_exit")
         return _ProbeRun("ok", stdout=bytes(stdout))
     finally:
-        selector.close()
+        _terminate_process_group(process)
+        if os.name == "posix":
+            kill_group(process.pid)
+        if guard is not None:
+            guard.close()
+        if selector is not None:
+            selector.close()
         for stream in (process.stdout, process.stderr):
             try:
-                stream.close()
+                if stream is not None:
+                    stream.close()
             except OSError:
                 # Streams are local cleanup handles and may already be closed.
                 pass

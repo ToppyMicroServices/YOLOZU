@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "scope": "local one-image code-owned runner smoke",
+  "limitations": [
+    "not qualification evidence",
+    "not license approval",
+    "not support-profile evidence",
+    "not lifecycle promotion",
+    "not production-readiness evidence"
+  ],
+  "runner": {
+    "runner_id": "torchvision",
+    "runner_version": "0.27.0.dev20260330",
+    "torch_version": "2.12.0.dev20260330",
+    "provider_id": "cpu",
+    "network_policy": "deny",
+    "os_network_isolation_claim": false,
+    "loader_format_during_inference": "safetensors"
+  },
+  "weights": {
+    "source_checkpoint_cache_key": "maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth",
+    "source_checkpoint_sha256": "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e",
+    "converted_safetensors_sha256": "59f39b25a05a7130ebb754f82451e44b791c684601a15cefc64f79462e1e8187",
+    "converted_safetensors_size_bytes": 185728220,
+    "redistributed": false
+  },
+  "input": {
+    "path": "data/smoke/images/val/000000000009.jpg",
+    "sha256": "3b0bb6bebad60a3329f1e3484434872e86998aeb7750d779b308e4a064868c2c",
+    "requested_label_count": 80
+  },
+  "result": {
+    "retained_predictions": 10,
+    "first_prediction": {
+      "native_class_index": 50,
+      "score": "0.98298037",
+      "bbox": [
+        "0.40181193",
+        "0.4848333",
+        "0.89484558",
+        "0.99868189"
+      ]
+    },
+    "elapsed_seconds": 7.536
+  }
+}

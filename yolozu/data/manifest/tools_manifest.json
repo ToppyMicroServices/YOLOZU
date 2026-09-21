@@ -42,6 +42,16 @@
         "validate_predictions"
       ]
     },
+    "image_service_safe": {
+      "availability": "bounded single-tenant MCP image service",
+      "tool_ids": [
+        "image_service_capabilities",
+        "put_image_asset",
+        "submit_image_job",
+        "get_image_job",
+        "cancel_image_job"
+      ]
+    },
     "mcp_live": {
       "availability": "requires optional mcp dependency",
       "tool_ids": [
@@ -55,6 +65,11 @@
         "predict_images",
         "recommend_image_pipeline",
         "process_images",
+        "image_service_capabilities",
+        "put_image_asset",
+        "submit_image_job",
+        "get_image_job",
+        "cancel_image_job",
         "parity_check",
         "calibrate_predictions",
         "eval_instance_seg",
@@ -2742,6 +2757,68 @@
       "tags": [
         "predictions",
         "calibration"
+      ]
+    },
+    {
+      "docs": [
+        "docs/image_service_mcp.md",
+        "docs/llm_integrations.md",
+        "docs/openai_mcp_actions.md"
+      ],
+      "effects": {
+        "fixed_writes": [
+          {
+            "kind": "dir",
+            "path": "runs/mcp_image_service",
+            "scope": "tree"
+          }
+        ],
+        "writes": []
+      },
+      "entrypoint": "yolozu/integrations/mcp_server.py",
+      "examples": [
+        {
+          "command": "Call the cancel_image_job MCP tool with a queued or running job_id.",
+          "description": "Cancel queued work or request termination of the running owned process; poll until terminal."
+        }
+      ],
+      "id": "cancel_image_job",
+      "inputs": [
+        {
+          "description": "Opaque image job identity.",
+          "kind": "string",
+          "name": "job_id",
+          "required": true
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Structured result: cancelled=true for stopped queued work, or reason=cancellation_requested while running work is stopping.",
+          "kind": "json",
+          "name": "cancellation_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "Pillow"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Cancel queued image work or stop a running owned process; release retained assets after termination and preserve tenant rate limits.",
+      "tags": [
+        "ai-first",
+        "image-service",
+        "mcp",
+        "security"
       ]
     },
     {
@@ -10874,6 +10951,69 @@
     },
     {
       "docs": [
+        "docs/image_service_mcp.md",
+        "docs/llm_integrations.md",
+        "docs/openai_mcp_actions.md"
+      ],
+      "effects": {
+        "fixed_writes": [
+          {
+            "kind": "dir",
+            "path": "runs/mcp_image_service",
+            "scope": "tree"
+          }
+        ],
+        "writes": []
+      },
+      "entrypoint": "yolozu/integrations/mcp_server.py",
+      "examples": [
+        {
+          "command": "Call the get_image_job MCP tool with the opaque job_id returned by submit_image_job.",
+          "description": "Read bounded status, abstention, or completed predictions without exposing service storage paths."
+        }
+      ],
+      "id": "get_image_job",
+      "inputs": [
+        {
+          "description": "Opaque image job identity.",
+          "kind": "string",
+          "name": "job_id",
+          "required": true
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Bounded job status and, when complete, managed predictions, provenance, and checksums.",
+          "kind": "json",
+          "name": "job_status_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "Pillow"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Return bounded status and result data for one opaque image job, enforcing tenant polling and expiry limits without exposing internal paths.",
+      "tags": [
+        "ai-first",
+        "image-service",
+        "mcp",
+        "read-only",
+        "security"
+      ]
+    },
+    {
+      "docs": [
         "docs/runpod_gpu_validation_split.md",
         "docs/doctor_diagnostics.md",
         "manual/chapters/17_realtime_batch_inference.tex"
@@ -11035,6 +11175,160 @@
       "tags": [
         "sweep",
         "hpo"
+      ]
+    },
+    {
+      "docs": [
+        "docs/image_service_mcp.md",
+        "docs/llm_integrations.md",
+        "docs/openai_mcp_actions.md"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": []
+      },
+      "entrypoint": "yolozu/integrations/mcp_server.py",
+      "examples": [
+        {
+          "command": "Call the image_service_capabilities MCP tool before uploading an image.",
+          "description": "Inspect the bounded media, task, execution, and retention limits without creating service storage."
+        }
+      ],
+      "id": "image_service_capabilities",
+      "inputs": [],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Bounded image-service capabilities and safety defaults.",
+          "kind": "json",
+          "name": "capabilities_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "Pillow"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Describe image-service capacity, per-60-second request limits, retention, and isolation boundaries without selecting or executing a model.",
+      "tags": [
+        "ai-first",
+        "image-service",
+        "mcp",
+        "read-only",
+        "security"
+      ]
+    },
+    {
+      "docs": [
+        "docs/openai_image_service_plugin.md",
+        "README.md",
+        "Readme_jp.md",
+        "manual/chapters/20_llm_mcp_integrations.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "temporary_writes": [
+          "OS temporary yolozu-plugin-* workspace; image assets and job data removed on normal exit, may remain after forced termination."
+        ],
+        "writes": []
+      },
+      "entrypoint": "plugins/yolozu-image-service/scripts/image_service_client.py",
+      "examples": [
+        {
+          "command": "python3 plugins/yolozu-image-service/scripts/image_service_client.py --help",
+          "description": "Inspect local client options without loading MCP dependencies."
+        },
+        {
+          "command": "python3 plugins/yolozu-image-service/scripts/image_service_client.py --capabilities",
+          "description": "Check the bounded installed service without an image or provider call."
+        },
+        {
+          "command": "python3 plugins/yolozu-image-service/scripts/image_service_client.py --image data/smoke/images/val/000000000009.jpg --class cat",
+          "description": "Preview selection through a separate temporary local stdio session."
+        }
+      ],
+      "id": "image_service_plugin_client",
+      "inputs": [
+        {
+          "flag": "--help",
+          "kind": "string",
+          "name": "help",
+          "required": false
+        },
+        {
+          "description": "Read capabilities without uploading; mutually exclusive with --image.",
+          "flag": "--capabilities",
+          "kind": "string",
+          "name": "capabilities",
+          "required": false
+        },
+        {
+          "description": "User-selected regular local JPEG/PNG/WebP, at most 8 MiB; never a URL.",
+          "flag": "--image",
+          "kind": "file",
+          "name": "image",
+          "required": false
+        },
+        {
+          "description": "Repeatable target label; required with --image.",
+          "flag": "--class",
+          "kind": "string",
+          "name": "classes",
+          "required": false
+        },
+        {
+          "description": "Opt in to processing; does not qualify or activate a model.",
+          "flag": "--execute",
+          "kind": "string",
+          "name": "execute",
+          "required": false
+        },
+        {
+          "default": 60,
+          "description": "Finite job-wait seconds in 1..120; expiry stops queued/running work. Transport and process cleanup have separate bounded waits.",
+          "flag": "--timeout",
+          "kind": "number",
+          "name": "timeout",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Capability or terminal job response, with abstention preserved; exit 0 is request completion, not proof of inference.",
+          "kind": "stdout",
+          "name": "result_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "PIL",
+          "yolozu"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Send one user-selected local image through a temporary bounded stdio MCP session; preview by default, preserve abstention, and remove temporary image/job data on normal exit.",
+      "tags": [
+        "mcp",
+        "plugin",
+        "image-service"
       ]
     },
     {
@@ -12457,6 +12751,89 @@
     },
     {
       "docs": [
+        "docs/openai_image_service_plugin.md",
+        "README.md",
+        "Readme_jp.md",
+        "manual/chapters/20_llm_mcp_integrations.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "flag": "--output",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "tools/prepare_image_service_plugin.py",
+      "examples": [
+        {
+          "command": "python3 tools/prepare_image_service_plugin.py --help",
+          "description": "Inspect preparation options."
+        },
+        {
+          "command": "python3 tools/prepare_image_service_plugin.py --python .venv/bin/python --output /tmp/yolozu-staging/plugins/yolozu-image-service",
+          "description": "Prepare a runtime-specific local copy at a new staging destination."
+        }
+      ],
+      "id": "prepare_image_service_plugin",
+      "inputs": [
+        {
+          "flag": "--help",
+          "kind": "string",
+          "name": "help",
+          "required": false
+        },
+        {
+          "description": "New destination ending in yolozu-image-service; existing paths are refused.",
+          "flag": "--output",
+          "kind": "dir",
+          "name": "output",
+          "required": true
+        },
+        {
+          "description": "Trusted interpreter with this source revision of yolozu[mcp] installed; virtualenv symlink identity is preserved.",
+          "flag": "--python",
+          "kind": "file",
+          "name": "python",
+          "required": true
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Manifest, MCP settings with absolute interpreter path, skill, image client, and code license.",
+          "kind": "dir",
+          "name": "plugin_directory"
+        },
+        {
+          "description": "Verified tool list and explicit installed_in_host=false and models_qualified=false markers.",
+          "kind": "stdout",
+          "name": "preparation_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false,
+        "python_packages": []
+      },
+      "runner": "python3",
+      "summary": "Prepare a non-overwriting local OpenAI plugin copy after checking the selected installed runtime's five-tool MCP surface; do not install dependencies, register a marketplace, or qualify a model.",
+      "tags": [
+        "mcp",
+        "plugin",
+        "packaging"
+      ]
+    },
+    {
+      "docs": [
         "docs/cvat_keypoints_recovery.md"
       ],
       "effects": {
@@ -13512,6 +13889,74 @@
         "publication",
         "protocol",
         "report"
+      ]
+    },
+    {
+      "docs": [
+        "docs/image_service_mcp.md",
+        "docs/llm_integrations.md",
+        "docs/openai_mcp_actions.md"
+      ],
+      "effects": {
+        "fixed_writes": [
+          {
+            "kind": "dir",
+            "path": "runs/mcp_image_service",
+            "scope": "tree"
+          }
+        ],
+        "writes": []
+      },
+      "entrypoint": "yolozu/integrations/mcp_server.py",
+      "examples": [
+        {
+          "command": "Call the put_image_asset MCP tool with strict base64 and its decoded JPEG, PNG, or WebP media type.",
+          "description": "Store one bounded private image and receive an opaque asset_id; caller paths and URLs are not accepted."
+        }
+      ],
+      "id": "put_image_asset",
+      "inputs": [
+        {
+          "description": "Strict base64 for one image bounded to 8 MiB after decoding.",
+          "kind": "string",
+          "name": "content_base64",
+          "required": true
+        },
+        {
+          "description": "Exact decoded media type: image/jpeg, image/png, or image/webp.",
+          "kind": "string",
+          "name": "media_type",
+          "required": true
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Opaque asset identity, digest, dimensions, and retention period; no storage path is returned.",
+          "kind": "json",
+          "name": "asset_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "Pillow"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Rate-limit, decode, validate, and privately store one bounded image without accepting a filesystem path or remote URL.",
+      "tags": [
+        "ai-first",
+        "image-service",
+        "mcp",
+        "security"
       ]
     },
     {
@@ -15761,6 +16206,7 @@
     },
     {
       "docs": [
+        "docs/image_service_mcp.md",
         "docs/llm_integrations.md",
         "docs/mcp_extension_architecture.md",
         "docs/copilot_mcp_integration.md",
@@ -15770,7 +16216,13 @@
         "docs/tools_index.md"
       ],
       "effects": {
-        "fixed_writes": [],
+        "fixed_writes": [
+          {
+            "kind": "dir",
+            "path": "runs/mcp_image_service",
+            "scope": "tree"
+          }
+        ],
         "writes": []
       },
       "entrypoint": "tools/run_mcp_server.py",
@@ -15778,6 +16230,10 @@
         {
           "command": "yolozu-mcp",
           "description": "Start MCP stdio server."
+        },
+        {
+          "command": "yolozu-mcp --transport streamable-http --surface image-service --host 127.0.0.1 --port 8000 --http-path /mcp",
+          "description": "Start the bounded five-tool image service on a loopback Streamable HTTP endpoint."
         },
         {
           "command": "yolozu-mcp --print-tools --guaranteed --ids-only",
@@ -15800,10 +16256,73 @@
       "inputs": [
         {
           "default": "stdio",
-          "description": "MCP transport (stdio supported by wrapper).",
+          "description": "MCP transport: stdio or streamable-http.",
           "flag": "--transport",
           "kind": "string",
           "name": "transport",
+          "required": false
+        },
+        {
+          "default": "full",
+          "description": "Tool surface: full, or the bounded five-tool image-service surface.",
+          "flag": "--surface",
+          "kind": "string",
+          "name": "surface",
+          "required": false
+        },
+        {
+          "default": "127.0.0.1",
+          "description": "Streamable HTTP bind host; external binds require the image-service surface, HTTPS public URL, and bearer authentication.",
+          "flag": "--host",
+          "kind": "string",
+          "name": "host",
+          "required": false
+        },
+        {
+          "default": 8000,
+          "description": "Streamable HTTP bind port in 1..65535.",
+          "flag": "--port",
+          "kind": "number",
+          "name": "port",
+          "required": false
+        },
+        {
+          "default": "/mcp",
+          "description": "Absolute Streamable HTTP MCP path without traversal.",
+          "flag": "--http-path",
+          "kind": "string",
+          "name": "http_path",
+          "required": false
+        },
+        {
+          "description": "Exact external HTTPS MCP URL when running behind a reviewed TLS proxy.",
+          "flag": "--public-url",
+          "kind": "string",
+          "name": "public_url",
+          "required": false
+        },
+        {
+          "default": "YOLOZU_MCP_AUTH_TOKEN",
+          "description": "Environment variable containing the bearer token; the token value is not accepted on the command line.",
+          "flag": "--auth-token-env",
+          "kind": "string",
+          "name": "auth_token_env",
+          "required": false
+        },
+        {
+          "default": "local",
+          "description": "Credential-bound lowercase tenant identifier for private asset and job storage.",
+          "flag": "--tenant-id",
+          "kind": "string",
+          "name": "tenant_id",
+          "required": false
+        },
+        {
+          "default": 86400,
+          "description": "Private asset, terminal job, and output retention in 300..604800 seconds.",
+          "flag": "--retention-seconds",
+          "kind": "number",
+          "name": "retention_seconds",
           "required": false
         },
         {
@@ -15881,7 +16400,7 @@
       "maturity": "stable",
       "outputs": [
         {
-          "description": "MCP stdio transport for compatible clients.",
+          "description": "MCP stdio or Streamable HTTP transport for compatible clients.",
           "kind": "string",
           "name": "transport"
         },
@@ -15913,7 +16432,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Run the YOLOZU MCP stdio server, expose canonical live tool ids and filtered packaged discovery, and provide typed TTT/CTTA export jobs that reject arbitrary extra args and require status=full checkpoint preflight.",
+      "summary": "Run the YOLOZU MCP server over stdio or Streamable HTTP with bounded image-service tools, exclusive tenant ownership, cancellable process jobs, rate limits, and idle-time retention cleanup.",
       "tags": [
         "mcp",
         "integration",
@@ -18447,6 +18966,111 @@
         "viz",
         "evaluation",
         "ai-safe"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "image_job_spec_json"
+        ],
+        "produces": [
+          "selection_decision_json",
+          "predictions_json"
+        ]
+      },
+      "docs": [
+        "docs/adaptive_image_routing.md",
+        "docs/image_service_mcp.md",
+        "docs/llm_integrations.md",
+        "docs/openai_mcp_actions.md"
+      ],
+      "effects": {
+        "fixed_writes": [
+          {
+            "kind": "dir",
+            "path": "runs/mcp_image_service",
+            "scope": "tree"
+          }
+        ],
+        "writes": []
+      },
+      "entrypoint": "yolozu/integrations/mcp_server.py",
+      "examples": [
+        {
+          "command": "Call the submit_image_job MCP tool with an asset_id, fixed_classes, and execute=false.",
+          "description": "Queue a qualified selection request; the service abstains when no eligible pipeline exists."
+        },
+        {
+          "command": "Call the submit_image_job MCP tool with execute=true only after approving model execution.",
+          "description": "Execute only a selected qualified pipeline with network denied and managed output."
+        }
+      ],
+      "id": "submit_image_job",
+      "inputs": [
+        {
+          "description": "Opaque ID returned by put_image_asset.",
+          "kind": "string",
+          "name": "asset_id",
+          "required": true
+        },
+        {
+          "description": "Bounded fixed-class request interpreted by the AI client before this call.",
+          "kind": "json",
+          "name": "fixed_classes",
+          "required": true
+        },
+        {
+          "default": "object_detection",
+          "description": "object_detection or instance_segmentation.",
+          "kind": "string",
+          "name": "task",
+          "required": false
+        },
+        {
+          "default": false,
+          "description": "False performs qualified selection/preflight only; true permits explicit model execution after selection.",
+          "kind": "string",
+          "name": "execute",
+          "required": false
+        },
+        {
+          "default": 300,
+          "description": "30..3600 seconds from queue admission, including selection and execution; expiry stops owned processes and reports timed_out.",
+          "kind": "number",
+          "name": "timeout_seconds",
+          "required": false
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "description": "Opaque asynchronous job identity and queued state.",
+          "kind": "json",
+          "name": "job_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "mcp",
+          "Pillow"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Queue a deadline-bounded cancellable image process using only a qualified registered pipeline or abstention; execution is opt-in and terminal paths release retained assets.",
+      "tags": [
+        "adaptive-inference",
+        "ai-first",
+        "image-service",
+        "mcp",
+        "qualification",
+        "security"
       ]
     },
     {

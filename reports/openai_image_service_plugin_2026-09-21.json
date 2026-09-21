@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "kind": "local_image_service_plugin_verification",
+  "date": "2026-09-21",
+  "plugin": "yolozu-image-service",
+  "version": "0.1.0",
+  "scope": "local compatibility-format plugin; no public submission",
+  "runtime_python": "3.14.6",
+  "checks": {
+    "plugin_validator_source_prepared_installed": "passed",
+    "skill_validator_source_installed": "passed",
+    "plugin_tests": {"run": 14, "result": "passed"},
+    "focused_plugin_and_service_tests": {"run": 51, "result": "passed"},
+    "full_unittest_suite": {"run": 1795, "skipped": 15, "seconds": 374.401, "result": "passed"},
+    "pre_push_focused_tests": {"run": 268, "result": "passed"},
+    "pre_push_offline_smoke_and_real_image_preflight": "passed",
+    "ruff_repository": "passed",
+    "declarative_manifest": {"tools": 149, "result": "passed"},
+    "packaged_manifest_and_document_references": "passed",
+    "generated_cli_mcp_and_web_references": "passed",
+    "existing_public_doc_examples": {"examples": 123, "result": "passed"},
+    "new_plugin_doc_examples": {"examples": 2, "result": "passed"},
+    "new_cli_help_without_optional_dependencies": "passed",
+    "relocated_package_stdio_discovery": "exactly five service tools",
+    "image_upload_preview_and_execute_request": "both returned abstention with no qualified model",
+    "invalid_images_and_non_overwrite_boundary": "passed",
+    "timeout_cancellation": "passed with mocked running job",
+    "installed_cache_capabilities_request": "passed",
+    "installed_cache_settings": "only the interpreter command differs from source"
+  },
+  "source_sha256": {
+    ".codex-plugin/plugin.json": "7d7ea67df7a931c63496ddd476310002919f645b1a5ed2a33aa83215c76d8913",
+    ".mcp.json": "e9a3453f26ead65d48868c760edd11300f911608cb762dd721ac923d2d8f35a5",
+    "skills/yolozu-image-service/SKILL.md": "803993eff41c9396cb3b056a605b35fda804006c4caf8de8a07bf58fc52e2a27",
+    "scripts/image_service_client.py": "5faa1f3368eb2953c4fa581ca21f424ba9f8f22ec0dd0377debc18daac1cd348"
+  },
+  "local_installation": {
+    "marketplace": "personal",
+    "plugin_id": "yolozu-image-service@personal",
+    "installed": true,
+    "enabled": true,
+    "new_desktop_task_pickup": "not verified; tracked in YOLOZU-f36z"
+  },
+  "boundaries": {
+    "cnn_license_review_quality_evaluation_activation": "separate work in YOLOZU-0rp4; unchanged",
+    "public_directory_submission": "not performed",
+    "remote_deployment_oauth_attachment_handoff": "not implemented by this plugin package",
+    "paid_provider_calls": "none",
+    "github_actions_poll_or_manual_rerun": "none",
+    "manual_pdf": "not built or rendered; source text and CLI-reference audit only",
+    "dependency_warnings": "Existing Pydantic lifespan and PyTorch/Python 3.14 warnings were emitted; passing tests do not qualify that runtime for model production use."
+  }
+}

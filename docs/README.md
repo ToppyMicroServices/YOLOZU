@@ -86,9 +86,11 @@ The environment-qualified local image-processing program targets an Experimental
   recommendation path. MCP-only `process_images` adds pinned revalidation,
   dry-run-by-default execution gating, and bounded managed output publication.
   The packaged registry contains three non-promoted Candidate baselines with
-  unbound execution. The support/evidence streams and runner maps are empty, so the
-  default response records `maturity_disallowed`, abstains, and cannot run a real
-  adaptive model.
+  unbound execution. A code-owned Torchvision runner exists, but no packaged
+  bundle binds it or passes the license, qualification, support, evidence, and
+  lifecycle gates. The default response records `maturity_disallowed`, abstains,
+  and cannot run a real adaptive model. The bounded OpenAI/Claude MCP route is
+  documented in [`image_service_mcp.md`](image_service_mcp.md).
 - Monitored-source inbox: [`algorithm_intake/README.md`](algorithm_intake/README.md).
   `yolozu scout-algorithms` is network-free and write-free by default. Explicit
   collection produces only a dated nonselectable candidate report.

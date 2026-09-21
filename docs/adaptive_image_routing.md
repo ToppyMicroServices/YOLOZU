@@ -30,7 +30,8 @@ The packaged registry contains the three records already present in the model zo
 and the lifecycle stream registers each only as Candidate. Their weight assets have
 pinned source, revision, size, SHA-256, license metadata, and cache identity. Their
 `execution_binding` is `unbound`, the support/activation streams and qualification
-report directory contain no selectable evidence, and no adaptive runner is registered.
+report directory contain no selectable evidence. The code-owned Torchvision runner
+is registered, but none of these records binds it.
 The package validates and loads this exact registry/lifecycle SSOT without importing
 a model runtime.
 An explicitly supplied workspace catalog is always operator-asserted and fails the
@@ -58,8 +59,13 @@ allowlisted `code_owned_audited` runner, or a separately registered code-owned
 isolated service with the exact policy digest for `third_party_isolated`. P0 ships
 the isolation interface and fail-closed gate but no isolated backend. Output is an
 exact managed tree containing `predictions.json`, `provenance.json`,
-`checksums.json`, and only referenced masks. The adaptive runner maps remain empty,
-so the installed default cannot execute a real adaptive model.
+`checksums.json`, and only referenced masks. A code-owned Torchvision Mask R-CNN
+runner is registered for exact safetensors/CPU bundles. No packaged bundle binds
+that runner or passes the required license, qualification, support, evidence, and
+lifecycle gates, so the installed default cannot execute a real adaptive model.
+The exact local Torchvision candidate remains an
+[unregistered review proposal](image_service_candidate_review.md), with unknown
+weight permission and no activated evidence.
 
 The reviewed [candidate isolation threat model and backend decision](candidate_isolation_threat_model.md)
 records `none_supported`. `python3 tools/probe_candidate_isolation.py` reports that
@@ -80,8 +86,9 @@ exact managed bundles. It pins bounded input and artifact descriptors, runs only
 repository-owned network-free runner in a terminable child process group, applies
 the frozen v1 schedule and handoff, and publishes one unactivated report through
 `ManagedOutputTransaction`. The three current Candidate records have unbound
-execution and the code-owned runner factory map is empty, so the default command
-fails with an actionable error and does
+execution. Although the code-owned Torchvision runner factory is registered,
+none of those records binds it, so the default command fails with an actionable
+error and does
 not create synthetic or no-op qualification evidence. It is not a selector,
 model adapter, or general image-processing capability.
 

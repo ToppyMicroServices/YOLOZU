@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "yolozu-image-service": {
+      "command": "python3",
+      "args": ["-I", "-m", "yolozu.integrations.mcp_cli", "--transport", "stdio", "--surface", "image-service"]
+    }
+  }
+}

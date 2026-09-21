@@ -11,7 +11,6 @@ import io
 import multiprocessing
 import os
 import pickle
-import signal
 import time
 from array import array
 from dataclasses import dataclass
@@ -21,6 +20,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Protocol, Sequence
 
 from PIL import Image, UnidentifiedImageError
+from yolozu.process_lifetime import ProcessGuard, stop_and_reap
 
 from .artifact_resolver import ArtifactResolver, PinnedVerifiedArtifactSet
 from .bundle_registry import AlgorithmRunner, RunnerProbeResult, load_algorithm_bundle_registry
@@ -59,6 +59,7 @@ from .evidence import (
 )
 from .inventory import PinnedDecodedInput, PinnedDecodedInputSet, pin_decoded_inputs
 from .managed_output import ManagedOutputLimits, ManagedOutputTransaction
+from .runners import create_torchvision_runner
 
 __all__ = [
     "QUALIFICATION_PROTOCOL_FINGERPRINT",
@@ -589,9 +590,12 @@ class _ForkedRunnerSession:
             args=(child, factory, bundle, environment, artifacts, inputs, labels),
             daemon=False,
         )
-        self._process.start()
-        child.close()
+        self._guard = None
+        self._closed = False
         try:
+            self._process.start()
+            child.close()
+            self._guard = ProcessGuard(self._process.pid, outer_deadline_ns / 1_000_000_000)
             ready = self._receive(PROBE_TIMEOUT_SECONDS, phase="runner_start")
             if set(ready) != {"ok", "runner_id", "runner_version"} or not all(
                 isinstance(ready[name], str)
@@ -599,9 +603,14 @@ class _ForkedRunnerSession:
                 for name in ("runner_id", "runner_version")
             ):
                 raise _fail("runner_failed", "runner startup identity is invalid")
-        except Exception:
+        except BaseException:
             self._terminate()
             self._connection.close()
+            child.close()
+            if self._guard is not None:
+                self._guard.close()
+            if self._process.pid is not None and not self._process.is_alive():
+                self._process.close()
             raise
         self.runner_id = ready["runner_id"]
         self.runner_version = ready["runner_version"]
@@ -658,37 +667,42 @@ class _ForkedRunnerSession:
 
     def _terminate(self) -> None:
         process = getattr(self, "_process", None)
-        if process is None or not process.is_alive():
+        if process is None or process.pid is None or self._closed:
             return
         try:
-            os.killpg(process.pid, signal.SIGTERM)
-        except ProcessLookupError:
-            process.terminate()
-        process.join(timeout=1)
-        if process.is_alive():
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                process.kill()
-            process.join(timeout=1)
+            stop_and_reap(process)
+        finally:
+            self._connection.close()
+            if self._guard is not None:
+                self._guard.close(disarm=not process.is_alive())
 
     def close(self, timeout_seconds: int) -> None:
-        if self._process.is_alive():
-            try:
+        if self._closed:
+            return
+        try:
+            if self._process.is_alive():
                 self._call("close", timeout_seconds)
-            except QualificationError:
-                self._terminate()
-                raise
-        self._process.join(timeout=1)
-        if self._process.is_alive():
-            self._terminate()
-            raise _fail("phase_timeout", "runner close did not reap the child process")
-        self._connection.close()
+            self._process.join(timeout=1)
+            if self._process.is_alive():
+                raise _fail("phase_timeout", "runner close did not reap the child process")
+        finally:
+            # Cleanup also runs when close itself times out or receives bad IPC.
+            try:
+                stop_and_reap(self._process, timeout=1)
+            finally:
+                self._connection.close()
+                if self._guard is not None:
+                    self._guard.close(disarm=not self._process.is_alive())
+                if not self._process.is_alive():
+                    self._process.close()
+                    self._closed = True
 
 
 # Factories are populated only by repository-owned adapter modules. There are
 # intentionally no generic import strings, entry points, or caller arguments.
-_CODE_OWNED_RUNNER_FACTORIES: dict[str, Callable[[], AlgorithmRunner]] = {}
+_CODE_OWNED_RUNNER_FACTORIES: dict[str, Callable[[], AlgorithmRunner]] = {
+    "torchvision": create_torchvision_runner,
+}
 _CODE_OWNED_EVALUATOR_FACTORIES: dict[
     str, Callable[[Path, Path], QualificationEvaluator]
 ] = {}

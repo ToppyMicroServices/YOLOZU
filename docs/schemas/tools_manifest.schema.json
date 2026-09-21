@@ -38,6 +38,7 @@
       "properties": {
         "mcp_live": { "$ref": "#/$defs/ai_surface" },
         "guaranteed_ai_safe": { "$ref": "#/$defs/ai_surface" },
+        "image_service_safe": { "$ref": "#/$defs/ai_surface" },
         "config_review": { "$ref": "#/$defs/ai_surface" },
         "actions_public": { "$ref": "#/$defs/ai_surface" }
       },

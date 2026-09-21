@@ -235,7 +235,7 @@ localで生成したreportは
 `site_managed` / `site_qualified`までで、任意のworkspace JSONは選択対象に
 なりません。repository-managed trustには、追跡されたreview workflowとpublic review
 referenceが別途必要です。
-ただし3件にadaptive runnerはまだbindされていません。そのため
+ただしpackagedされた3件はrunnerにbindされていません。そのため
 現在はdummy evidenceを作らず、理由を示して停止します。内部のpure selectorは、
 検証済みのin-memory observationだけを対象に、固定したtrust、compatibility、artifact、
 evidence、performance、deterministic rankingの規則を適用します。provider file、model、
@@ -250,9 +250,11 @@ adapterはまだありません。ExperimentalかつMCP-onlyの`process_images`�
 decisionを受け取り、job、現在のlifecycle/evidence、environment、workload、input、class mapping、
 pinned artifact stateを再検証します。defaultは書き込みを行わない`dry_run=true`です。明示的な
 実行では、登録済みのcode-ownedかつnetwork-freeなrouteだけを使い、managedな
-predictions/provenance/checksum treeをatomicに公開します。ただしadaptive runner
-mapは空のため、現時点で実際のadaptive modelは実行できず、model adapterや性能実績を追加した
-ものではありません。activation
+predictions/provenance/checksum treeをatomicに公開します。exactなsafetensors/CPU
+bundle向けのcode-owned Torchvision Mask R-CNN runnerは登録されていますが、これにbindされ、
+license、qualification、support、evidence、lifecycle gateを通過したpackaged bundleは
+まだありません。そのためdefault installationでは実際のadaptive modelを実行できず、
+性能実績を追加したものではありません。activation
 recordだけでmodelの選択や実行は行いません。registryの
 読み込み、environment profile、smoke結果、output publicationだけでは
 qualification evidenceにもhuman adoptionの証明にもなりません。
@@ -269,6 +271,19 @@ qualification evidenceにもhuman adoptionの証明にもなりません。
 では、source、sdist、wheel、installed MCP callで同じ境界を確認しています。positiveな
 selector/executor caseは内部fixtureによるもので、実bundleのqualificationやselectedな
 public runを示すものではありません。
+
+OpenAIとClaudeからは、filesystemやbackendを操作させない5-toolのMCP image serviceを
+利用できます。待ち行列を含む処理期限、実行中のキャンセル、tenant保存先の排他を備えます。
+local stdio、Streamable HTTP、認証、tenant単位の利用制限、idle時の
+期限切れデータ削除、現在のabstention境界は
+[Bounded MCP image service](docs/image_service_mcp.md)を参照してください。
+実CNN bundleはまだ[未登録のレビュー提案](docs/image_service_candidate_review.md)であり、
+qualification・ライセンス承認・promotion済みではありません。
+
+[ローカルOpenAIプラグイン](docs/openai_image_service_plugin.md)は、この5-tool surfaceと
+専用Skillをまとめたものです。ローカル画像用clientとruntime確認付きの準備コマンドを
+含みます。モデルのqualification・有効化は行わず、ChatGPTの公開ディレクトリへ
+掲載されたものでもありません。
 
 生成した[roadmap report](reports/adaptive_vision_roadmap.md)、packagedされた[machine-readable projection](yolozu/data/manifest/adaptive_vision_roadmap.json)、[Beadsの同期規則](docs/roadmap.md)を参照してください。
 
