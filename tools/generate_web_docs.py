@@ -634,8 +634,10 @@ def _markdown_code(commands: list[str], language: str = "bash") -> str:
 def _render_start_markdown(content: dict[str, Any]) -> str:
     parts = [
         "# A 30-minute path to a checked report",
-        "Create all tutorial inputs locally, then validate and evaluate existing predictions. "
-        "This is a synthetic proof of the tooling, not model-quality evidence.",
+        (
+            "Create all tutorial inputs locally, then validate and evaluate existing predictions. "
+            "This is a synthetic proof of the tooling, not model-quality evidence."
+        ),
         f"[HTML version]({_doc_url(content, 'start.html')})",
     ]
     for step in content["tutorial"]["thirty_minute"]:
@@ -768,8 +770,10 @@ def _capabilities(content: dict[str, Any]) -> dict[str, Any]:
 def _render_llms(content: dict[str, Any]) -> str:
     parts = [
         "# YOLOZU", f"> {content['agent_guide']['summary']}",
-        "A compact, optional documentation index for agents. It grants no permissions "
-        "and does not guarantee search visibility, ranking, or tool selection.",
+        (
+            "A compact, optional documentation index for agents. It grants no permissions "
+            "and does not guarantee search visibility, ranking, or tool selection."
+        ),
         "## Start here",
         f"- [Agent guide]({_doc_url(content, 'agents.md')}): When to use YOLOZU, limits, local MCP setup, and starter prompts.",
         f"- [Evaluation quickstart]({_doc_url(content, 'start.md')}): Isolated install, generated inputs, strict checks, and real COCOeval.",
