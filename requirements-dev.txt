@@ -1,4 +1,4 @@
 # Developer conveniences (lint/format etc.)
 -r requirements-test.txt
 
-ruff>=0.5
+ruff>=0.16.0
