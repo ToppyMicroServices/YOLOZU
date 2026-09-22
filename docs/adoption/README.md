@@ -36,6 +36,7 @@ feedback, not from individual usage tracking.
 Reviews:
 
 - [`2026-07-feedback-review.md`](2026-07-feedback-review.md)
+- [`2026-08-feedback-review.md`](2026-08-feedback-review.md)
 
 The monthly review records category frequency, highest non-security impact,
 response-target results, public evidence, unknowns, and linked Beads actions.
