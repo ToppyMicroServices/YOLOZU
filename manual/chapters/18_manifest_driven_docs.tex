@@ -45,6 +45,17 @@ Relevant supplementary references include:
   \item \path{tools/validate_tool_manifest.py}
 \end{itemize}
 
+\section{Web and Agent Discovery}
+\path{tools/generate_web_docs.py} also generates \path{llms.txt}, HTML and
+Markdown onboarding, \path{capabilities.json}, and \path{sitemap.xml} under
+\path{docs/generated/web_docs/}. The capability catalog copies surface sets
+from the generated MCP reference and records source hashes. The agent guide
+states when to use each entrypoint and preserves model-qualification limits.
+Run the generator's \cmd{--check --json} mode to detect stale output.
+These files help readers and agents navigate the documentation; they do not
+guarantee search visibility, tool selection, or model readiness. Public-site
+deployment and access checks remain separate; see \path{docs/llm_discovery.md}.
+
 \section{Mandatory Update Procedure}
 When altering tool behavior, you must follow this sequential procedure:
 \begin{enumerate}

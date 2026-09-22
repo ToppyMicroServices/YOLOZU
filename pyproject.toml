@@ -43,6 +43,8 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://www.toppymicros.com/yolozu/"
+Documentation = "https://www.toppymicros.com/yolozu/docs/"
+"LLM Guide" = "https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/llm_discovery.md"
 Company = "https://www.toppymicros.com/"
 Repository = "https://github.com/ToppyMicroServices/YOLOZU"
 Issues = "https://github.com/ToppyMicroServices/YOLOZU/issues"

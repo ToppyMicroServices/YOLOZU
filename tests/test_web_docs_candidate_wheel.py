@@ -24,6 +24,7 @@ class TestWebDocsCandidateWheel(unittest.TestCase):
         cwd: Path,
         env: dict[str, str] | None = None,
         expect: int = 0,
+        timeout: int | None = None,
     ) -> subprocess.CompletedProcess[str]:
         proc = subprocess.run(
             command,
@@ -33,6 +34,7 @@ class TestWebDocsCandidateWheel(unittest.TestCase):
             stderr=subprocess.PIPE,
             text=True,
             check=False,
+            timeout=timeout,
         )
         self.assertEqual(
             proc.returncode,
@@ -180,6 +182,90 @@ class TestWebDocsCandidateWheel(unittest.TestCase):
                 elif parts[0] == "python":
                     parts[0] = str(python)
                 return parts
+
+            inspection_workflows = [
+                workflow for workflow in content["agent_guide"]["workflows"]
+                if workflow["id"] == "mcp-inspect"
+            ]
+            self.assertEqual(len(inspection_workflows), 1)
+            inspection_flags = {
+                "--help", "--print-tools", "--sample-generate-config",
+                "--sample-review-config",
+            }
+            inspected = set()
+            skipped_installs = 0
+            for command in inspection_workflows[0]["commands"]:
+                parts = shlex.split(command)
+                # Dependencies are reused from the existing runner. Do not
+                # install extras or access a package index in this offline test.
+                if parts == ["python", "-m", "pip", "install", "yolozu[mcp]"]:
+                    skipped_installs += 1
+                    continue
+                if parts == ["mkdir", "-p", "reports"]:
+                    (work_dir / "reports").mkdir(exist_ok=True)
+                    continue
+                self.assertEqual(parts[0], "yolozu-mcp")
+                self.assertIn(parts[1], inspection_flags)
+                self.assertNotIn("--transport", parts)
+                self.assertNotIn(parts[1], inspected)
+                inspected.add(parts[1])
+                output_path = None
+                if ">" in parts:
+                    self.assertEqual(parts.count(">"), 1)
+                    self.assertEqual(parts.index(">"), len(parts) - 2)
+                    relative = Path(parts[-1])
+                    self.assertFalse(relative.is_absolute())
+                    output_path = (work_dir / relative).resolve()
+                    self.assertIn(work_dir.resolve(), output_path.parents)
+                    parts = parts[:-2]
+                inspection = self._run(
+                    [
+                        str(python), "-m", "yolozu.integrations.mcp_cli",
+                        *parts[1:],
+                    ],
+                    cwd=work_dir,
+                    env=env,
+                    timeout=30,
+                )
+                if output_path is not None:
+                    output_path.write_text(inspection.stdout, encoding="utf-8")
+                else:
+                    self.assertEqual(parts[1:], ["--help"])
+                    for flag in inspection_flags:
+                        self.assertIn(flag, inspection.stdout)
+            self.assertEqual(skipped_installs, 1)
+            self.assertEqual(inspected, inspection_flags)
+
+            reference = json.loads(
+                (source_root / "docs/generated/mcp_actions_tool_reference.json")
+                .read_text(encoding="utf-8")
+            )
+            discovery = json.loads(
+                (work_dir / "reports/mcp_tool_ids.json").read_text(encoding="utf-8")
+            )
+            expected_ids = sorted(reference["surfaces"]["guaranteed_ai_safe"]["tool_ids"])
+            self.assertTrue(discovery["ok"])
+            self.assertEqual(discovery["schema_version"], 1)
+            self.assertEqual(discovery["selected_tool_ids"], expected_ids)
+            self.assertEqual(discovery["manifest_tools"], expected_ids)
+            self.assertTrue(discovery["filters"]["guaranteed"])
+            self.assertTrue(discovery["filters"]["ids_only"])
+            generated_config = json.loads(
+                (work_dir / "reports/ai_generate_config.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(generated_config["schema_version"], 1)
+            self.assertEqual(generated_config["tool"], "eval_coco")
+            self.assertTrue(generated_config["arguments"]["dry_run"])
+            self.assertFalse(generated_config["safety"]["allow_network"])
+            self.assertFalse(generated_config["safety"]["allow_gpu"])
+            config_review = json.loads(
+                (work_dir / "reports/ai_review_config.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(config_review["schema_version"], 1)
+            self.assertTrue(config_review["ok"])
+            self.assertEqual(config_review["issues"], [])
+            self.assertEqual(config_review["warnings"], [])
+            self.assertEqual(config_review["summary"], "config accepted")
 
             doctor_proc = subprocess.run(
                 installed_command(documented_command("yolozu doctor --proof")),

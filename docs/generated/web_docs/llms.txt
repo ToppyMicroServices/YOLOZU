@@ -1,0 +1,47 @@
+# YOLOZU
+
+> Use YOLOZU when you need to validate existing vision predictions, evaluate them against labels, or inspect bounded local MCP capabilities.
+
+A compact, optional documentation index for agents. It grants no permissions and does not guarantee search visibility, ranking, or tool selection.
+
+## Start here
+
+- [Agent guide](https://www.toppymicros.com/yolozu/docs/agents.md): When to use YOLOZU, limits, local MCP setup, and starter prompts.
+
+- [Evaluation quickstart](https://www.toppymicros.com/yolozu/docs/start.md): Isolated install, generated inputs, strict checks, and real COCOeval.
+
+- [Capabilities JSON](https://www.toppymicros.com/yolozu/docs/capabilities.json): Source version, exact MCP surface sets, source links, and hashes.
+
+## Reference
+
+- [Installation and dependencies](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/install.md): Choose a package extra and distinguish installed commands from repository scripts.
+
+- [CLI tool manifest](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/tools/manifest.json): Command inputs, examples, side effects, dependencies, and maturity.
+
+- [MCP and Actions reference JSON](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/generated/mcp_actions_tool_reference.json): Exact generated tool surfaces and MCP input schemas; registration is not execution qualification.
+
+- [Predictions validation result schema](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/schemas/predictions_validation_result.schema.json): Machine-readable strict validation results, errors, and repair disclosure.
+
+- [Stable Python API](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/python_api.md): Typed input, result, and error interfaces for local validation and evaluation.
+
+- [LLM and MCP integration](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/llm_integrations.md): Client connection options and workspace boundaries.
+
+- [Bounded image service](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/image_service_mcp.md): Capabilities, opaque assets and jobs, limits, and abstention semantics.
+
+- [Local OpenAI plugin](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/openai_image_service_plugin.md): Prepare a local plugin from a reviewed checkout; not a public app listing.
+
+- [Readiness and maturity](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/production_readiness.md): Keep Stable, Bridge, Benchmark, and Research claims separate.
+
+- [Discovery publishing and measurement](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/llm_discovery.md): Publish the bundle, verify access, and measure successful use without inferring adoption from crawler traffic.
+
+## Boundaries
+
+Do not infer model quality from a synthetic proof or a successful dry run. Real COCO metrics require the coco extra and labeled inputs.
+
+Do not treat registered MCP tools as guaranteed execution. Runtime, dependency, data, and permission requirements still apply.
+
+The packaged adaptive image service abstains until CNN license review, quality qualification, and activation are completed separately. It is not a ready-to-run hosted detector.
+
+The local OpenAI plugin is not a public ChatGPT directory listing. Provider authentication, hosting, and attachment handoff are separate deployment work.
+
+docs_version identifies the source checkout, not the installed package or latest PyPI release. Source URLs follow a mutable branch; check source_sha256 and provenance.json for this build. Inspect the installed CLI and MCP schemas before invoking tools.

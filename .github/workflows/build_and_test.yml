@@ -221,6 +221,7 @@ jobs:
           python -m unittest tests.test_byop_quickstarts -v
           python -m unittest \
             tests.test_web_docs_generation \
+            tests.test_web_docs_discovery \
             tests.test_web_docs_candidate_wheel -v
 
       - name: MCP/actions smoke
@@ -410,6 +411,7 @@ jobs:
           python tools/generate_web_docs.py --check --json
           python -m unittest \
             tests.test_web_docs_generation \
+            tests.test_web_docs_discovery \
             tests.test_web_docs_candidate_wheel -v
 
       - name: Smoke walkthrough (deep, offline)

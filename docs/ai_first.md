@@ -40,8 +40,8 @@ Best-effort (environment dependent, not in stable AI-safe guarantee):
 - TensorRT build/export
 - OpenCV CUDA/OpenVINO backend execution
 
-The live MCP server registers 27 canonical tool ids. The Actions API shares 21
-canonical operations. `generate_config` and `review_config` are in-process
+The live MCP and Actions API surfaces have different membership.
+`generate_config` and `review_config` are in-process
 config-review tools and are not Actions endpoints. These sets are intentionally
 different and are machine-readable in
 `docs/generated/mcp_actions_tool_reference.json` under `surfaces`.
@@ -57,10 +57,11 @@ wheel. Surface membership and maturity are separate: no `stable` maturity is
 inferred from `guaranteed_ai_safe`. A maturity/tag filter excludes
 unclassified records and reports those exclusions in `filter_diagnostics`.
 
-## 4) Fast path (3 commands)
+## 4) Fast path
 
 ```bash
 yolozu-mcp --print-tools --guaranteed --ids-only
+mkdir -p reports
 yolozu-mcp --sample-generate-config > reports/ai_generate_config.json
 yolozu-mcp --sample-review-config reports/ai_generate_config.json
 ```

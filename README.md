@@ -144,6 +144,7 @@ flowchart LR
 - [`docs/byop_quickstarts.md`](docs/byop_quickstarts.md): checked Ultralytics, Detectron2, MMDetection, and YOLOX export-to-report paths
 - [`docs/case_studies/maskrcnn_eager_torchscript.md`](docs/case_studies/maskrcnn_eager_torchscript.md): real eager/TorchScript outputs evaluated through one pinned lane
 - [Searchable web docs](https://www.toppymicros.com/yolozu/docs/): self-contained strict 30-minute path, typed Python API, generated commands and schemas, examples, glossary, and failure guide
+- [LLM discovery and onboarding](docs/llm_discovery.md): agent-readable guides, capability metadata, installation routes, and current usage boundaries
 
 ## Primary Focus
 
