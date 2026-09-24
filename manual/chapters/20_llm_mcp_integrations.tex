@@ -100,6 +100,9 @@ provide an OS network sandbox. Deployment isolation and HTTP connection/body lim
 remain the operator's responsibility. See \path{docs/image_service_mcp.md} for the
 exact limits and provider request settings, and
 \path{docs/image_service_candidate_review.md} for the unregistered CNN proposal.
+The local-only \cmd{yolozu prepare-torchvision-maskrcnn} command verifies a
+user-provided exact checkpoint and converts it to the pinned safetensors cache
+artifact. It does not download, redistribute, register, qualify, or promote weights.
 
 The local OpenAI plugin in \path{plugins/yolozu-image-service} packages this
 same five-tool surface and one scoped skill. Prepare a runtime-specific copy

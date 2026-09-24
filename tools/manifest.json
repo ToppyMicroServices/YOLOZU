@@ -13151,6 +13151,102 @@
     },
     {
       "docs": [
+        "README.md",
+        "Readme_jp.md",
+        "docs/adaptive_image_routing.md",
+        "docs/image_service_candidate_review.md",
+        "docs/image_service_mcp.md",
+        "manual/chapters/04_cli_reference.tex",
+        "manual/chapters/20_llm_mcp_integrations.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Writes one exact safetensors artifact and adjacent path-free provenance below the local artifact root without overwriting existing bytes.",
+            "flag": "--artifact-root",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "yolozu/cli.py",
+      "examples": [
+        {
+          "command": "python3 -m yolozu prepare-torchvision-maskrcnn --checkpoint ~/.cache/torch/hub/checkpoints/maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth --accept-upstream-terms",
+          "description": "Verify a user-provided exact checkpoint and convert it locally without downloading or redistributing weights."
+        },
+        {
+          "command": "python3 -m yolozu prepare-torchvision-maskrcnn --help",
+          "description": "Inspect the exact local preparation boundary."
+        }
+      ],
+      "id": "prepare_torchvision_maskrcnn",
+      "inputs": [
+        {
+          "description": "User-provided exact Torchvision Mask R-CNN source checkpoint.",
+          "flag": "--checkpoint",
+          "kind": "file",
+          "name": "checkpoint",
+          "required": true
+        },
+        {
+          "default": "~/.cache/yolozu/models",
+          "description": "Local artifact root containing the fixed runner cache key.",
+          "flag": "--artifact-root",
+          "kind": "dir",
+          "name": "artifact_root",
+          "required": false
+        },
+        {
+          "description": "Required acknowledgement of Torchvision's pretrained-model notice.",
+          "flag": "--accept-upstream-terms",
+          "kind": "string",
+          "name": "accept_upstream_terms",
+          "required": true
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": "~/.cache/yolozu/models/torchvision/maskrcnn-resnet50-fpn-v2-coco-v1/model.safetensors",
+          "description": "Exact locally converted safetensors artifact.",
+          "kind": "file",
+          "name": "artifact"
+        },
+        {
+          "default": "~/.cache/yolozu/models/torchvision/maskrcnn-resnet50-fpn-v2-coco-v1/model.safetensors.provenance.json",
+          "description": "Path-free local preparation provenance with NOASSERTION and false redistribution fields.",
+          "kind": "file",
+          "name": "provenance"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "network": false,
+        "python_packages": [
+          "torch",
+          "safetensors"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Verify and locally convert one exact user-provided Torchvision checkpoint without downloading, relicensing, or redistributing model bytes.",
+      "tags": [
+        "adaptive-inference",
+        "artifact",
+        "experimental",
+        "local-inference",
+        "provenance",
+        "torchvision"
+      ]
+    },
+    {
+      "docs": [
         "docs/ttt_protocol.md",
         "manual/chapters/15_ttt_tent_mim.tex"
       ],

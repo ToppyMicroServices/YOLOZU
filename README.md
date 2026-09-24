@@ -203,6 +203,13 @@ screening stream contains two current `hold` decisions from the 2026-08-29
 screening input is always operator-asserted. Neither record is a managed pass, so
 no candidate is made available by this implementation.
 Explicit workspace catalogs remain operator-asserted and nonselectable. The Experimental
+`yolozu prepare-torchvision-maskrcnn` command accepts only the exact pinned
+Torchvision Mask R-CNN checkpoint supplied by the user. It performs no download,
+requires acknowledgement of the upstream pretrained-model notice, verifies the
+source digest, and writes a deterministic safetensors artifact plus local provenance
+to the model cache. The checkpoint remains `NOASSERTION`; YOLOZU's Apache-2.0
+license does not relicense or redistribute either weight file.
+The Experimental
 `yolozu qualify-image-pipeline` command now implements pinned no-follow input
 and asset preflight, a frozen repeat/soak protocol, bounded child-process
 cancellation, and atomic unactivated `qualification_report.json` publication.
@@ -287,7 +294,8 @@ running cancellation, and exclusive tenant storage ownership. See
 [Bounded MCP image service](docs/image_service_mcp.md) for local stdio,
 Streamable HTTP, authentication, per-tenant request limits, idle-time retention
 cleanup, and the current abstention boundary. The exact CNN bundle remains an
-[unregistered review proposal](docs/image_service_candidate_review.md).
+[unregistered review proposal](docs/image_service_candidate_review.md). Local
+checkpoint preparation does not register, qualify, activate, or promote it.
 
 The [local OpenAI plugin](docs/openai_image_service_plugin.md) packages this
 five-tool surface and a scoped workflow skill, with a local image client and

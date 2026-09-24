@@ -199,6 +199,12 @@ runtime、resource、maintenance、security、human reviewを分離し、pass、
 2026-08-29の[candidate review](docs/adaptive_candidate_screenings_2026-08-29.md)で得た
 currentな`hold`が2件あります。workspace inputは常にoperator-assertedです。managed passは
 ないため、この実装だけで利用可能なcandidateが増えることはありません。POSIX専用の
+Experimental `yolozu prepare-torchvision-maskrcnn` commandは、ユーザーが取得した
+exact pinned Torchvision Mask R-CNN checkpointだけを受け付けます。downloadは行わず、
+upstreamのpretrained-model noticeへの同意を要求し、source digestを検証してから、
+deterministicなsafetensors artifactとlocal provenanceをmodel cacheへ書きます。
+checkpointは`NOASSERTION`のままです。YOLOZUのApache-2.0 licenseは、sourceまたは
+変換後weightを再license・再配布しません。
 Experimental `yolozu qualify-image-pipeline` commandは、pinned no-follow input/asset
 preflight、固定したrepeat/soak protocol、child processのbounded cancellation、
 unactivatedな`qualification_report.json`のatomic publicationを実装しています。
@@ -279,7 +285,8 @@ local stdio、Streamable HTTP、認証、tenant単位の利用制限、idle時�
 期限切れデータ削除、現在のabstention境界は
 [Bounded MCP image service](docs/image_service_mcp.md)を参照してください。
 実CNN bundleはまだ[未登録のレビュー提案](docs/image_service_candidate_review.md)であり、
-qualification・ライセンス承認・promotion済みではありません。
+qualification・ライセンス承認・promotion済みではありません。local checkpointの準備は
+可能ですが、それだけでbundleの登録・qualification・activation・promotionは行われません。
 
 [ローカルOpenAIプラグイン](docs/openai_image_service_plugin.md)は、この5-tool surfaceと
 専用Skillをまとめたものです。ローカル画像用clientとruntime確認付きの準備コマンドを

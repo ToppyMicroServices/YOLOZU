@@ -31,22 +31,59 @@ took 5.690 seconds in this single run. This is not a latency percentile, accurac
 measurement, supported resolution range, or full qualification. The draft input
 shape describes only that image. No OS network isolation was measured or claimed.
 
+## Approved local preparation boundary
+
+On 2026-09-25, the release reviewer approved a narrower acquisition design. YOLOZU
+does not download or redistribute the source checkpoint or converted artifact.
+The user obtains the exact upstream checkpoint, reviews the upstream pretrained-model
+notice, and runs:
+
+```bash
+yolozu prepare-torchvision-maskrcnn \
+  --checkpoint /path/to/maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth \
+  --accept-upstream-terms
+```
+
+The command accepts only the pinned 185,828,065-byte source with SHA-256
+`73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e`.
+It performs no network request, loads only after verification with
+`weights_only=True` and read-only memory mapping, converts locally with sorted
+contiguous tensors, and accepts only the 185,728,220-byte safetensors output with SHA-256
+`59f39b25a05a7130ebb754f82451e44b791c684601a15cefc64f79462e1e8187`.
+The adjacent provenance records the upstream URL and notice, runtime versions,
+explicit acknowledgement, `NOASSERTION`, and false redistribution fields without
+recording the user's source path. Existing cache bytes are never overwritten.
+
+This resolves the acquisition and redistribution design question. It does not
+establish that the checkpoint is Apache-2.0. It also does not register the draft,
+approve a license review, define a quality workload, or satisfy qualification.
+
+The implementation was exercised on 2026-09-25 with the cached source checkpoint.
+The temporary conversion produced the exact expected size and SHA-256, and its
+provenance recorded Torch `2.12.0.dev20260330` and safetensors `0.8.0`. The
+temporary artifact was then removed. Installation into the default user cache was
+attempted but failed cleanly because the host filesystem had less usable free space
+than the 185,728,220-byte artifact. No partial artifact remains. Persistent local
+installation is therefore still incomplete on this host; the conversion result is
+not qualification evidence.
+
 ## Why activation remains blocked
 
 Torchvision's [code license](https://raw.githubusercontent.com/pytorch/vision/main/LICENSE)
 is BSD-3-Clause, but its [pretrained-model notice](https://github.com/pytorch/vision#pre-trained-model-license)
 asks users to determine the permissions for their use case, including terms
-derived from training data. The inspected sources do not settle the permission
-for this proposed service and weight redistribution. The draft therefore keeps
-`license_expression=unknown` and `license_review=unreviewed`. This is an unresolved
-review question, not a finding that use is prohibited. The upstream sources were
-checked on 2026-09-20; the exact installed source-revision pages could not be
-retrieved in that check.
+derived from training data. The local preparation record therefore uses
+`NOASSERTION`; it does not copy Apache-2.0 from YOLOZU onto the checkpoint. The
+historical 2026-09-20 draft remains unchanged with `license_expression=unknown`
+and `license_review=unreviewed`. A future registered spec must use the reviewed
+`NOASSERTION` disposition unless independent rights evidence supports a different
+expression.
 
 Repository prerequisites still missing:
 
-- A reviewed disposition for the exact weights, runtime dependency set, and
-  evaluation images, with retained references and intended service/redistribution scope.
+- A managed artifact-license review that records `NOASSERTION`, the approved
+  user-acquired/non-redistributed scope, and retained upstream references.
+- Reviewed dispositions for the runtime dependency set and frozen evaluation data.
 - Managed candidate screening and registration with reviewed license state.
 - A frozen quality workload, evaluator, threshold, and measured qualification.
   The one-image smoke must not supply those values.

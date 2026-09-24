@@ -45,7 +45,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">149 manifest entries with declared maturity, inputs,
+  <p class="lead">150 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -1451,6 +1451,21 @@ python3 tools/prepare_keypoints_dataset.py --source /path/to/cvat_export --forma
   <h3>Examples</h3>
   <pre><code>python3 scripts/download_coco_instances_tiny.py --out-root data/coco --split val2017 --num-images 8 --seed 0 --force &amp;&amp; python3 tools/prepare_real_multitask_fewshot.py --instances-json data/coco/annotations/instances_val2017.json --images-dir data/coco/images/val2017 --out data/real_multitask_fewshot --train-images 6 --val-images 2 --num-keypoints 4 --strict-provenance --force</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/prepare_real_multitask_fewshot.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/training_inference_export.md" target="_blank" rel="noopener noreferrer">training_inference_export.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/16_depth_6dof_symmetry.tex" target="_blank" rel="noopener noreferrer">16_depth_6dof_symmetry.tex</a></p>
+</details>
+
+<details class="card" id="tool-prepare-torchvision-maskrcnn" data-tool-id="prepare_torchvision_maskrcnn"
+  data-search-card data-search-text="prepare_torchvision_maskrcnn Verify and locally convert one exact user-provided Torchvision checkpoint without downloading, relicensing, or redistributing model bytes. experimental yolozu/cli.py python3 -m yolozu prepare-torchvision-maskrcnn --checkpoint ~/.cache/torch/hub/checkpoints/maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth --accept-upstream-terms python3 -m yolozu prepare-torchvision-maskrcnn --help">
+  <summary><code>prepare_torchvision_maskrcnn</code> — Verify and locally convert one exact user-provided Torchvision checkpoint without downloading, relicensing, or redistributing model bytes.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>yolozu/cli.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--checkpoint</code> — required, file</li><li><code>--artifact-root</code> — default=~/.cache/yolozu/models, dir</li><li><code>--accept-upstream-terms</code> — required, string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 -m yolozu prepare-torchvision-maskrcnn --checkpoint ~/.cache/torch/hub/checkpoints/maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth --accept-upstream-terms
+python3 -m yolozu prepare-torchvision-maskrcnn --help</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/yolozu/cli.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/Readme_jp.md" target="_blank" rel="noopener noreferrer">Readme_jp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/adaptive_image_routing.md" target="_blank" rel="noopener noreferrer">adaptive_image_routing.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/image_service_candidate_review.md" target="_blank" rel="noopener noreferrer">image_service_candidate_review.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/image_service_mcp.md" target="_blank" rel="noopener noreferrer">image_service_mcp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/04_cli_reference.tex" target="_blank" rel="noopener noreferrer">04_cli_reference.tex</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/20_llm_mcp_integrations.tex" target="_blank" rel="noopener noreferrer">20_llm_mcp_integrations.tex</a></p>
 </details>
 
 <details class="card" id="tool-prepare-ttt-domain-shift-target" data-tool-id="prepare_ttt_domain_shift_target"

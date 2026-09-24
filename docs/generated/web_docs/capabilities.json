@@ -24,7 +24,7 @@
     {
       "description": "Command inputs, examples, side effects, dependencies, and maturity.",
       "id": "cli_manifest",
-      "source_sha256": "3380693badb474989bf140273a781c4053ea2874e8ebd60349744c033826c4f6",
+      "source_sha256": "b06e4dc9730a0f49867ae3528f30a1f5e7afe1d39da36b9e541da3d00c786c51",
       "title": "CLI tool manifest",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/tools/manifest.json"
     },
@@ -59,7 +59,7 @@
     {
       "description": "Capabilities, opaque assets and jobs, limits, and abstention semantics.",
       "id": "image_service",
-      "source_sha256": "148d1f62cc153ee43f5705730e3bef13cca673e8d009d1bac492d7f0cd87f22c",
+      "source_sha256": "03df085e44b5ab57149925760e19d764b9f344923463118193fcdf5f9de27e82",
       "title": "Bounded image service",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/image_service_mcp.md"
     },
