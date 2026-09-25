@@ -59,13 +59,14 @@ establish that the checkpoint is Apache-2.0. It also does not register the draft
 approve a license review, define a quality workload, or satisfy qualification.
 
 The implementation was exercised on 2026-09-25 with the cached source checkpoint.
-The temporary conversion produced the exact expected size and SHA-256, and its
-provenance recorded Torch `2.12.0.dev20260330` and safetensors `0.8.0`. The
-temporary artifact was then removed. Installation into the default user cache was
-attempted but failed cleanly because the host filesystem had less usable free space
-than the 185,728,220-byte artifact. No partial artifact remains. Persistent local
-installation is therefore still incomplete on this host; the conversion result is
-not qualification evidence.
+The first temporary conversion produced the exact expected size and SHA-256, then
+was removed. Two initial default-cache attempts failed cleanly with `ENOSPC` and
+left no partial artifact. After space became available, the same command completed
+the persistent default-cache installation. The installed file is mode `0600`; its
+size and SHA-256 match the pinned values above. Its path-free provenance records
+Torch `2.12.0.dev20260330`, safetensors `0.8.0`, the exact source identity,
+explicit upstream-terms acknowledgement, `NOASSERTION`, and false redistribution.
+This verified local installation is not qualification evidence.
 
 ## Why activation remains blocked
 
