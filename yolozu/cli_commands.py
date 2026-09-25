@@ -1137,6 +1137,27 @@ def _cmd_fetch_model(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_prepare_torchvision_maskrcnn(args: argparse.Namespace) -> int:
+    from yolozu.adaptive.checkpoint_preparation import (
+        prepare_torchvision_maskrcnn_checkpoint,
+    )
+
+    try:
+        result = prepare_torchvision_maskrcnn_checkpoint(
+            checkpoint_path=str(args.checkpoint),
+            artifact_root=getattr(args, "artifact_root", None),
+            accept_upstream_terms=bool(
+                getattr(args, "accept_upstream_terms", False)
+            ),
+        )
+    except Exception as exc:
+        raise SystemExit(str(exc)) from exc
+    print(str(result.artifact_path))
+    print(str(result.provenance_path))
+    print(f"artifact_reused={str(result.artifact_reused).lower()}")
+    return 0
+
+
 def _cmd_benchmark(args: argparse.Namespace) -> int:
     from yolozu.eval.benchmark_mode import run_benchmark_mode
 

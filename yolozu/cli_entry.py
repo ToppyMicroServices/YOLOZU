@@ -17,6 +17,7 @@ from .cli_commands import (
     _cmd_registry_validate,
     _cmd_list_models,
     _cmd_fetch_model,
+    _cmd_prepare_torchvision_maskrcnn,
     _cmd_export,
     _cmd_export_dataset,
     _cmd_predict_images,
@@ -294,6 +295,26 @@ def main(argv: list[str] | None = None) -> int:
     fetch.add_argument("--retries", type=int, default=3, help="Download retry count (default: 3).")
     fetch.add_argument("--timeout", type=float, default=60.0, help="Download timeout in seconds (default: 60).")
     fetch.add_argument("--force", action="store_true", help="Re-download to cache and overwrite output artifact.")
+
+    prepare_maskrcnn = sub.add_parser(
+        "prepare-torchvision-maskrcnn",
+        help="Verify and locally convert the exact pinned Torchvision checkpoint.",
+    )
+    prepare_maskrcnn.add_argument(
+        "--checkpoint",
+        required=True,
+        help="User-provided maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth path.",
+    )
+    prepare_maskrcnn.add_argument(
+        "--artifact-root",
+        default=None,
+        help="Local artifact root (default: ~/.cache/yolozu/models).",
+    )
+    prepare_maskrcnn.add_argument(
+        "--accept-upstream-terms",
+        action="store_true",
+        help="Required acknowledgement of Torchvision's pretrained-model notice.",
+    )
 
     export = sub.add_parser("export", help="Export predictions.json artifacts across the supported backend lanes.")
     parse_common_export_args(export)
@@ -1749,6 +1770,8 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("unknown list command")
     if args.command == "fetch":
         return _cmd_fetch_model(args)
+    if args.command == "prepare-torchvision-maskrcnn":
+        return _cmd_prepare_torchvision_maskrcnn(args)
     if args.command == "export":
         return _cmd_export(args)
     if args.command == "export-dataset":

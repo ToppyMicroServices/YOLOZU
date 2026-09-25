@@ -714,6 +714,13 @@
     "title": "prepare_real_multitask_fewshot"
   },
   {
+    "href": "commands.html#tool-prepare-torchvision-maskrcnn",
+    "kind": "command",
+    "search_text": "prepare_torchvision_maskrcnn Verify and locally convert one exact user-provided Torchvision checkpoint without downloading, relicensing, or redistributing model bytes. experimental yolozu/cli.py --checkpoint --artifact-root --accept-upstream-terms python3 -m yolozu prepare-torchvision-maskrcnn --checkpoint ~/.cache/torch/hub/checkpoints/maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth --accept-upstream-terms python3 -m yolozu prepare-torchvision-maskrcnn --help",
+    "summary": "Verify and locally convert one exact user-provided Torchvision checkpoint without downloading, relicensing, or redistributing model bytes.",
+    "title": "prepare_torchvision_maskrcnn"
+  },
+  {
     "href": "commands.html#tool-prepare-ttt-domain-shift-target",
     "kind": "command",
     "search_text": "prepare_ttt_domain_shift_target Prepare a deterministic, provenance-hashed domain-shift target and recipe while refusing source/output overlap, symlink outputs, protected roots, and unowned replacement. research scripts/prepare_ttt_domain_shift_target.py --dataset-root --split --out --corruption --severity --seed --max-images --copy-labels --no-copy-labels --force --recipe-out python3 scripts/prepare_ttt_domain_shift_target.py --dataset-root data/smoke --split val --out reports/domain_shift/smoke_gaussian_blur_s2 --corruption gaussian_blur --severity 2 --seed 2026 --force",

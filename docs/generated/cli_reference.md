@@ -6,14 +6,16 @@ Keep narrative docs short and link here for the full command surface.
 ## Top-level `yolozu --help`
 
 ```text
-usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,promote-image-pipeline,scout-algorithms,check-qualification-freshness,registry,completion,comp} ...
+usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,prepare-torchvision-maskrcnn,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,promote-image-pipeline,scout-algorithms,check-qualification-freshness,registry,completion,comp} ...
 
 positional arguments:
-  {guide,doctor,dr,list,fetch,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,promote-image-pipeline,scout-algorithms,check-qualification-freshness,registry,completion,comp}
+  {guide,doctor,dr,list,fetch,prepare-torchvision-maskrcnn,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,promote-image-pipeline,scout-algorithms,check-qualification-freshness,registry,completion,comp}
     guide               Show beginner-friendly routes and copy-paste commands.
     doctor (dr)         Check the environment. Use --explain for beginner-friendly next actions.
     list                List registries and built-in catalogs.
     fetch               Download a model artifact from the built-in (or custom) model registry.
+    prepare-torchvision-maskrcnn
+                        Verify and locally convert the exact pinned Torchvision checkpoint.
     export              Export predictions.json artifacts across the supported backend lanes.
     export-dataset      Export a YOLOZU dataset into YOLO, COCO, KITTI, or segmentation layout.
     predict-images      Run folder inference and write predictions JSON + overlays + HTML.
@@ -272,6 +274,7 @@ Contact: develop@toppymicros.com
 | prepare_image_service_plugin | experimental | tools/prepare_image_service_plugin.py | Prepare a non-overwriting local OpenAI plugin copy after checking the selected installed runtime's five-tool MCP surface; do not install dependencies, register a marketplace, or qualify a model. |
 | prepare_keypoints_dataset | stable | tools/prepare_keypoints_dataset.py | Prepare keypoints dataset in one command (auto-detect YOLO Pose or COCO keypoints) and emit YOLOZU-ready dataset wrapper. |
 | prepare_real_multitask_fewshot | stable | tools/prepare_real_multitask_fewshot.py | Create a small real-image multitask few-shot dataset (bbox/seg/keypoints/depth/pose sidecars) from COCO instances, with optional tiny COCO auto-download and explicit label provenance metadata. |
+| prepare_torchvision_maskrcnn | experimental | yolozu/cli.py | Verify and locally convert one exact user-provided Torchvision checkpoint without downloading, relicensing, or redistributing model bytes. |
 | prepare_ttt_domain_shift_target | research | scripts/prepare_ttt_domain_shift_target.py | Prepare a deterministic, provenance-hashed domain-shift target and recipe while refusing source/output overlap, symlink outputs, protected roots, and unowned replacement. |
 | prepare_voc_seg | stable | tools/prepare_voc_seg.py | Prepare Pascal VOC semantic segmentation layout + dataset.json manifest. |
 | probe_candidate_isolation | experimental | tools/probe_candidate_isolation.py | Report the code-owned none-supported candidate-isolation decision without treating backend presence, mocks, or in-process guards as containment. |

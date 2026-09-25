@@ -92,6 +92,13 @@ error and does
 not create synthetic or no-op qualification evidence. It is not a selector,
 model adapter, or general image-processing capability.
 
+The separate `yolozu prepare-torchvision-maskrcnn` command is a local-only
+artifact preparation step for one exact checkpoint. It requires a user-provided
+source file and explicit acknowledgement of the upstream pretrained-model notice,
+then verifies and converts to the runner's pinned safetensors cache key. It does
+not download, register, screen, qualify, activate, select, execute, or promote a
+bundle. Its provenance uses `NOASSERTION`; Apache-2.0 applies only to YOLOZU source.
+
 The Experimental `yolozu scout-algorithms` surface is a separate candidate inbox.
 It accepts only `docs/algorithm_intake/sources.json`. Without `--collect`, it
 validates that file and prints a bounded JSON plan without network access or writes.

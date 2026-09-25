@@ -52,6 +52,7 @@ _PKG_PASSTHROUGH_COMMANDS = {
     "onnxrt",
     "parity",
     "predictions",
+    "prepare-torchvision-maskrcnn",
     "qualify-image-pipeline",
     "review-image-pipeline-support-profiles",
     "update-image-pipeline-lifecycle",
@@ -1415,6 +1416,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         ("benchmark", "Delegate to yolozu package CLI benchmark command."),
         ("parity", "Delegate to yolozu package CLI parity command."),
         ("predictions", "Delegate to yolozu package CLI predictions command."),
+        (
+            "prepare-torchvision-maskrcnn",
+            "Delegate to the exact local Torchvision checkpoint preparation command.",
+        ),
         (
             "qualify-image-pipeline",
             "Delegate to yolozu package CLI qualification command.",

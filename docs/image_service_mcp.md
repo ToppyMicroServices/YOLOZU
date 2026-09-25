@@ -217,6 +217,21 @@ one-image smoke run confirmed real detections for one exact checkpoint,
 runtime, and image. The bounded record is
 [`mcp_image_service_runner_smoke_2026-09-20.json`](../reports/mcp_image_service_runner_smoke_2026-09-20.json).
 
+Users can prepare that exact artifact without giving YOLOZU a download role:
+
+```bash
+yolozu prepare-torchvision-maskrcnn \
+  --checkpoint /path/to/maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth \
+  --accept-upstream-terms
+```
+
+The command performs no network request. It checks the pinned source size and
+SHA-256 before a restricted `weights_only=True`, read-only memory-mapped load,
+writes the exact converted artifact under the local YOLOZU model cache, and records a path-free provenance
+file. It records the checkpoint license as `NOASSERTION` and both source and
+converted redistribution as false. Apache-2.0 applies to YOLOZU source, not to
+the checkpoint. Existing destination bytes are never overwritten.
+
 That smoke result is not qualification, license approval, or promotion
 evidence. No packaged bundle currently combines this runner with completed
 license review, support profiles, activated qualification evidence, and an
@@ -226,5 +241,7 @@ place until the existing governance gates are completed for an exact bundle.
 
 The [candidate review](image_service_candidate_review.md) records a validated,
 unregistered bundle proposal, exact runtime/component identities, a repeated
-one-image smoke, and the remaining review gates. It deliberately retains
-`license_expression=unknown` and does not change the packaged registry.
+one-image smoke, the approved local-preparation boundary, and the remaining
+review gates. The historical proposal retains `license_expression=unknown`; a
+future managed spec must use `NOASSERTION` unless separate rights evidence is
+approved. Preparation changes no packaged registry or lifecycle record.
