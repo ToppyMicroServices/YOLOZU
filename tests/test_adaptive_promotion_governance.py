@@ -66,7 +66,7 @@ def _jsonl(*records: dict) -> bytes:
 
 class _ScreeningPass:
     def to_dict(self) -> dict:
-        return {"status": "current_pass", "trust_domain": "yolozu_managed"}
+        return {"status": "not_applicable", "trust_domain": "unknown"}
 
 
 class _PromotionWorkspace:
@@ -461,6 +461,14 @@ class _PromotionWorkspace:
 
 
 class PromotionServiceTests(unittest.TestCase):
+    def test_existing_code_owned_candidate_needs_no_screening_record(self) -> None:
+        workspace = _PromotionWorkspace(target_channel="Experimental")
+        self.addCleanup(workspace.cleanup)
+        outcome = promote_image_pipeline(
+            **workspace.args(target_channel="Experimental")
+        )
+        self.assertEqual(outcome.status, "dry_run_ready")
+
     @patch(
         "yolozu.adaptive.promotion.build_screening_eligibility_observation",
         return_value=_ScreeningPass(),

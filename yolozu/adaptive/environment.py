@@ -158,7 +158,9 @@ else:
     return common + body
 
 
-_PYTHON = str(Path(sys.executable).resolve())
+# Keep the active virtual-environment launcher. Resolving its symlink would
+# silently probe the base interpreter and report installed runtimes as absent.
+_PYTHON = os.path.abspath(sys.executable)
 _RUNTIME_SPECS = tuple(
     _ProbeSpec(
         probe_id=f"runtime_{module_name}",

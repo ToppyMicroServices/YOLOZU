@@ -90,9 +90,10 @@ Custom screening input is always operator-asserted and cannot produce a managed 
 returns `ok=true` for both `selected` and `abstained` SelectionDecision outcomes.
 Malformed, unsafe, corrupt, or internal failures return `ok=false`. The operation
 does not parse natural language, run a model, download assets, write files, or
-request network access. The packaged registry contains three Candidate baselines
-with unbound execution. Because Candidate is nonselectable and the screening and
-public evidence streams are empty, the default installed call records `maturity_disallowed` and
+request network access. The packaged registry contains three unbound model-zoo
+Candidates and one bound, qualification-only Torchvision Candidate whose full
+report is `hold`. Because Candidate is nonselectable and the activation stream is
+empty, the default installed call records `maturity_disallowed` and
 abstains rather than inventing a recommendation.
 
 `process_images` is the paired Experimental MCP-only processing operation. It
@@ -100,8 +101,8 @@ requires the complete selected decision, repeats the governed and pinned local
 preflight, and defaults to `dry_run=true`, which creates no runner or output.
 Only explicit `dry_run=false` may use a registered code-owned network-free route
 and publish the exact managed predictions/provenance/checksum tree. A code-owned
-Torchvision runner is registered, but no packaged bundle binds it or passes the
-required license, qualification, support, evidence, and lifecycle gates. The
+Torchvision runner is bound only to the qualification-only Candidate. Its full
+report is `hold`, and it has no support, activation, or promoted assignment. The
 default installed surface therefore cannot currently execute a real adaptive
 model. It is not `guaranteed_ai_safe`.
 

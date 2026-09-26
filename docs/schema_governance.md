@@ -98,11 +98,11 @@ their own source and packaged form; there is no docs copy or serialized mutable
 projection. A report ID is a validated ASCII component, never a path. Site-managed
 reports and activation streams stay under an explicit site-confined root and are
 not copied into the repository package. The default registry contains three
-Candidate baselines matching the model zoo; the screening stream has two current
-hold records, while the public support and activation streams remain empty and
-there are no public qualification reports. Each baseline
-has `execution_binding.status=unbound`, so the records are neither selectable nor
-executable. Runtime projections must be
+unbound Candidate baselines matching the model zoo and one bound,
+qualification-only Torchvision Candidate. The screening stream has two current
+hold records. The public support and activation streams remain empty, and one
+unactivated `hold` qualification report is retained. No Candidate is selectable
+by ordinary jobs. Runtime projections must be
 derived from validated immutable records and complete, strictly ordered event
 chains.
 

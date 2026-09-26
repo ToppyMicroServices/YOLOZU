@@ -94,9 +94,9 @@ Experimental adaptive pipeline available.
 This subsection is for callers integrating adaptive image pipelines. It is not
 needed for the first-run or predictions-evaluation path above.
 
-The installed package also contains three non-promoted adaptive Candidate bundle
-records matching the existing model zoo. Their weight metadata is pinned, but their
-execution binding is unbound. The bounded loader validates this registry and lifecycle
+The installed package contains three non-promoted, unbound adaptive Candidate bundle
+records matching the existing model zoo, plus one bound Torchvision Mask R-CNN
+Candidate that consumes an exact user-prepared local safetensors artifact. The bounded loader validates this registry and lifecycle
 SSOT without importing a model runtime or downloading assets. A caller-supplied workspace catalog remains
 \cmd{operator\_asserted} and nonselectable; registry integrity alone is not
 qualification evidence. A non-executing candidate-screening provider is packaged,
@@ -104,10 +104,13 @@ and the repository-managed stream currently contains two \cmd{hold} records.
 Workspace screening input remains
 \cmd{operator\_asserted}, and a pass record alone cannot register or execute a
 bundle. The Experimental \cmd{yolozu qualify-image-pipeline}
-command is installed. A code-owned Torchvision runner is registered, but the
-Candidate records do not bind it, so the default invocation fails actionably
-without dummy evidence. Its \cmd{--help} documents
+command is installed. It alone may measure the exact bound Candidate for an intended
+Experimental request with the code-owned local COCO evaluator. Candidate remains
+unavailable to ordinary routing. Its \cmd{--help} documents
 the exact-bundle, timeout, pinned-input, and managed-output interface contract.
+The first retained 16-image run returned \cmd{hold} because its preregistered
+p95 latency limit was exceeded. No activation, support assignment, or promotion
+was created from that report.
 
 The Experimental \cmd{yolozu update-image-pipeline-lifecycle} command is also
 installed. It defaults to a no-write dry-run and requires an approved public review,

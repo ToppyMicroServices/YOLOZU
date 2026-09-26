@@ -232,16 +232,17 @@ file. It records the checkpoint license as `NOASSERTION` and both source and
 converted redistribution as false. Apache-2.0 applies to YOLOZU source, not to
 the checkpoint. Existing destination bytes are never overwritten.
 
-That smoke result is not qualification, license approval, or promotion
-evidence. No packaged bundle currently combines this runner with completed
-license review, support profiles, activated qualification evidence, and an
-Experimental or Stable lifecycle assignment. Therefore the default installed
-service still abstains instead of executing a CNN. This boundary must remain in
-place until the existing governance gates are completed for an exact bundle.
+That smoke result is not qualification or promotion evidence. The exact runner
+and local artifact are now bound to a reviewed `NOASSERTION` Candidate, but
+Candidate remains unavailable to normal service routing. Its first full
+qualification retained known quality and performance measurements and returned
+`hold`: the preregistered `5000 ms` p95 limit was exceeded. The threshold was not
+changed after measurement. No evidence activation, support-profile assignment,
+or Experimental lifecycle assignment was created, so the default installed
+service still abstains instead of executing the CNN.
 
-The [candidate review](image_service_candidate_review.md) records a validated,
-unregistered bundle proposal, exact runtime/component identities, a repeated
-one-image smoke, the approved local-preparation boundary, and the remaining
-review gates. The historical proposal retains `license_expression=unknown`; a
-future managed spec must use `NOASSERTION` unless separate rights evidence is
-approved. Preparation changes no packaged registry or lifecycle record.
+The [candidate review](image_service_candidate_review.md) records the exact
+runtime/component identities, local-preparation boundary, retained full report,
+measured hold, and remaining gates. The older proposal remains a historical
+record only; the managed bundle uses `NOASSERTION` and does not redistribute
+either weight artifact.

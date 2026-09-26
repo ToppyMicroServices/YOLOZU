@@ -208,6 +208,17 @@ checkpointは`NOASSERTION`のままです。YOLOZUのApache-2.0 licenseは、sou
 Experimental `yolozu qualify-image-pipeline` commandは、pinned no-follow input/asset
 preflight、固定したrepeat/soak protocol、child processのbounded cancellation、
 unactivatedな`qualification_report.json`のatomic publicationを実装しています。
+ローカルで準備したexact Torchvision bundleは`NOASSERTION`のCandidateとしてだけ登録され、
+通常のjobからは選択できません。qualifierだけが、将来のExperimental request用として
+このCandidateを測定できます。code-owned `coco_bbox_simple_map_v1` evaluatorは
+workspace内のuser-local COCO instances fileを読みます。image、annotation、model bytesは
+packageしません。固定した16-image quality profileとMCPのexact single-image
+workload profileは、それぞれ
+[`configs/qualification/torchvision_maskrcnn_coco16_cpu.json`](configs/qualification/torchvision_maskrcnn_coco16_cpu.json)と
+[`configs/qualification/torchvision_maskrcnn_service_single_cpu.json`](configs/qualification/torchvision_maskrcnn_service_single_cpu.json)です。
+16-image runでは既知のquality値を保持しましたが、事前登録したp95 latency上限を
+超えたため`hold`になりました。assignmentはCandidateのままです。詳細は
+[candidate review](docs/image_service_candidate_review.md)を参照してください。
 Experimental `yolozu activate-qualification-evidence` は、review、trust、freshness、
 registry/lifecycle、stale-head の全gateをdry-runで確認し、`--approve`を明示した場合
 だけactivation、supersession、terminal revocationをatomicに追記します。

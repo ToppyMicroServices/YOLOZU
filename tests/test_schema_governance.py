@@ -67,12 +67,14 @@ class TestSchemaGovernance(unittest.TestCase):
         repo_root = Path(__file__).resolve().parents[1]
         data_root = repo_root / "yolozu" / "data" / "adaptive_routing"
         registry = json.loads((data_root / "bundle_specs.json").read_text(encoding="utf-8"))
-        self.assertEqual(len(registry["bundles"]), 3)
-        self.assertTrue(
-            all(
-                bundle["execution_binding"]["status"] == "unbound"
+        self.assertEqual(len(registry["bundles"]), 4)
+        self.assertEqual(
+            [
+                bundle["bundle_id"]
                 for bundle in registry["bundles"]
-            )
+                if bundle["execution_binding"]["status"] == "bound"
+            ],
+            ["torchvision-maskrcnn-r50-fpn-v2-coco-cpu"],
         )
         lifecycle = [
             json.loads(line)
@@ -80,10 +82,10 @@ class TestSchemaGovernance(unittest.TestCase):
             .read_text(encoding="utf-8")
             .splitlines()
         ]
-        self.assertEqual(len(lifecycle), 6)
+        self.assertEqual(len(lifecycle), 8)
         self.assertEqual(
             [event["event_type"] for event in lifecycle],
-            ["register_global", "candidate_registration"] * 3,
+            ["register_global", "candidate_registration"] * 4,
         )
         self.assertEqual((data_root / "support_profiles.jsonl").read_bytes(), b"")
         self.assertEqual((data_root / "evidence_activation.jsonl").read_bytes(), b"")
@@ -100,6 +102,19 @@ class TestSchemaGovernance(unittest.TestCase):
         self.assertEqual(
             list((data_root / "qualification_reports").glob("*.json")), []
         )
+        report_directories = sorted(
+            path for path in (data_root / "qualification_reports").iterdir()
+            if path.is_dir()
+        )
+        self.assertEqual(
+            [path.name for path in report_directories],
+            ["qualification-20260925T190537Z-76ab14c7d5a2"],
+        )
+        retained = json.loads(
+            report_directories[0].joinpath("qualification_report.json").read_bytes()
+        )
+        self.assertEqual(retained["status"], "hold")
+        self.assertEqual(retained["failures"], ["max_p95_latency_exceeded"])
         governance = (repo_root / "docs" / "schema_governance.md").read_text(
             encoding="utf-8"
         )
