@@ -7,8 +7,9 @@ Later interface contracts, qualification evidence, selectors, MCP surfaces, loca
 execution, and tests must follow it.
 
 The current release adds Experimental MCP recommendation and pinned-processing
-surfaces. It also registers three non-promoted Candidate baselines, but it does
-not add a model adapter or a runnable bundle.
+surfaces. It registers three unbound model-zoo Candidate baselines and one bound,
+qualification-only Torchvision Candidate. The bound Candidate's first full report
+is `hold`, so it remains unavailable to ordinary routing.
 YOLOZU's current Stable predictions validation and evaluation lane remains unchanged.
 
 The [OSS support scope](oss_support_scope.md) requires this surface to remain
@@ -81,16 +82,16 @@ Its positive selector and executor cases are internal fixtures below the public
 orchestration gate. They are not qualification evidence and do not demonstrate a
 selected public end-to-end run.
 
-The Experimental `yolozu qualify-image-pipeline` surface is now implemented for
-exact managed bundles. It pins bounded input and artifact descriptors, runs only a
+The Experimental `yolozu qualify-image-pipeline` surface is implemented for exact
+managed bundles. It pins bounded input and artifact descriptors, runs only a
 repository-owned network-free runner in a terminable child process group, applies
 the frozen v1 schedule and handoff, and publishes one unactivated report through
-`ManagedOutputTransaction`. The three current Candidate records have unbound
-execution. Although the code-owned Torchvision runner factory is registered,
-none of those records binds it, so the default command fails with an actionable
-error and does
-not create synthetic or no-op qualification evidence. It is not a selector,
-model adapter, or general image-processing capability.
+`ManagedOutputTransaction`. The managed registry contains three unbound model-zoo
+Candidates plus one bound Torchvision Mask R-CNN Candidate. The latter uses the
+exact locally prepared safetensors artifact and remains unavailable to ordinary
+routing. The qualifier may measure the exact Candidate pointer only for a request
+whose intended public channel is Experimental; this does not assign that channel.
+It is not a selector or a general image-processing capability.
 
 The separate `yolozu prepare-torchvision-maskrcnn` command is a local-only
 artifact preparation step for one exact checkpoint. It requires a user-provided
@@ -160,11 +161,29 @@ The command accepts a canonical `ImageJobSpec` JSON file, a workspace-confined
 single image or bounded directory, an exact packaged bundle ID/version and lifecycle
 channel, an optional workspace-confined artifact root, and a fresh managed output
 directory. A ground-truth path can be paired only with an exact registered code-owned
-evaluator and a preregistered quality requirement; no evaluator is registered for
-the current baselines. `--qualification-timeout-seconds` is restricted to `60..14400`.
+evaluator and a preregistered quality requirement. The registered
+`coco_bbox_simple_map_v1` evaluator reads one bounded user-local COCO instances file,
+matches exact pinned input basenames and bundle vocabulary, excludes crowd boxes,
+and reports YOLOZU simple bbox mAP@50:95. It is not official COCOeval. Its protocol
+hash binds both evaluator and `simple_map` source bytes. `--qualification-timeout-seconds`
+is restricted to `60..14400`.
 Soft-real-time requests require at least 1,260 seconds so the ten-minute section and
 bounded setup can fit. `--smoke` is a short wiring check and can emit only `smoke`,
 never `qualified`.
+
+Qualification identity includes input mode, exact decoded dimensions and count,
+compute policy, result bound, prompt characteristics, and other workload fields.
+The 16-image quality profile therefore cannot authorize the single-image MCP
+service workload. A separate frozen service profile mirrors the request constructed
+by `submit_image_job`; both exact profiles need their own retained report and
+activation before they can be advertised together.
+
+The first completed 16-image Candidate run is retained under
+`yolozu/data/adaptive_routing/qualification_reports/qualification-20260925T190537Z-76ab14c7d5a2`.
+Its simple bbox mAP@50:95 was `0.53920414` against the fixed `0.2` threshold,
+but conservative p95 latency was `7633.534416 ms` against the fixed `5000 ms`
+limit. The report status is therefore `hold`. It is not activated, and no
+support profile or lifecycle promotion was created.
 
 ```bash
 yolozu qualify-image-pipeline --help
@@ -602,7 +621,7 @@ promotion path; rollback cannot introduce it. There is no automatic rollback pat
 lifecycle and support streams immediately before the atomic append, validates the
 complete readback, and never mutates bundle specs, artifacts, support profiles,
 qualification reports, or evidence streams. The packaged lifecycle still contains
-only the three Candidate registrations; no real lifecycle maintenance or rollback
+only the four Candidate registrations; no real lifecycle maintenance or rollback
 event was appended with this implementation.
 
 ### Reviewed channel promotion
@@ -616,9 +635,11 @@ record and set digest, a byte-for-byte ordered profile echo, and the complete
 current repository-managed activation binding set. A public repository review uses
 only a non-personal role ID and bounded reference/reason.
 
-Candidate-to-Experimental also requires one current repository-managed screening
-pass, approved immutable artifact/license state, a bound validated execution
-interface contract, and explicit rollback readiness. A first assignment records
+Candidate-to-Experimental requires a current repository-managed screening pass for
+`screened_candidate` provenance. `existing_code_owned` provenance instead requires
+the code-owned `not_applicable` observation and does not invent a screening record.
+Both paths require approved immutable artifact/license state, a bound validated
+execution interface contract, and explicit rollback readiness. A first assignment records
 `none_abstention`; a later assignment either audit-binds the exact current prior
 assignment or explicitly records the reviewed `none` fallback. Third-party isolated
 execution additionally remains blocked without both a current CandidateBuildRecord

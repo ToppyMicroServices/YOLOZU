@@ -18,6 +18,8 @@ from yolozu.adaptive.inventory import pin_decoded_inputs
 from yolozu.adaptive.qualification import (
     _ForkedRunnerSession,
     _collect_report,
+    _preflight_bundle,
+    _select_bundle,
     _sustained_summary,
     nanoseconds_to_milliseconds,
     nearest_rank_nanoseconds,
@@ -506,6 +508,36 @@ class TestAdaptiveQualification(unittest.TestCase):
                     workspace_root=root,
                 )
             self.assertFalse((root / "reports").exists())
+
+    def test_candidate_qualification_targets_an_experimental_request(self) -> None:
+        bundle = validate_algorithm_bundle_spec(_bundle_payload())
+        job = self._job(input_mode="single_image", max_images=1)
+        _preflight_bundle(bundle, job, channel="Candidate")
+        stable_only = job.to_dict()
+        stable_only["allowed_maturities"] = ["Stable"]
+        with self.assertRaisesRegex(ValueError, "intended Experimental"):
+            _preflight_bundle(
+                bundle,
+                validate_image_job_spec(stable_only),
+                channel="Candidate",
+            )
+
+    def test_packaged_torchvision_candidate_is_qualification_only(self) -> None:
+        bundle = _select_bundle(
+            bundle_id="torchvision-maskrcnn-r50-fpn-v2-coco-cpu",
+            bundle_version="2026-09-26-local1",
+            channel="Candidate",
+        )
+        self.assertEqual(
+            bundle.to_dict()["execution_binding"]["status"],
+            "bound",
+        )
+        with self.assertRaisesRegex(ValueError, "bundle_ineligible"):
+            _select_bundle(
+                bundle_id="torchvision-maskrcnn-r50-fpn-v2-coco-cpu",
+                bundle_version="2026-09-26-local1",
+                channel="Experimental",
+            )
 
     def test_pinned_input_rejects_directory_entry_swap(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

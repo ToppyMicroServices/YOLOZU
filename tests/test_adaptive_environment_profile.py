@@ -361,6 +361,9 @@ class TestBoundedEnvironmentProbeProcess(unittest.TestCase):
         self.assertEqual(result.code, "stdout_limit")
         self.assertEqual(result.stdout, b"")
 
+    def test_runtime_probe_keeps_active_interpreter_environment(self) -> None:
+        self.assertEqual(environment_mod._PYTHON, os.path.abspath(sys.executable))
+
     def test_disallowed_command_or_arguments_are_rejected(self) -> None:
         disallowed = environment_mod._ProbeSpec(
             "runtime_torch",

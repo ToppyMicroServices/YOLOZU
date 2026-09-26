@@ -779,7 +779,14 @@ def promote_image_pipeline(
             screening = build_screening_eligibility_observation(
                 bundle, _load_screening(state)
             ).to_dict()
-            if screening["status"] != "current_pass":
+            if bundle.to_dict()["provenance_class"] == "existing_code_owned":
+                if screening["status"] != "not_applicable":
+                    _gate(
+                        gates,
+                        "screening_invalid",
+                        "existing code-owned promotion requires not-applicable screening",
+                    )
+            elif screening["status"] != "current_pass":
                 _gate(
                     gates,
                     "screening_pass_missing",

@@ -45,6 +45,10 @@ from .contracts import (
     validate_image_job_spec,
 )
 from .environment import build_environment_profile
+from .evaluators import (
+    COCO_BBOX_SIMPLE_MAP_EVALUATOR_ID,
+    create_coco_bbox_simple_map_evaluator,
+)
 from .evidence import (
     HANDOFF_ID,
     HANDOFF_VERSION,
@@ -704,8 +708,14 @@ _CODE_OWNED_RUNNER_FACTORIES: dict[str, Callable[[], AlgorithmRunner]] = {
     "torchvision": create_torchvision_runner,
 }
 _CODE_OWNED_EVALUATOR_FACTORIES: dict[
-    str, Callable[[Path, Path], QualificationEvaluator]
-] = {}
+    str,
+    Callable[
+        [Path, Path, PinnedDecodedInputSet, AlgorithmBundleSpec],
+        QualificationEvaluator,
+    ],
+] = {
+    COCO_BBOX_SIMPLE_MAP_EVALUATOR_ID: create_coco_bbox_simple_map_evaluator,
+}
 
 
 def _select_bundle(
@@ -731,8 +741,24 @@ def _select_bundle(
     bundle = matches[0]
     record = bundle.to_dict()
     pointer = loaded.lifecycle.channel_pointers.get((record["family_id"], channel))
+    if channel == "Candidate":
+        state = loaded.lifecycle.bundle_states.get(bundle.spec_digest)
+        eligible = bool(
+            not loaded.selection_trust_reason_codes
+            and pointer is not None
+            and state is not None
+            and state["bundle_state"] == "enabled"
+            and all(
+                review["review_state"] == "approved"
+                for review in state["artifact_license_reviews"]
+            )
+        )
+    else:
+        eligible = loaded.is_lifecycle_eligible(
+            family_id=record["family_id"], channel=channel
+        )
     if (
-        not loaded.is_lifecycle_eligible(family_id=record["family_id"], channel=channel)
+        not eligible
         or pointer is None
         or pointer["bundle_spec_digest"] != bundle.spec_digest
     ):
@@ -748,7 +774,13 @@ def _preflight_bundle(bundle: AlgorithmBundleSpec, job: ImageJobSpec, *, channel
             "runner_unavailable",
             "bundle metadata is registered without a complete adaptive runner binding",
         )
-    if channel not in job_record["allowed_maturities"]:
+    if channel == "Candidate":
+        if "Experimental" not in job_record["allowed_maturities"]:
+            raise _fail(
+                "maturity_not_allowed",
+                "Candidate qualification requires an intended Experimental request",
+            )
+    elif channel not in job_record["allowed_maturities"]:
         raise _fail("maturity_not_allowed", "request does not allow the selected channel")
     if job_record["task"] not in bundle_record["tasks"]:
         raise _fail("task_unsupported", "bundle does not declare the requested task")
@@ -1472,8 +1504,11 @@ def qualify_image_pipeline(
     normalized_job = job if isinstance(job, ImageJobSpec) else validate_image_job_spec(job)
     if normalized_job.to_dict()["execution_mode"] == "soft_realtime" and qualification_timeout_seconds < SOFT_REALTIME_MIN_TIMEOUT_SECONDS:
         raise _fail("timeout_invalid", "soft_realtime requires at least 1260 seconds for setup and soak")
-    if channel not in {"Experimental", "Stable"}:
-        raise _fail("channel_invalid", "channel must be Experimental or Stable")
+    if channel not in {"Candidate", "Experimental", "Stable"}:
+        raise _fail(
+            "channel_invalid",
+            "channel must be Candidate, Experimental, or Stable",
+        )
     if (ground_truth_path is None) != (evaluator_id is None):
         raise _fail("evaluator_invalid", "ground truth and evaluator ID must be supplied together")
     if evaluator_id is not None and normalized_job.to_dict().get("quality_requirement") is None:
@@ -1490,19 +1525,16 @@ def qualify_image_pipeline(
             "runner_unavailable",
             f"registered runner {runner_id!r} has no audited code-owned adapter in this build",
         )
-    evaluator: QualificationEvaluator | None = None
+    evaluator_factory: Callable[
+        [Path, Path, PinnedDecodedInputSet, AlgorithmBundleSpec],
+        QualificationEvaluator,
+    ] | None = None
     if evaluator_id is not None:
         evaluator_factory = _CODE_OWNED_EVALUATOR_FACTORIES.get(evaluator_id)
         if evaluator_factory is None:
             raise _fail(
                 "evaluator_unavailable",
                 f"evaluator {evaluator_id!r} is not registered as code-owned in this build",
-            )
-        evaluator = evaluator_factory(Path(ground_truth_path), workspace)
-        if evaluator.evaluator_id != evaluator_id:
-            raise _fail(
-                "evaluator_invalid",
-                "evaluator factory identity does not match the requested evaluator ID",
             )
 
     started = _utc_now()
@@ -1515,6 +1547,20 @@ def qualify_image_pipeline(
         workspace_root=workspace,
         max_images=normalized_job.to_dict()["max_images"],
     ) as inputs:
+        evaluator: QualificationEvaluator | None = None
+        if evaluator_factory is not None:
+            assert ground_truth_path is not None and evaluator_id is not None
+            evaluator = evaluator_factory(
+                Path(ground_truth_path),
+                workspace,
+                inputs,
+                bundle,
+            )
+            if evaluator.evaluator_id != evaluator_id:
+                raise _fail(
+                    "evaluator_invalid",
+                    "evaluator factory identity does not match the requested evaluator ID",
+                )
         workload = build_qualification_workload_profile(normalized_job, inputs.inventory)
         with ArtifactResolver(
             workspace=workspace,

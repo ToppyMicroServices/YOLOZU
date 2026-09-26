@@ -72,8 +72,9 @@ promise that environment-dependent execution will succeed; only the four-tool
 `recommend_image_pipeline` accepts a structured image job and local input. It
 returns a selected or abstained SelectionDecision without inference, downloads,
 writes, network access, or natural-language parsing. The packaged registry contains
-three non-promoted Candidate records, while the screening and public evidence streams
-are empty. The default installed call therefore abstains. A selected decision would
+three unbound model-zoo Candidates and one bound, qualification-only Torchvision
+Candidate whose full report is `hold`. The activation stream is empty. The default
+installed call therefore abstains. A selected decision would
 require matching governed evidence and does
 not itself execute the selected pipeline.
 

@@ -95,6 +95,14 @@ class PinnedDecodedInput:
     _parent_descriptor: int
     _entry_name: str
 
+    @property
+    def source_basename(self) -> str:
+        """Return the validated local basename for code-owned evaluation only."""
+
+        if Path(self._entry_name).name != self._entry_name:
+            raise ValueError("pinned input basename is invalid")
+        return self._entry_name
+
     def read_source_bytes(self) -> bytes:
         current = _input_identity(os.fstat(self._descriptor))
         try:

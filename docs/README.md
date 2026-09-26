@@ -86,10 +86,10 @@ The environment-qualified local image-processing program targets an Experimental
   `recommend_image_pipeline` tool exposes its bounded read-only
   recommendation path. MCP-only `process_images` adds pinned revalidation,
   dry-run-by-default execution gating, and bounded managed output publication.
-  The packaged registry contains three non-promoted Candidate baselines with
-  unbound execution. A code-owned Torchvision runner exists, but no packaged
-  bundle binds it or passes the license, qualification, support, evidence, and
-  lifecycle gates. The default response records `maturity_disallowed`, abstains,
+  The packaged registry contains three unbound model-zoo Candidates and one bound,
+  qualification-only Torchvision Candidate. The bound Candidate's full report is
+  `hold` and has no activated evidence, support assignment, or promoted lifecycle
+  pointer. The default response records `maturity_disallowed`, abstains,
   and cannot run a real adaptive model. The bounded OpenAI/Claude MCP route is
   documented in [`image_service_mcp.md`](image_service_mcp.md).
 - Monitored-source inbox: [`algorithm_intake/README.md`](algorithm_intake/README.md).

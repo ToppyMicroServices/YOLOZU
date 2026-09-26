@@ -1,42 +1,22 @@
 # First image-service CNN: review status
 
-Status on 2026-09-20: **hold; not registered, qualified, activated, or promoted**.
-The bounded MCP gateway works, but its default model selection still abstains.
-This is the remaining work in step 1 of the service plan, tracked as `YOLOZU-0rp4`.
+Status on 2026-09-26: **measured hold; Candidate only**.
 
-## Exact local candidate
+The exact Torchvision Mask R-CNN bundle is registered and executable only on the
+qualification-only Candidate channel. Ordinary routing still cannot select it.
+The first full qualification completed, but its preregistered latency gate did
+not pass. No evidence activation, support-profile assignment, lifecycle
+promotion, failure-drill claim, or successful five-tool CNN execution followed.
+This is tracked as `YOLOZU-0rp4`.
 
-The [machine-readable review proposal](../reports/image_service_candidate_review_2026-09-20.json)
-contains an `AlgorithmBundleSpec` that passed the strict schema/digest validator.
-It is outside the managed registry and has no effect on selection. Its proposed
-code-owned execution class is subject to repository review, not an audit claim.
+## Artifact and redistribution boundary
 
-The candidate is Torchvision Mask R-CNN ResNet-50 FPN v2, `COCO_V1`, CPU FP32,
-object detection only, with the exact 80-class mapping. The report pins Torch
-`2.12.0.dev20260330`, Torchvision `0.27.0.dev20260330`, Pillow `12.2.0`,
-safetensors `0.8.0`, adapter bytes, and all three component digests. This installed
-nightly runtime was used for a local smoke; no other runtime is qualified by it.
+YOLOZU source remains Apache-2.0. That license is not copied onto the source
+checkpoint or the locally converted safetensors artifact. The bundle records
+the weight license as `NOASSERTION` and retains the upstream pretrained-model
+notice at the pinned Torchvision revision.
 
-The cached source checkpoint was rehashed before a restricted `weights_only=True`
-load. Conversion sorted the state keys and serialized contiguous tensors with
-`safetensors.torch.save`. The converted SHA-256 is
-`59f39b25a05a7130ebb754f82451e44b791c684601a15cefc64f79462e1e8187`
-(185,728,220 bytes). No weights were downloaded or redistributed. In the draft,
-`source_id` identifies the original checkpoint, not a downloadable safetensors
-file; any later acquisition workflow must preserve that conversion distinction.
-
-The revised adapter loaded those bytes and retained 10 detections on the existing
-smoke image, matching the earlier run's first prediction. Load plus prediction
-took 5.690 seconds in this single run. This is not a latency percentile, accuracy
-measurement, supported resolution range, or full qualification. The draft input
-shape describes only that image. No OS network isolation was measured or claimed.
-
-## Approved local preparation boundary
-
-On 2026-09-25, the release reviewer approved a narrower acquisition design. YOLOZU
-does not download or redistribute the source checkpoint or converted artifact.
-The user obtains the exact upstream checkpoint, reviews the upstream pretrained-model
-notice, and runs:
+The user obtains the exact upstream checkpoint and runs:
 
 ```bash
 yolozu prepare-torchvision-maskrcnn \
@@ -44,74 +24,74 @@ yolozu prepare-torchvision-maskrcnn \
   --accept-upstream-terms
 ```
 
-The command accepts only the pinned 185,828,065-byte source with SHA-256
-`73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e`.
-It performs no network request, loads only after verification with
-`weights_only=True` and read-only memory mapping, converts locally with sorted
-contiguous tensors, and accepts only the 185,728,220-byte safetensors output with SHA-256
+The command performs no download. It accepts only the 185,828,065-byte source
+with SHA-256
+`73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e`,
+then writes only the 185,728,220-byte local safetensors artifact with SHA-256
 `59f39b25a05a7130ebb754f82451e44b791c684601a15cefc64f79462e1e8187`.
-The adjacent provenance records the upstream URL and notice, runtime versions,
-explicit acknowledgement, `NOASSERTION`, and false redistribution fields without
-recording the user's source path. Existing cache bytes are never overwritten.
+Both files remain outside the repository, packages, reports, and release
+artifacts. The local artifact and path-free provenance were rechecked at mode
+`0600` before qualification.
 
-This resolves the acquisition and redistribution design question. It does not
-establish that the checkpoint is Apache-2.0. It also does not register the draft,
-approve a license review, define a quality workload, or satisfy qualification.
+This design avoids YOLOZU redistribution. It is not a legal conclusion that the
+checkpoint is Apache-2.0 or that every use is permitted.
 
-The implementation was exercised on 2026-09-25 with the cached source checkpoint.
-The first temporary conversion produced the exact expected size and SHA-256, then
-was removed. Two initial default-cache attempts failed cleanly with `ENOSPC` and
-left no partial artifact. After space became available, the same command completed
-the persistent default-cache installation. The installed file is mode `0600`; its
-size and SHA-256 match the pinned values above. Its path-free provenance records
-Torch `2.12.0.dev20260330`, safetensors `0.8.0`, the exact source identity,
-explicit upstream-terms acknowledgement, `NOASSERTION`, and false redistribution.
-This verified local installation is not qualification evidence.
+## Frozen quality run
 
-## Why activation remains blocked
+The reviewed bundle is
+`torchvision-maskrcnn-r50-fpn-v2-coco-cpu@2026-09-26-local1`, with bundle-spec
+digest `76ab14c7d5a2f50824491d6859b1ecfd2dd40cecfd0ac951f2d8ed1c23784f2d`.
+The job definition is
+[`torchvision_maskrcnn_coco16_cpu.json`](../configs/qualification/torchvision_maskrcnn_coco16_cpu.json).
+It fixed the 16-image local COCO input, exact annotation hash, code-owned
+`coco_bbox_simple_map_v1` evaluator, quality threshold `0.2`, p95 limit
+`5000 ms`, cold-start limit `30000 ms`, and minimum repeat throughput
+`0.1 fps` before the completed measurement.
 
-Torchvision's [code license](https://raw.githubusercontent.com/pytorch/vision/main/LICENSE)
-is BSD-3-Clause, but its [pretrained-model notice](https://github.com/pytorch/vision#pre-trained-model-license)
-asks users to determine the permissions for their use case, including terms
-derived from training data. The local preparation record therefore uses
-`NOASSERTION`; it does not copy Apache-2.0 from YOLOZU onto the checkpoint. The
-historical 2026-09-20 draft remains unchanged with `license_expression=unknown`
-and `license_review=unreviewed`. A future registered spec must use the reviewed
-`NOASSERTION` disposition unless independent rights evidence supports a different
-expression.
+The evaluator excludes `iscrowd=1`, binds every selected image basename and
+dimension, binds the exact 80-class bundle vocabulary, and uses YOLOZU's simple
+bbox mAP at IoU thresholds 0.50 through 0.95. It is not official COCOeval and
+must not be compared directly with an upstream COCO metric.
 
-Repository prerequisites still missing:
+The full protocol ran one fresh cold start, 20 warm-up iterations, three repeats
+of 200 timed inferences, and one quality prediction for each of the 16 images.
+The exact retained report is
+[`qualification_report.json`](../yolozu/data/adaptive_routing/qualification_reports/qualification-20260925T190537Z-76ab14c7d5a2/qualification_report.json).
 
-- A managed artifact-license review that records `NOASSERTION`, the approved
-  user-acquired/non-redistributed scope, and retained upstream references.
-- Reviewed dispositions for the runtime dependency set and frozen evaluation data.
-- Managed candidate screening and registration with reviewed license state.
-- A frozen quality workload, evaluator, threshold, and measured qualification.
-  The one-image smoke must not supply those values.
-- Reviewed support profiles, retained evidence activation, and the existing
-  failure-drill/promotion gates. No approval identifier was invented or reused.
+Observed results:
 
-The current qualifier also requires an enabled, license-approved channel target
-before measurement. A new candidate's initial qualification entry path needs to
-be resolved under the existing governance policy before its first promotion;
-assigning a channel just to get past preflight would not establish eligibility.
-The exact proposal's current bundle lookup was checked and returned
-`bundle_not_found`; no full workload was started and no lifecycle record changed.
+- status: `hold`
+- failure: `max_p95_latency_exceeded`
+- cold start: `6376.550708 ms`
+- conservative p50: `5101.565541 ms`
+- conservative p95: `7633.534416 ms`
+- conservative p99: `9520.114875 ms`
+- conservative repeat throughput: 200 images in 1,052,487,852,667 ns,
+  approximately `0.190 fps`
+- simple bbox mAP@50:95: `0.53920414`, above the fixed `0.2` threshold
+- report digest:
+  `ba3850695b760b059b4d61d6cc39e66c0c2f3cbff1326568a34208a579862b12`
 
-Once these inputs and reviews exist, run the frozen workload, retain its actual
-results even on failure, and promote only if every gate passes. Neither this
-proposal nor explicit `execute=true` can bypass those checks.
+The quality and throughput gates passed, but the report as a whole did not.
+The `5000 ms` p95 limit was not raised after seeing the result. The exact report,
+protocol, public input IDs, reproduction command, and checksums are retained;
+model bytes, images, and annotations are not.
 
-## Steps 2–4
+## Remaining gate
 
-The repository implements the five-tool surface, authenticated Streamable HTTP,
-private tenant directories, image/capacity and HTTP-upload limits, per-minute request limits,
-idle-time expiry, queued cancellation, and bounded runner execution. The
-authenticated local HTTP-protocol test covers upload, submit, status, and cancel;
-without a registered model it verifies abstention, not successful CNN selection.
-Provider request settings were checked against the official OpenAI and Claude
-documentation; no provider API call was made.
+The Candidate stays unavailable to normal jobs. The separately frozen
+[`torchvision_maskrcnn_service_single_cpu.json`](../configs/qualification/torchvision_maskrcnn_service_single_cpu.json)
+matches the workload constructed by the MCP service, but it was not measured
+after the blocking quality-profile result. It carries no support or performance
+claim.
 
-Public operation still needs a deployment target, TLS/DNS, a real credential,
-gateway request limits, and OS/container isolation. None has been provisioned.
-See [the service guide](image_service_mcp.md) for exact limits and setup.
+Resume only after an explicit, prospective decision about the intended p95
+objective or a real performance improvement. A new threshold or implementation
+must be reviewed before a new measurement; the retained hold report must not be
+relabelled. A future qualified service workload would still need evidence
+activation, complete support-profile review, Candidate-to-Experimental
+promotion, and successful execution through all five MCP tools.
+
+The local HTTP-protocol tests cover the five-tool surface and abstention. Public
+operation still needs a deployment target, TLS/DNS, credentials, gateway request
+limits, and OS/container isolation. None is claimed here.

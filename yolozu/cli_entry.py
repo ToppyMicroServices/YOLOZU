@@ -1328,9 +1328,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     qualify.add_argument(
         "--channel",
-        choices=("Experimental", "Stable"),
+        choices=("Candidate", "Experimental", "Stable"),
         default="Experimental",
-        help="Exact lifecycle channel required for the bundle.",
+        help="Exact lifecycle channel required for the bundle; Candidate is qualification-only.",
     )
     qualify.add_argument(
         "--qualification-timeout-seconds",

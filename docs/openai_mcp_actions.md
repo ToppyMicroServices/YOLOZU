@@ -42,8 +42,9 @@ is not by itself a deterministic or dependency-free guarantee.
 The MCP-only `recommend_image_pipeline` operation is Experimental and read-only.
 It can return a selected or abstained SelectionDecision for a structured local
 image job, but it does not execute a model or download or write assets. The
-packaged registry contains three Candidate baselines with unbound execution. The
-public evidence stream is empty, so the default installed call records
+packaged registry contains three unbound model-zoo Candidates and one bound,
+qualification-only Torchvision Candidate. Its full report is `hold`, and the
+activation stream is empty, so the default installed call records
 `maturity_disallowed` and abstains. It is not exposed through GPT Actions.
 The optional workspace-confined screening root remains operator-asserted; it cannot
 self-assign a repository-managed pass.

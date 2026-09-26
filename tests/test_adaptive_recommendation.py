@@ -104,13 +104,13 @@ class TestAdaptiveRecommendation(unittest.TestCase):
                 result["recommendation_metadata"]["screening_trust_domain"],
                 "yolozu_managed",
             )
-            self.assertEqual(result["decision"]["registry_bundle_count"], 3)
+            self.assertEqual(result["decision"]["registry_bundle_count"], 4)
             self.assertEqual(
                 [
                     evaluation["reason_codes"]
                     for evaluation in result["decision"]["candidate_evaluations"]
                 ],
-                [["maturity_disallowed"]] * 3,
+                [["maturity_disallowed"]] * 4,
             )
             self.assertEqual(
                 [
@@ -119,7 +119,7 @@ class TestAdaptiveRecommendation(unittest.TestCase):
                         "artifact_observations"
                     ]
                 ],
-                ["not_checked_due_to_prior_filter"] * 3,
+                ["not_checked_due_to_prior_filter"] * 4,
             )
             self.assertIsNone(
                 result["recommendation_metadata"][

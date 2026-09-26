@@ -61,7 +61,7 @@ def _write_custom(
 
 
 class TestAdaptiveBundleRegistry(unittest.TestCase):
-    def test_packaged_ssot_loads_candidate_baselines_without_selectable_bundle(
+    def test_packaged_ssot_loads_candidates_without_publicly_selectable_bundle(
         self,
     ) -> None:
         loaded = load_algorithm_bundle_registry()
@@ -74,15 +74,22 @@ class TestAdaptiveBundleRegistry(unittest.TestCase):
             [
                 "detectron2-faster-rcnn-r50-fpn-1x-coco",
                 "mmdet-faster-rcnn-r50-fpn-1x-coco",
+                "torchvision-maskrcnn-r50-fpn-v2-coco-cpu",
                 "yolox-s-coco",
             ],
         )
-        self.assertEqual(len(loaded.lifecycle.events), 6)
+        self.assertEqual(len(loaded.lifecycle.events), 8)
+        statuses = {
+            bundle.to_dict()["bundle_id"]: bundle.to_dict()["execution_binding"]["status"]
+            for bundle in loaded.bundles
+        }
+        self.assertEqual(statuses["torchvision-maskrcnn-r50-fpn-v2-coco-cpu"], "bound")
         self.assertTrue(
-            all(
-                bundle.to_dict()["execution_binding"]["status"] == "unbound"
-                for bundle in loaded.bundles
-            )
+            all(statuses[model_id] == "unbound" for model_id in statuses if model_id != "torchvision-maskrcnn-r50-fpn-v2-coco-cpu")
+        )
+        self.assertNotIn(
+            ("torchvision-maskrcnn-r50-fpn-v2", "Experimental"),
+            loaded.lifecycle.channel_pointers,
         )
 
         checkout = (
@@ -104,7 +111,10 @@ class TestAdaptiveBundleRegistry(unittest.TestCase):
             bundle.to_dict()["bundle_id"]: bundle.to_dict()
             for bundle in loaded.bundles
         }
-        self.assertEqual(set(bundles), set(model_records))
+        self.assertEqual(
+            set(bundles) - {"torchvision-maskrcnn-r50-fpn-v2-coco-cpu"},
+            set(model_records),
+        )
 
         for model_id in sorted(model_records):
             with self.subTest(model_id=model_id):
@@ -292,7 +302,7 @@ class TestAdaptiveBundleRegistry(unittest.TestCase):
                     support_profiles=managed_support
                 ).bundles
             ),
-            3,
+            4,
         )
 
     def test_lifecycle_failures_and_unknown_license_are_not_repaired(self) -> None:
@@ -458,11 +468,11 @@ heavy = {'torch', 'onnxruntime', 'tensorrt', 'cv2', 'coremltools'}
 assert not (heavy & set(sys.modules))
 assert list(Path('.').iterdir()) == []
 loaded = registry.load_algorithm_bundle_registry()
-assert len(loaded.bundles) == 3
-assert all(
-    bundle.to_dict()['execution_binding']['status'] == 'unbound'
+assert len(loaded.bundles) == 4
+assert sum(
+    bundle.to_dict()['execution_binding']['status'] == 'bound'
     for bundle in loaded.bundles
-)
+) == 1
 """
         with tempfile.TemporaryDirectory() as temporary:
             environment = dict(os.environ)

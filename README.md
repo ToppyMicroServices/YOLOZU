@@ -213,6 +213,19 @@ The Experimental
 `yolozu qualify-image-pipeline` command now implements pinned no-follow input
 and asset preflight, a frozen repeat/soak protocol, bounded child-process
 cancellation, and atomic unactivated `qualification_report.json` publication.
+The exact locally prepared Torchvision bundle is registered only on the Candidate
+channel with `NOASSERTION`; Candidate is still not selectable by ordinary jobs.
+The qualifier alone may measure that Candidate for an intended Experimental
+request. The code-owned `coco_bbox_simple_map_v1` evaluator reads a user-local,
+workspace-confined COCO instances file and never packages images, annotations, or
+model bytes. The frozen 16-image quality profile and exact single-image MCP
+workload profile are
+[`configs/qualification/torchvision_maskrcnn_coco16_cpu.json`](configs/qualification/torchvision_maskrcnn_coco16_cpu.json)
+and
+[`configs/qualification/torchvision_maskrcnn_service_single_cpu.json`](configs/qualification/torchvision_maskrcnn_service_single_cpu.json).
+The completed 16-image run retained a known quality result but returned `hold`
+because its preregistered p95 latency limit was exceeded. Candidate remains the
+only assignment; see the [candidate review](docs/image_service_candidate_review.md).
 Experimental `yolozu activate-qualification-evidence` now dry-runs every review,
 trust, freshness, registry, lifecycle, and stale-head gate before it can append an
 activation, supersession, or terminal revocation. Mutation requires `--approve`.
@@ -249,8 +262,9 @@ implementation did not promote any model; the packaged streams remain Candidate-
 Locally emitted reports can reach only `site_managed` / `site_qualified`; arbitrary
 workspace JSON remains nonselectable. Repository-managed trust additionally requires
 the retained, tracked review workflow and a public review reference.
-The three packaged records remain unbound, so the command currently fails
-actionably instead of producing dummy evidence. A pure internal selector now applies the fixed trust,
+The three model-zoo records remain unbound. The fourth, exact Torchvision
+Candidate is bound only for qualification and its first full report is `hold`.
+A pure internal selector now applies the fixed trust,
 compatibility, artifact, evidence, performance, and deterministic ranking rules
 to already validated in-memory observations. It performs no provider-file,
 model, runner, or network I/O. The Experimental MCP-only
@@ -259,16 +273,16 @@ read-only structured recommendation. It validates the typed job and local input,
 checks non-I/O gates before artifact access, and returns either a complete
 SelectionDecision or an honest abstention. It does not run inference, download or
 write assets, parse natural language, or expose absolute paths or raw probe output.
-Because the three records remain Candidate and the public evidence stream is empty,
+Because all four records remain Candidate and the activation stream is empty,
 the default call currently abstains with `maturity_disallowed`. Experimental
 MCP-only `process_images` now accepts that
 complete selected decision, revalidates the job, current lifecycle/evidence,
 environment, workload, input, class mapping, and pinned artifact state, and defaults
 to a no-write `dry_run=true`. Explicit execution uses only a registered code-owned,
 network-free route and publishes an atomic managed predictions/provenance/checksum
-tree. A code-owned Torchvision Mask R-CNN runner is registered for exact
-safetensors/CPU bundles, but no packaged bundle binds it or passes the required
-license, qualification, support, evidence, and lifecycle gates. The default
+tree. A code-owned Torchvision Mask R-CNN runner is bound to the exact
+safetensors/CPU Candidate, but its measured report is `hold` and it has no
+support, activation, or promoted lifecycle assignment. The default
 installation therefore still cannot execute a real adaptive model; no
 performance claim was added. An activation record alone does
 not select or execute a model. Registry loading, an

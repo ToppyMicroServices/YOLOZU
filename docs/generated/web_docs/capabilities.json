@@ -24,7 +24,7 @@
     {
       "description": "Command inputs, examples, side effects, dependencies, and maturity.",
       "id": "cli_manifest",
-      "source_sha256": "b06e4dc9730a0f49867ae3528f30a1f5e7afe1d39da36b9e541da3d00c786c51",
+      "source_sha256": "6074d4feae9103852caa06513cff3c53d3d9ef9b5239c5855777a1977e5a3d39",
       "title": "CLI tool manifest",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/tools/manifest.json"
     },
@@ -52,14 +52,14 @@
     {
       "description": "Client connection options and workspace boundaries.",
       "id": "mcp_clients",
-      "source_sha256": "1dc7a780bea9649f78a21fb6002a813d4765d24710d46e3d0aa70e12a2633592",
+      "source_sha256": "ac716f504dcb294b41180ad401cdd67cbb8ee2d374e191ae9fd6fcac86fad611",
       "title": "LLM and MCP integration",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/llm_integrations.md"
     },
     {
       "description": "Capabilities, opaque assets and jobs, limits, and abstention semantics.",
       "id": "image_service",
-      "source_sha256": "03df085e44b5ab57149925760e19d764b9f344923463118193fcdf5f9de27e82",
+      "source_sha256": "13f9745e88c51d8163a3072193d204d39eeb74845fa018659ed93aabb3e0fdce",
       "title": "Bounded image service",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/image_service_mcp.md"
     },
@@ -73,7 +73,7 @@
     {
       "description": "Keep Stable, Bridge, Benchmark, and Research claims separate.",
       "id": "readiness",
-      "source_sha256": "0ad0c76fe6b83be1a911014d495b8dd1c88d305f5c56eba281c41ceb4f83e522",
+      "source_sha256": "93a5a358be9fc590eea563c8354489fe05312d678102ae6b6e00b37a5d7eb08c",
       "title": "Readiness and maturity",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/production_readiness.md"
     },

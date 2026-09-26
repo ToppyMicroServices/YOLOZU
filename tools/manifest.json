@@ -14339,8 +14339,8 @@
       "entrypoint": "tools/qualify_image_pipeline.py",
       "examples": [
         {
-          "command": "python3 tools/qualify_image_pipeline.py --job configs/examples/adaptive_image_job.json --input data/smoke/images/val --bundle-id example --bundle-version 1 --output-dir reports/image_pipeline_qualification",
-          "description": "Measure an exact eligible packaged bundle; the current empty registry fails actionably without dummy evidence."
+          "command": "python3 tools/qualify_image_pipeline.py --job configs/qualification/torchvision_maskrcnn_coco16_cpu.json --input data/coco/images/val2017 --bundle-id torchvision-maskrcnn-r50-fpn-v2-coco-cpu --bundle-version 2026-09-26-local1 --channel Candidate --ground-truth data/coco/annotations/instances_val2017_full.json --evaluator-id coco_bbox_simple_map_v1 --output-dir reports/image_pipeline_qualification",
+          "description": "Qualify the exact registered Torchvision Candidate against user-local COCO inputs; Candidate remains unavailable to normal routing."
         },
         {
           "command": "python3 tools/qualify_image_pipeline.py --help",
@@ -14448,7 +14448,7 @@
         "macos_ok": true
       },
       "runner": "python3",
-      "summary": "Measure one exact registered local image pipeline with pinned inputs/assets, bounded child-process cancellation, exact aggregates, and atomic unactivated evidence output.",
+      "summary": "Measure one exact registered local image pipeline, including a qualification-only Candidate, with pinned inputs/assets, a code-owned local COCO evaluator, bounded child-process cancellation, exact aggregates, and atomic unactivated evidence output.",
       "tags": [
         "adaptive-inference",
         "benchmark",
