@@ -45,7 +45,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">150 manifest entries with declared maturity, inputs,
+  <p class="lead">152 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -97,6 +97,22 @@ python3 tools/activate_qualification_evidence.py --help</code></pre>
   <h3>Examples</h3>
   <pre><code>python3 tools/adapter_parity_suite.py --adapter-predictions rtdetr=reports/pred_rtdetr.json --adapter-predictions mmdet=reports/pred_mmdet.json --adapter-predictions detectron2=reports/pred_detectron2.json --adapter-predictions yolo_runtime=reports/pred_yolo_runtime.json --adapter-predictions opencv_dnn=reports/pred_opencv_dnn.json --adapter-predictions custom_cpp=reports/pred_custom_cpp.json --reference-adapter rtdetr --output reports/adapter_parity_suite.json</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/adapter_parity_suite.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/adapter_templates.md" target="_blank" rel="noopener noreferrer">adapter_templates.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/adapter_contract.md" target="_blank" rel="noopener noreferrer">adapter_contract.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/production_readiness.md" target="_blank" rel="noopener noreferrer">production_readiness.md</a></p>
+</details>
+
+<details class="card" id="tool-adapter-sdk" data-tool-id="adapter_sdk"
+  data-search-card data-search-text="adapter_sdk Discover installed yolozu.adapters.v1 metadata without imports, then explicitly load and check a reviewed adapter plugin against the Stable predictions interface contract. stable yolozu/cli.py python3 -m yolozu adapter list python3 -m yolozu adapter test dummy --allow-plugin-load python3 -m yolozu adapter --help">
+  <summary><code>adapter_sdk</code> — Discover installed yolozu.adapters.v1 metadata without imports, then explicitly load and check a reviewed adapter plugin against the Stable predictions interface contract.</summary>
+  <div class="meta">
+    <span class="badge badge-stable">stable</span>
+    <span><code>yolozu/cli.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>operation</code> — required, string</li><li><code>name</code> — string</li><li><code>--config</code> — file</li><li><code>--records</code> — file</li><li><code>--allow-plugin-load</code> — string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 -m yolozu adapter list
+python3 -m yolozu adapter test dummy --allow-plugin-load
+python3 -m yolozu adapter --help</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/yolozu/cli.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/adapter_contract.md" target="_blank" rel="noopener noreferrer">adapter_contract.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/adapter_templates.md" target="_blank" rel="noopener noreferrer">adapter_templates.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/03_concepts_contracts.tex" target="_blank" rel="noopener noreferrer">03_concepts_contracts.tex</a></p>
 </details>
 
 <details class="card" id="tool-announce-release" data-tool-id="announce_release"
@@ -1610,6 +1626,22 @@ python3 tools/promote_image_pipeline.py --help</code></pre>
   <pre><code>python3 tools/qualify_image_pipeline.py --job configs/qualification/torchvision_maskrcnn_coco16_cpu.json --input data/coco/images/val2017 --bundle-id torchvision-maskrcnn-r50-fpn-v2-coco-cpu --bundle-version 2026-09-26-local1 --channel Candidate --ground-truth data/coco/annotations/instances_val2017_full.json --evaluator-id coco_bbox_simple_map_v1 --output-dir reports/image_pipeline_qualification
 python3 tools/qualify_image_pipeline.py --help</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/qualify_image_pipeline.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/Readme_jp.md" target="_blank" rel="noopener noreferrer">Readme_jp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/adaptive_image_routing.md" target="_blank" rel="noopener noreferrer">adaptive_image_routing.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/qualification_report.schema.json" target="_blank" rel="noopener noreferrer">qualification_report.schema.json</a></p>
+</details>
+
+<details class="card" id="tool-qualify-release" data-tool-id="qualify_release"
+  data-search-card data-search-text="qualify_release Create, verify, and compare portable release qualification packs with fail-closed pass, hold, and fail decisions over the Stable COCO evaluation engine. stable yolozu/cli.py python3 -m yolozu qualify-release create --dataset data/smoke --predictions data/smoke/predictions/predictions_dummy.json --output-dir reports/qualification_smoke --split val --max-images 2 --dry-run python3 -m yolozu qualify-release verify reports/qualification_smoke python3 -m yolozu qualify-release --help">
+  <summary><code>qualify_release</code> — Create, verify, and compare portable release qualification packs with fail-closed pass, hold, and fail decisions over the Stable COCO evaluation engine.</summary>
+  <div class="meta">
+    <span class="badge badge-stable">stable</span>
+    <span><code>yolozu/cli.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>operation</code> — required, string</li><li><code>--dataset</code> — dir</li><li><code>--predictions</code> — file</li><li><code>--output-dir</code> — dir</li><li><code>--baseline-predictions</code> — file</li><li><code>--split</code> — string</li><li><code>--bbox-format</code> — default=cxcywh_norm, string</li><li><code>--max-images</code> — number</li><li><code>--dry-run</code> — string</li><li><code>--min-map50-95</code> — number</li><li><code>--max-map50-95-drop</code> — number</li><li><code>--force</code> — string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 -m yolozu qualify-release create --dataset data/smoke --predictions data/smoke/predictions/predictions_dummy.json --output-dir reports/qualification_smoke --split val --max-images 2 --dry-run
+python3 -m yolozu qualify-release verify reports/qualification_smoke
+python3 -m yolozu qualify-release --help</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/yolozu/cli.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/Readme_jp.md" target="_blank" rel="noopener noreferrer">Readme_jp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/ai_first.md" target="_blank" rel="noopener noreferrer">ai_first.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/llm_integrations.md" target="_blank" rel="noopener noreferrer">llm_integrations.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/openai_mcp_actions.md" target="_blank" rel="noopener noreferrer">openai_mcp_actions.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/python_api.md" target="_blank" rel="noopener noreferrer">python_api.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/release_qualification.md" target="_blank" rel="noopener noreferrer">release_qualification.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/schemas/release_qualification.schema.json" target="_blank" rel="noopener noreferrer">release_qualification.schema.json</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/20_llm_mcp_integrations.tex" target="_blank" rel="noopener noreferrer">20_llm_mcp_integrations.tex</a></p>
 </details>
 
 <details class="card" id="tool-qualify-sdft-continual" data-tool-id="qualify_sdft_continual"

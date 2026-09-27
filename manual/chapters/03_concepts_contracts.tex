@@ -372,6 +372,13 @@ python3 tools/validate_predictions.py /path/to/predictions.json --strict
 
 \section{Adapters (Bring-Your-Own Inference)}
 An adapter functions as a thin interface layer bridging a specific inference implementation and \yolozu{}'s standardized interface contracts. If your system can generate a compliant \path{predictions.json}, it can be evaluated.
+Installed third-party adapters can advertise the
+\cmd{yolozu.adapters.v1} entry point. \cmd{yolozu adapter list} reads package
+metadata without importing provider code. Loading and conformance execution
+require the explicit \cmd{--allow-plugin-load} flag. The packaged SDK checks
+plugin metadata first, then validates one \cmd{predict(records)} result against
+the Stable predictions interface contract. See
+\path{docs/adapter_templates.md} for the provider fields and test command.
 
 In practical terms, this entails:
 \begin{itemize}

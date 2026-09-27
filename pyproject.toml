@@ -168,6 +168,9 @@ full = "Convenience superset for docs/demo paths; CI avoids relying on this to l
 yolozu = "yolozu.cli:main"
 yolozu-mcp = "yolozu.integrations.mcp_cli:main"
 
+[project.entry-points."yolozu.adapters.v1"]
+dummy = "yolozu.adapter_sdk:BuiltinDummyAdapterPlugin"
+
 [tool.setuptools]
 include-package-data = true
 
@@ -196,6 +199,7 @@ include = ["yolozu*", "rtdetr_pose*"]
   "protocols/*.json",
   "schemas/*.json",
   "docs/*.md",
+  "conformance/*.ppm",
 ]
 "rtdetr_pose" = ["configs/*.json"]
 

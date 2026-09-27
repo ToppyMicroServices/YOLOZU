@@ -6,15 +6,21 @@ import ssl
 import subprocess
 import sys
 import tempfile
-import time
 from pathlib import Path
 from unittest import TestCase, main, mock
 
+from test_support.scout_pdf_workers import (
+    cpu_pdf_worker,
+    large_ipc_pdf_worker,
+    pid_pdf_worker,
+    rss_pdf_worker,
+    sleep_pdf_worker,
+    temp_pdf_worker,
+)
 from yolozu.adaptive.algorithm_scout import (
     AlgorithmScoutError,
     DocumentParserLimits,
     _apply_pdf_resource_limits,
-    _disable_child_process_creation,
     _parse_document,
     _parse_html,
     _parse_pdf,
@@ -38,74 +44,6 @@ from yolozu.adaptive.safe_https import (
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCES = "docs/algorithm_intake/sources.json"
 PUBLIC_IP = "93.184.216.34"
-
-
-def _sleep_pdf_worker(connection, body, temp_dir, limits) -> None:
-    del connection, body, temp_dir, limits
-    import os
-
-    os.setsid()
-    time.sleep(5)
-
-
-def _large_ipc_pdf_worker(connection, body, temp_dir, limits) -> None:
-    del body, temp_dir, limits
-    import os
-
-    os.setsid()
-    connection.send_bytes(b"xx")
-    connection.close()
-
-
-def _rss_pdf_worker(connection, body, temp_dir, limits) -> None:
-    del connection, body, temp_dir, limits
-    import os
-
-    os.setsid()
-    allocation = bytearray(2 * 1024 * 1024)
-    allocation[0] = 1
-    time.sleep(5)
-
-
-def _cpu_pdf_worker(connection, body, temp_dir, limits) -> None:
-    del connection, body, temp_dir
-    import os
-
-    os.setsid()
-    _apply_pdf_resource_limits(limits)
-    while True:
-        pass
-
-
-def _pid_pdf_worker(connection, body, temp_dir, limits) -> None:
-    del body, temp_dir, limits
-    import os
-
-    os.setsid()
-    _disable_child_process_creation()
-    try:
-        os.fork()
-    except PermissionError:
-        connection.send_bytes(b'{"code":"pdf_pid_limit","ok":false}')
-    connection.close()
-
-
-def _temp_pdf_worker(connection, body, temp_dir, limits) -> None:
-    del body
-    import os
-    import resource
-    import signal
-
-    os.setsid()
-    signal.signal(signal.SIGXFSZ, signal.SIG_IGN)
-    resource.setrlimit(resource.RLIMIT_FSIZE, (limits.pdf_temp_bytes, limits.pdf_temp_bytes))
-    try:
-        with open(Path(temp_dir) / "overflow", "wb") as output:
-            output.write(b"xx")
-            output.flush()
-    except OSError:
-        connection.send_bytes(b'{"code":"pdf_temp_limit","ok":false}')
-    connection.close()
 
 
 class _FakeSocket:
@@ -835,7 +773,7 @@ class TestBoundedScoutParsers(TestCase):
                 _parse_pdf(
                     b"%PDF-1.4",
                     DocumentParserLimits(pdf_wall_seconds=1),
-                    _worker=_sleep_pdf_worker,
+                    _worker=sleep_pdf_worker,
                     _temp_parent=directory,
                 )
             self.assertEqual(list(Path(directory).iterdir()), [])
@@ -843,7 +781,7 @@ class TestBoundedScoutParsers(TestCase):
                 _parse_pdf(
                     b"%PDF-1.4",
                     DocumentParserLimits(pdf_ipc_bytes=1),
-                    _worker=_large_ipc_pdf_worker,
+                    _worker=large_ipc_pdf_worker,
                     _temp_parent=directory,
                 )
             self.assertEqual(list(Path(directory).iterdir()), [])
@@ -851,7 +789,7 @@ class TestBoundedScoutParsers(TestCase):
                 _parse_pdf(
                     b"%PDF-1.4",
                     DocumentParserLimits(pdf_rss_bytes=1),
-                    _worker=_rss_pdf_worker,
+                    _worker=rss_pdf_worker,
                     _temp_parent=directory,
                 )
             self.assertEqual(list(Path(directory).iterdir()), [])
@@ -859,7 +797,7 @@ class TestBoundedScoutParsers(TestCase):
                 _parse_pdf(
                     b"%PDF-1.4",
                     DocumentParserLimits(pdf_cpu_seconds=1),
-                    _worker=_cpu_pdf_worker,
+                    _worker=cpu_pdf_worker,
                     _temp_parent=directory,
                 )
             self.assertEqual(list(Path(directory).iterdir()), [])
@@ -867,7 +805,7 @@ class TestBoundedScoutParsers(TestCase):
                 _parse_pdf(
                     b"%PDF-1.4",
                     DocumentParserLimits(),
-                    _worker=_pid_pdf_worker,
+                    _worker=pid_pdf_worker,
                     _temp_parent=directory,
                 )
             self.assertEqual(list(Path(directory).iterdir()), [])
@@ -875,7 +813,7 @@ class TestBoundedScoutParsers(TestCase):
                 _parse_pdf(
                     b"%PDF-1.4",
                     DocumentParserLimits(pdf_temp_bytes=1),
-                    _worker=_temp_pdf_worker,
+                    _worker=temp_pdf_worker,
                     _temp_parent=directory,
                 )
             self.assertEqual(list(Path(directory).iterdir()), [])

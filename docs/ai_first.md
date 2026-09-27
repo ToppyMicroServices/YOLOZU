@@ -35,6 +35,8 @@ AI-safe tool scripts (CLI; not exposed as guaranteed MCP tool ids):
 
 Best-effort (environment dependent, not in stable AI-safe guarantee):
 
+- the Stable `qualify_release` task-level tool, which writes a workspace-confined
+  evidence pack and requires local data plus `yolozu[coco]` for real metrics
 - tool-runner operations beyond the guaranteed MCP tool ids (for example `eval_coco`, `validate_dataset`, `parity_check`)
 - training jobs (`train`, `ttt`, `ctta`)
 - TensorRT build/export
@@ -70,7 +72,7 @@ yolozu-mcp --sample-review-config reports/ai_generate_config.json
 when the config cannot be read safely, so agents can use the process status
 without parsing human text.
 
-Inspect all 32 registered MCP operations, or filter the broader manifest
+Inspect all 33 registered MCP operations, or filter the broader manifest
 registry without returning full records:
 
 ```bash
@@ -82,6 +84,12 @@ yolozu-mcp --print-tools --ids-only --maturity stable --tag validation
 execution guarantee: only `guaranteed_ai_safe` carries the deterministic,
 lightweight guarantee, and every other operation remains subject to its
 declared dependencies and runtime inputs.
+
+`qualify_release` calls the same Stable engine as `yolozu.api.qualify_release`
+and `yolozu qualify-release create`. MCP paths are workspace-confined and its
+default is `dry_run=true`. A dry run emits `decision: hold`; the tool never
+turns missing metrics or missing thresholds into a pass. See
+[`release_qualification.md`](release_qualification.md).
 
 `recommend_image_pipeline` is an Experimental, MCP-only, read-only operation.
 The caller supplies a structured `job_spec` and workspace-confined `input_path`;

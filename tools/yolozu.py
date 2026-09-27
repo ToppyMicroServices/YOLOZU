@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 _PKG_PASSTHROUGH_COMMANDS = {
     "activate-qualification-evidence",
+    "adapter",
     "benchmark",
     "calibrate",
     "demo",
@@ -54,6 +55,7 @@ _PKG_PASSTHROUGH_COMMANDS = {
     "predictions",
     "prepare-torchvision-maskrcnn",
     "qualify-image-pipeline",
+    "qualify-release",
     "review-image-pipeline-support-profiles",
     "update-image-pipeline-lifecycle",
     "scout-algorithms",
@@ -1423,6 +1425,14 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         (
             "qualify-image-pipeline",
             "Delegate to yolozu package CLI qualification command.",
+        ),
+        (
+            "qualify-release",
+            "Delegate to the portable release qualification pack command.",
+        ),
+        (
+            "adapter",
+            "Delegate to the packaged adapter SDK and conformance command.",
         ),
         (
             "review-image-pipeline-support-profiles",

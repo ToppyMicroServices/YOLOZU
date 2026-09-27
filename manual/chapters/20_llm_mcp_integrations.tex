@@ -21,6 +21,7 @@ Core exposed tools:
   \item \cmd{validate_predictions}
   \item \cmd{validate_dataset}
   \item \cmd{eval_coco}
+  \item \cmd{qualify_release} (MCP only)
   \item \cmd{run_scenarios}
   \item \cmd{convert_dataset} (optional)
 \end{itemize}
@@ -57,7 +58,7 @@ Guaranteed AI-safe surface (deterministic/lightweight):
   \item \cmd{validate_predictions}
 \end{itemize}
 
-The live MCP server registers a broader 32-tool surface. The generated JSON
+The live MCP server registers a broader 33-tool surface. The generated JSON
 reference separates \cmd{mcp_live}, \cmd{guaranteed_ai_safe},
 \cmd{image_service_safe}, \cmd{config_review}, and \cmd{actions_public}; registration alone does not
 promote environment-dependent operations into the guaranteed set.
@@ -68,6 +69,16 @@ unclassified, and filtered discovery reports the number of excluded
 unclassified records.
 Read-only discovery and \cmd{--help} do not create job-storage artifacts;
 \cmd{runs/mcp_jobs} is initialized only when a job operation needs it.
+
+The Stable \cmd{qualify_release} tool uses the same engine as
+\cmd{yolozu qualify-release create} and \cmd{yolozu.api.qualify_release}.
+Paths remain inside the MCP workspace. Its safe default is
+\cmd{dry_run=true}, which always produces a \cmd{hold} decision because no
+official metrics exist. A pass requires real local evaluation and an explicit
+quality threshold. This tool writes the requested pack directory and depends
+on local data, so it is not part of \cmd{guaranteed_ai_safe}. The pack format,
+verification command, and checksum limits are documented in
+\path{docs/release_qualification.md}.
 
 The Experimental \cmd{recommend\_image\_pipeline} tool accepts a typed image job
 and workspace-confined input. Optional registry, candidate-screening, evidence,
@@ -237,6 +248,7 @@ unless \cmd{repair=true}.
   \item Data/validation: \cmd{doctor}, \cmd{validate_predictions}, \cmd{validate_dataset}, \cmd{convert_dataset}
   \item Inference/calibration: \cmd{predict_images}, \cmd{parity_check}, \cmd{calibrate_predictions}
   \item Evaluation: \cmd{eval_coco}, \cmd{eval_instance_seg}, \cmd{eval_long_tail}, \cmd{run_scenarios}
+  \item Release evidence (MCP only): \cmd{qualify_release}
 \end{itemize}
 
 \subsection{Asynchronous job tools}

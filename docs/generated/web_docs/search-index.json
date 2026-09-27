@@ -70,6 +70,13 @@
     "title": "adapter_parity_suite"
   },
   {
+    "href": "commands.html#tool-adapter-sdk",
+    "kind": "command",
+    "search_text": "adapter_sdk Discover installed yolozu.adapters.v1 metadata without imports, then explicitly load and check a reviewed adapter plugin against the Stable predictions interface contract. stable yolozu/cli.py   --config --records --allow-plugin-load python3 -m yolozu adapter list python3 -m yolozu adapter test dummy --allow-plugin-load python3 -m yolozu adapter --help",
+    "summary": "Discover installed yolozu.adapters.v1 metadata without imports, then explicitly load and check a reviewed adapter plugin against the Stable predictions interface contract.",
+    "title": "adapter_sdk"
+  },
+  {
     "href": "commands.html#tool-announce-release",
     "kind": "command",
     "search_text": "announce_release Generate (and optionally post) release announcement bundle for LinkedIn/X/Reddit from GitHub release event payload. stable tools/announce_release.py --event-json --out-dir --post --platform --strict-post --reddit-subreddit --reddit-kind --x-max-len python3 tools/announce_release.py --out-dir reports/announce python3 tools/announce_release.py --out-dir reports/announce --post --strict-post",
@@ -791,6 +798,13 @@
     "title": "qualify_image_pipeline"
   },
   {
+    "href": "commands.html#tool-qualify-release",
+    "kind": "command",
+    "search_text": "qualify_release Create, verify, and compare portable release qualification packs with fail-closed pass, hold, and fail decisions over the Stable COCO evaluation engine. stable yolozu/cli.py  --dataset --predictions --output-dir --baseline-predictions --split --bbox-format --max-images --dry-run --min-map50-95 --max-map50-95-drop --force python3 -m yolozu qualify-release create --dataset data/smoke --predictions data/smoke/predictions/predictions_dummy.json --output-dir reports/qualification_smoke --split val --max-images 2 --dry-run python3 -m yolozu qualify-release verify reports/qualification_smoke python3 -m yolozu qualify-release --help",
+    "summary": "Create, verify, and compare portable release qualification packs with fail-closed pass, hold, and fail decisions over the Stable COCO evaluation engine.",
+    "title": "qualify_release"
+  },
+  {
     "href": "commands.html#tool-qualify-sdft-continual",
     "kind": "command",
     "search_text": "qualify_sdft_continual Qualify checkpoint-distillation continual learning across fixed seeds and real COCOeval, including the prospective naive/SDFT-response/replay/combined ablation with selected-query and replay execution gates. research tools/qualify_sdft_continual.py --spec --output-dir --archive --role --source-summary ./.venv/bin/python tools/qualify_sdft_continual.py --output-dir /tmp/yolozu-sdft-qualification ./.venv/bin/python tools/qualify_sdft_continual.py --spec configs/continual/sdft_response_replay_preregistration.json --output-dir /tmp/yolozu-sdft-response-replay",
@@ -1370,6 +1384,13 @@
     "search_text": "Reference Adapter Regression Report Checked-in YOLOZU JSON Schema. baseline_meta baseline_path contract diff_summary_path failures gate_policy gates hard_failures ok predictions_sha256 protocol run run_meta schema_version soft_failures speed summary topk_examples topk_examples_dir warnings docs/schemas/reference_adapter_regression_report.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "Reference Adapter Regression Report"
+  },
+  {
+    "href": "schemas.html#schema-release-qualification-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU release qualification decision Checked-in YOLOZU JSON Schema. checks decision evaluator_version limitations pack_format passed protocol_fingerprint request_fingerprint schema_version docs/schemas/release_qualification.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU release qualification decision"
   },
   {
     "href": "schemas.html#schema-research-lane-report-schema",

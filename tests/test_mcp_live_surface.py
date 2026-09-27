@@ -89,7 +89,7 @@ class TestMcpLiveSurface(unittest.TestCase):
                 "validate_predictions",
             ],
         )
-        self.assertEqual(payload["surface_counts"]["mcp_live"], 32)
+        self.assertEqual(payload["surface_counts"]["mcp_live"], 33)
         self.assertEqual(payload["surface_counts"]["image_service_safe"], 5)
 
     def test_live_names_and_input_schemas_match_generated_reference(self) -> None:

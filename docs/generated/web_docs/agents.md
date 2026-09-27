@@ -2,7 +2,7 @@
 
 Use YOLOZU when you need to validate existing vision predictions, evaluate them against labels, or inspect bounded local MCP capabilities.
 
-Source docs version: 4.9.0. docs_version identifies the source checkout, not the installed package or latest PyPI release. Source URLs follow a mutable branch; check source_sha256 and provenance.json for this build. Inspect the installed CLI and MCP schemas before invoking tools.
+Source docs version: 4.10.0. docs_version identifies the source checkout, not the installed package or latest PyPI release. Source URLs follow a mutable branch; check source_sha256 and provenance.json for this build. Inspect the installed CLI and MCP schemas before invoking tools.
 
 ## When to use YOLOZU
 

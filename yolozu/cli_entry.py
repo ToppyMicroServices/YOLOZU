@@ -55,6 +55,7 @@ from yolozu.eval.benchmark_flags import (
     STRICT_HELP,
 )
 from yolozu.inference.export_orchestrator import parse_common_export_args
+from yolozu.platform_cli import add_platform_parsers, handle_platform_command
 from yolozu.predictions.bbox_formats import SUPPORTED_PREDICTION_BBOX_FORMATS
 import argparse
 import json
@@ -180,6 +181,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
+
+    add_platform_parsers(sub)
 
     guide = sub.add_parser("guide", help="Show beginner-friendly routes and copy-paste commands.")
     guide.add_argument(
@@ -1712,6 +1715,9 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(_render_guide_text(str(args.goal)), end="")
         return 0
+    platform_result = handle_platform_command(args)
+    if platform_result is not None:
+        return platform_result
     if args.command == "train":
         if getattr(args, "import_from", None) and getattr(args, "external_backend", None):
             raise SystemExit("train cannot combine --import preview with --external-backend")

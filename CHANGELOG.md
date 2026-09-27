@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.10.0] - 2026-09-28
+
+### Added
+- Add portable release qualification packs with deterministic input digests,
+  path-redacted evaluation evidence, explicit pass/hold/fail gates, checksum
+  verification, and compatible-pack metric diffs.
+- Expose the same qualification engine through the Stable Python API, CLI, and
+  one workspace-confined MCP task-level tool.
+- Ship a typed `yolozu.adapters.v1` plugin SDK, metadata-only discovery,
+  explicit plugin loading, a packaged conformance image, and predictions
+  interface conformance checks.
+
+### Changed
+- Document the qualification pack and adapter plugin boundaries across the
+  English and Japanese quick starts, AI guide, Stable Python API, and manual.
+
 ## [4.9.0] - 2026-09-21
 
 ### Added

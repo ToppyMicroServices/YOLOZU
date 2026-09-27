@@ -18,3 +18,4 @@ recursive-include protocols *.json
 recursive-include rtdetr_pose/rtdetr_pose/configs *.json
 recursive-include rtdetr_pose/configs *.json
 recursive-include rtdetr_pose/tools *.py
+recursive-include test_support *.py

@@ -1,9 +1,10 @@
 # Stable Python API
 
 `yolozu.api` is the supported in-process surface for validating and evaluating
-detection predictions. It does not launch a subprocess, change the process
-working directory, or write a report unless the caller explicitly serializes
-the returned result.
+detection predictions and creating release qualification packs. It does not
+launch a subprocess or change the process working directory. Validation and
+evaluation are in-memory; `qualify_release` writes only the explicit output
+directory supplied by the caller.
 
 ## Shortest CLI path
 
@@ -111,6 +112,29 @@ print(validated.to_dict())
 `evaluate_coco` accepts the same `PredictionsInput`, a wrapped mapping, or an
 entry sequence in place of a path.
 
+## Release qualification
+
+```python
+from yolozu.api import qualify_release, verify_qualification_pack
+
+result = qualify_release(
+    "/absolute/path/to/dataset",
+    "/absolute/path/to/candidate_predictions.json",
+    "/absolute/path/to/qualification_pack",
+    min_map50_95=0.40,
+)
+
+if not result.passed:
+    raise RuntimeError(result.decision)
+if not verify_qualification_pack(result.pack_dir).ok:
+    raise RuntimeError("qualification pack verification failed")
+```
+
+The pack is written atomically and contains content digests, path-redacted
+evaluation evidence, an explicit decision, and checksums. A dry run, missing
+metrics, or a request without a quality threshold produces `hold`, never
+`pass`. See [`release_qualification.md`](release_qualification.md).
+
 ## `max_images` semantics
 
 The dataset is ordered deterministically and the first `N` records are
@@ -139,6 +163,12 @@ This page is the source of truth for the supported Python surface:
 | `CocoEvaluationResult` | Typed result with `to_dict()` serialization |
 | `validate_predictions` | Strict validation; `repair=True` is explicit opt-in |
 | `evaluate_coco` | Strict validation plus dry-run conversion or real COCOeval |
+| `QualificationResult` | Pack path, `pass`/`hold`/`fail` decision, and serialized evidence |
+| `PackVerificationResult` | Checksum and semantic verification result |
+| `qualify_release` | Create a deterministic, path-redacted qualification pack |
+| `verify_qualification_pack` | Verify pack checksums and recompute its decision |
+| `diff_qualification_packs` | Compare metrics only for compatible verified packs |
+| `QualificationError` | Invalid qualification request or pack |
 | `APIError` | Base machine-readable exception with `code` and `to_dict()` |
 | `InputError` | Path, JSON, or option input error |
 | `DatasetError` | Dataset loading or empty-selection error |

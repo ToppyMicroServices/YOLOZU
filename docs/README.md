@@ -42,6 +42,8 @@ yolozu doctor --proof
 
 - [`predictions_schema.md`](predictions_schema.md): the predictions interface contract
 - [`python_api.md`](python_api.md): typed in-process validation/evaluation API and stable error policy
+- [`release_qualification.md`](release_qualification.md): portable pass/hold/fail release packs, verification, and compatible diffs
+- [`adapter_templates.md`](adapter_templates.md): packaged third-party adapter SDK and explicit conformance route
 - [`install.md`](install.md): install, `doctor`, and environment setup
 - [`llm_discovery.md`](llm_discovery.md): agent-readable discovery, installation and usage routes, and publication checks
 - [`cpu_only_dod.md`](cpu_only_dod.md): CPU-only proof/demo/validate/eval DoD path
@@ -51,7 +53,7 @@ yolozu doctor --proof
 
 ## Next 3 Routes
 
-- Stable lane: evaluate precomputed predictions and keep the predictions interface contract stable
+- Stable lane: evaluate precomputed predictions and turn pinned results into verifiable release qualification packs
 - Bridge lane: train/export flows that emit the same predictions interface contract
 - Benchmark/Research lanes: backend parity, SynthGen handoff, and opt-in research lanes over already evaluated artifacts
 
@@ -124,13 +126,13 @@ The environment-qualified local image-processing program targets an Experimental
 
 ## Capability Maturity
 
-- Stable: prediction validation/evaluation, wrapped `predictions.json`, install/doctor flow, repo smoke/demo path
+- Stable: prediction validation/evaluation, release qualification packs, packaged adapter SDK, install/doctor flow, repo smoke/demo path
 - Experimental: backend parity, benchmark orchestration, external training handoff, macOS/MPS evaluation paths
 - Research: continual learning, self-distillation, TTT, Hessian refinement
 
 ## Production Readiness
 
-- Stable scope: prediction validation/evaluation and the predictions interface contract
+- Stable scope: prediction validation/evaluation, release qualification packs, and the predictions and adapter plugin interface contracts
 - Needs qualification in your environment: backend parity, benchmark orchestration, SynthGen handoff, macOS/MPS paths
 - Research-oriented: continual learning, self-distillation, TTT, Hessian refinement
 - Details: [`production_readiness.md`](production_readiness.md)
