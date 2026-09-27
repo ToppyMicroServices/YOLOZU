@@ -9,6 +9,7 @@ results.
 from __future__ import annotations
 
 import copy
+import importlib
 import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -28,6 +29,15 @@ from yolozu.predictions.predictions import (
 from yolozu.predictions.predictions_transform import load_classes_json, normalize_class_ids
 from yolozu.predictions.schema_governance import validate_payload_schema_version
 
+_QUALIFICATION_EXPORTS = (
+    "QualificationError",
+    "QualificationResult",
+    "PackVerificationResult",
+    "qualify_release",
+    "verify_qualification_pack",
+    "diff_qualification_packs",
+)
+
 __all__ = [
     "APIError",
     "InputError",
@@ -42,12 +52,7 @@ __all__ = [
     "CocoEvaluationResult",
     "validate_predictions",
     "evaluate_coco",
-    "QualificationError",
-    "QualificationResult",
-    "PackVerificationResult",
-    "qualify_release",
-    "verify_qualification_pack",
-    "diff_qualification_packs",
+    *_QUALIFICATION_EXPORTS,
 ]
 
 JsonObject = dict[str, Any]
@@ -713,14 +718,15 @@ def _write_json_atomic(path: Path, payload: Mapping[str, Any]) -> None:
     temporary.replace(path)
 
 
-# Imported after the evaluation implementation so qualification can call back
-# into this module without creating an import cycle.  These names are part of
-# the same Stable Python API surface.
-from yolozu.qualification import (  # noqa: E402
-    PackVerificationResult,
-    QualificationError,
-    QualificationResult,
-    diff_qualification_packs,
-    qualify_release,
-    verify_qualification_pack,
-)
+def __getattr__(name: str) -> Any:
+    """Resolve qualification exports lazily to keep the API import graph acyclic."""
+
+    if name not in _QUALIFICATION_EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(importlib.import_module("yolozu.qualification"), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | _QUALIFICATION_EXPORTS)
