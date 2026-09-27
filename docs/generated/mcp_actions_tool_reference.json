@@ -1560,6 +1560,10 @@
       },
       "examples": [
         {
+          "command": "python3 -m yolozu qualify-release create --spec examples/release_qualification_action/yolozu.yaml",
+          "description": "Run the shared qualification engine from one strict YAML spec whose relative paths resolve from the spec directory."
+        },
+        {
           "command": "python3 -m yolozu qualify-release create --dataset data/smoke --predictions data/smoke/predictions/predictions_dummy.json --output-dir reports/qualification_smoke --split val --max-images 2 --dry-run",
           "description": "Create a deterministic validation pack whose decision remains hold because dry-run has no official metrics."
         },

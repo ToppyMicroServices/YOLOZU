@@ -1,5 +1,5 @@
 {
-  "docs_version": "4.10.0",
+  "docs_version": "4.11.0",
   "entrypoints": {
     "agent_guide": "https://www.toppymicros.com/yolozu/docs/agents.md",
     "llms": "https://www.toppymicros.com/yolozu/docs/llms.txt",
@@ -24,14 +24,14 @@
     {
       "description": "Command inputs, examples, side effects, dependencies, and maturity.",
       "id": "cli_manifest",
-      "source_sha256": "811116318ae6df705aa13af6006ab3351c2fe8c2f36e3b39f48f93b2c548fe9c",
+      "source_sha256": "688f25c4c55088845cd297e2790899552939dcee4d718e5e5955d4595f6a028b",
       "title": "CLI tool manifest",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/tools/manifest.json"
     },
     {
       "description": "Exact generated tool surfaces and MCP input schemas; registration is not execution qualification.",
       "id": "mcp_reference",
-      "source_sha256": "619c54be141e2e12057c59336c02463e41b6df6b1e632b33154ad74dd2f0fafb",
+      "source_sha256": "9a7ce2e83117b6ad09e694fcf01499dda31bd824f7733ed0dac579999d477af7",
       "title": "MCP and Actions reference JSON",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/generated/mcp_actions_tool_reference.json"
     },
@@ -45,21 +45,21 @@
     {
       "description": "Typed input, result, and error interfaces for local validation and evaluation.",
       "id": "python_api",
-      "source_sha256": "e8d38867d230e4ba28e2c90e0c319811e5deef927a7ced21893e972f629c00ed",
+      "source_sha256": "b9a867316516b2a43922e040b91928c7417780e5fdf454c7881c00050df33894",
       "title": "Stable Python API",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/python_api.md"
     },
     {
       "description": "Client connection options and workspace boundaries.",
       "id": "mcp_clients",
-      "source_sha256": "d2523403828be31c92c0a74e5de77a29708cc1fca12553567198bfa3e6749ce2",
+      "source_sha256": "e758960350d094f258ce5fb210fed7e85ef3b384a8e8a3f8fc059375f54774df",
       "title": "LLM and MCP integration",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/llm_integrations.md"
     },
     {
       "description": "Capabilities, opaque assets and jobs, limits, and abstention semantics.",
       "id": "image_service",
-      "source_sha256": "13f9745e88c51d8163a3072193d204d39eeb74845fa018659ed93aabb3e0fdce",
+      "source_sha256": "4e18277d7dfb1ad6e0e6c2b4937a397ff301371437c3dda017a093fbb0f55a8d",
       "title": "Bounded image service",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/image_service_mcp.md"
     },

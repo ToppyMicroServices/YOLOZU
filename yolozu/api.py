@@ -31,9 +31,12 @@ from yolozu.predictions.schema_governance import validate_payload_schema_version
 
 _QUALIFICATION_EXPORTS = (
     "QualificationError",
+    "QualificationSpec",
     "QualificationResult",
     "PackVerificationResult",
+    "load_qualification_spec",
     "qualify_release",
+    "qualify_release_from_spec",
     "verify_qualification_pack",
     "diff_qualification_packs",
 )

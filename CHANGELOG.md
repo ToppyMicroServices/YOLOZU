@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.11.0] - 2026-09-28
+
+### Added
+- Add a reusable composite GitHub Action that accepts one strict qualification
+  spec, writes the release decision to the job summary, and uploads the verified
+  Qualification Pack before enforcing the gate.
+- Add a versioned YAML interface contract and schema for portable release
+  qualification requests, with paths resolved relative to the spec.
+
+### Changed
+- Migrate the optional MCP integration to the official Python SDK v2 while
+  retaining explicit legacy-client coverage and the bounded image-service HTTP
+  surface.
+- Run the qualification Action smoke test and MCP v2 protocol checks in the
+  lightweight CI tier.
+
 ## [4.10.0] - 2026-09-28
 
 ### Added

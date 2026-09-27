@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import hmac
 import ipaddress
+from typing import Any
 from urllib.parse import urlsplit
 
 from mcp.server.auth.provider import AccessToken
 from mcp.server.auth.settings import AuthSettings
-from mcp.server.fastmcp import FastMCP
+from mcp.server import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
 
 from .ai_surface import (
@@ -60,12 +61,12 @@ from .tool_runner import (
 )
 
 
-app = FastMCP("yolozu")
+app = MCPServer("yolozu")
 
 
-class _ImageServiceMCP(FastMCP):
-    def streamable_http_app(self):
-        application = super().streamable_http_app()
+class _ImageServiceMCP(MCPServer):
+    def streamable_http_app(self, **kwargs: Any):
+        application = super().streamable_http_app(**kwargs)
         application.add_middleware(ImageServiceHTTPBounds)
         return application
 
@@ -119,7 +120,9 @@ def _http_server_boundary(
             for character in streamable_http_path
         )
     ):
-        raise ValueError("streamable_http_path must be an absolute path without traversal")
+        raise ValueError(
+            "streamable_http_path must be an absolute path without traversal"
+        )
     if auth_token is not None and (
         not 32 <= len(auth_token.encode("utf-8")) <= 4096
         or any(ord(character) < 32 or ord(character) == 127 for character in auth_token)
@@ -227,9 +230,7 @@ def ai_tools_tool(
         "tool": "ai_tools",
         "summary": "listed AI/MCP tool surface",
         "exit_code": 0,
-        "supported_mcp_tools": list(
-            surfaces["guaranteed_ai_safe"]["tool_ids"]
-        ),
+        "supported_mcp_tools": list(surfaces["guaranteed_ai_safe"]["tool_ids"]),
         "supported_mcp_tools_semantics": (
             "compatibility view of guaranteed_ai_safe tool ids"
         ),
@@ -245,21 +246,16 @@ def ai_tools_tool(
     if ids_only:
         payload["selected_tool_ids"] = list(tools)
         payload["surface_counts"] = {
-            name: len(surface["tool_ids"])
-            for name, surface in surfaces.items()
+            name: len(surface["tool_ids"]) for name, surface in surfaces.items()
         }
     else:
         payload["guaranteed_mcp_tools"] = list(
             surfaces["guaranteed_ai_safe"]["tool_ids"]
         )
-        payload["live_mcp_tools"] = list(
-            surfaces["mcp_live"]["tool_ids"]
-        )
+        payload["live_mcp_tools"] = list(surfaces["mcp_live"]["tool_ids"])
         payload["surfaces"] = surfaces
     if maturity is not None or tag is not None:
-        payload["filter_diagnostics"] = discovery[
-            "filter_diagnostics"
-        ]
+        payload["filter_diagnostics"] = discovery["filter_diagnostics"]
     return payload
 
 
@@ -339,7 +335,9 @@ def validate_predictions_tool(path: str, strict: bool = True) -> dict:
 
 
 @app.tool(name="validate_dataset")
-def validate_dataset_tool(dataset: str, split: str | None = None, strict: bool = True, mode: str = "fail") -> dict:
+def validate_dataset_tool(
+    dataset: str, split: str | None = None, strict: bool = True, mode: str = "fail"
+) -> dict:
     """Validate YOLO-format dataset."""
     return validate_dataset(dataset=dataset, split=split, strict=strict, mode=mode)
 
@@ -643,19 +641,27 @@ def convert_dataset_tool(
 
 
 @app.tool(name="train_job")
-def train_job_tool(train_config: str, run_id: str | None = None, resume: str | None = None) -> dict:
+def train_job_tool(
+    train_config: str, run_id: str | None = None, resume: str | None = None
+) -> dict:
     """Queue train command as asynchronous job and return job_id."""
     return train_job(train_config=train_config, run_id=run_id, resume=resume)
 
 
 @app.tool(name="export_predictions_job")
-def export_predictions_job_tool(dataset: str, output: str, split: str | None = None, force: bool = True) -> dict:
+def export_predictions_job_tool(
+    dataset: str, output: str, split: str | None = None, force: bool = True
+) -> dict:
     """Queue predictions export command as asynchronous job and return job_id."""
-    return export_predictions_job(dataset=dataset, output=output, split=split, force=force)
+    return export_predictions_job(
+        dataset=dataset, output=output, split=split, force=force
+    )
 
 
 @app.tool(name="export_onnx_job")
-def export_onnx_job_tool(dataset: str, output: str, split: str | None = None, force: bool = True) -> dict:
+def export_onnx_job_tool(
+    dataset: str, output: str, split: str | None = None, force: bool = True
+) -> dict:
     """Compatibility alias for export_predictions_job_tool."""
     return export_onnx_job(dataset=dataset, output=output, split=split, force=force)
 
@@ -804,15 +810,10 @@ def run_server(
         auth_token=auth_token,
         public_url=public_url,
     )
-    selected.settings.host = host
-    selected.settings.port = port
-    selected.settings.streamable_http_path = streamable_http_path
-    selected.settings.stateless_http = True
-    selected.settings.json_response = True
     selected._token_verifier = None
     selected.settings.auth = None
 
-    selected.settings.transport_security = TransportSecuritySettings(
+    transport_security = TransportSecuritySettings(
         enable_dns_rebinding_protection=True,
         allowed_hosts=allowed_hosts,
         allowed_origins=allowed_origins,
@@ -827,7 +828,15 @@ def run_server(
         )
     try:
         start_image_service()
-        selected.run(transport="streamable-http")
+        selected.run(
+            transport="streamable-http",
+            host=host,
+            port=port,
+            streamable_http_path=streamable_http_path,
+            stateless_http=True,
+            json_response=True,
+            transport_security=transport_security,
+        )
     finally:
         close_image_service()
 

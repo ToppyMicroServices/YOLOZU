@@ -20,13 +20,23 @@ import warnings
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
 MAX_PIXELS = 64_000_000
 MAX_DIMENSION = 16_384
-TOOL_NAMES = frozenset({
-    "image_service_capabilities", "put_image_asset", "submit_image_job",
-    "get_image_job", "cancel_image_job",
-})
+TOOL_NAMES = frozenset(
+    {
+        "image_service_capabilities",
+        "put_image_asset",
+        "submit_image_job",
+        "get_image_job",
+        "cancel_image_job",
+    }
+)
 SERVER_ARGS = [
-    "-I", "-m", "yolozu.integrations.mcp_cli",
-    "--transport", "stdio", "--surface", "image-service",
+    "-I",
+    "-m",
+    "yolozu.integrations.mcp_cli",
+    "--transport",
+    "stdio",
+    "--surface",
+    "image-service",
 ]
 
 
@@ -53,29 +63,35 @@ def read_image(path: Path) -> dict[str, str]:
     with warnings.catch_warnings():
         warnings.simplefilter("error", Image.DecompressionBombWarning)
         with Image.open(io.BytesIO(data)) as image:
-            media_type = {"PNG": "image/png", "JPEG": "image/jpeg", "WEBP": "image/webp"}.get(image.format)
+            media_type = {
+                "PNG": "image/png",
+                "JPEG": "image/jpeg",
+                "WEBP": "image/webp",
+            }.get(image.format)
             if media_type is None:
                 raise ValueError("only PNG, JPEG, and WebP images are supported")
             width, height = image.size
             if max(width, height) > MAX_DIMENSION or width * height > MAX_PIXELS:
                 raise ValueError("image dimensions exceed the service limits")
             image.verify()
-    return {"content_base64": base64.b64encode(data).decode("ascii"), "media_type": media_type}
+    return {
+        "content_base64": base64.b64encode(data).decode("ascii"),
+        "media_type": media_type,
+    }
 
 
 async def call(session, name: str, arguments: dict | None = None) -> dict:
     reply = await session.call_tool(name, arguments or {})
-    payload = reply.structuredContent
+    payload = reply.structured_content
     if payload is None:
         payload = json.loads(reply.content[0].text)
-    if reply.isError or not isinstance(payload, dict) or payload.get("ok") is not True:
+    if reply.is_error or not isinstance(payload, dict) or payload.get("ok") is not True:
         # Do not echo arbitrary server responses or user image bytes on failure.
         raise ValueError(f"{name} failed; no inference success is implied")
     return payload
 
 
 async def request(session, args: argparse.Namespace, image: dict | None) -> dict:
-    await session.initialize()
     listed = await session.list_tools()
     if {tool.name for tool in listed.tools} != TOOL_NAMES:
         raise ValueError("server does not expose exactly the bounded five-tool surface")
@@ -83,12 +99,16 @@ async def request(session, args: argparse.Namespace, image: dict | None) -> dict
     if image is None:
         return capabilities
     uploaded = await call(session, "put_image_asset", image)
-    submitted = await call(session, "submit_image_job", {
-        "asset_id": uploaded["asset"]["asset_id"],
-        "fixed_classes": args.classes,
-        "execute": args.execute,
-        "timeout_seconds": max(30, math.ceil(args.timeout)),
-    })
+    submitted = await call(
+        session,
+        "submit_image_job",
+        {
+            "asset_id": uploaded["asset"]["asset_id"],
+            "fixed_classes": args.classes,
+            "execute": args.execute,
+            "timeout_seconds": max(30, math.ceil(args.timeout)),
+        },
+    )
     job_id = submitted["job"]["job_id"]
     deadline = asyncio.get_running_loop().time() + args.timeout
     while True:
@@ -102,34 +122,63 @@ async def request(session, args: argparse.Namespace, image: dict | None) -> dict
 
 
 async def run(args: argparse.Namespace, image: dict | None) -> dict:
-    from mcp import ClientSession, StdioServerParameters
-    from mcp.client.stdio import stdio_client
+    from mcp import Client, StdioServerParameters
 
     # A fresh session avoids writing into a caller's project or plugin cache.
     # No token or provider API key is needed for this local child process.
     with tempfile.TemporaryDirectory(prefix="yolozu-plugin-") as workspace:
         params = StdioServerParameters(
-            command=sys.executable, args=SERVER_ARGS, cwd=workspace,
+            command=sys.executable,
+            args=SERVER_ARGS,
+            cwd=workspace,
             env={},
         )
-        async with stdio_client(params) as (read, write):
-            async with ClientSession(read, write) as session:
-                return await asyncio.wait_for(request(session, args, image), args.timeout + 15)
+        async with Client(params, mode="legacy") as session:
+            return await asyncio.wait_for(
+                request(session, args, image), args.timeout + 15
+            )
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     source = parser.add_mutually_exclusive_group(required=True)
-    source.add_argument("--capabilities", action="store_true", help="Inspect capabilities without uploading an image.")
-    source.add_argument("--image", type=Path, help="User-selected local PNG/JPEG/WebP; at most 8 MiB.")
-    parser.add_argument("--class", dest="classes", action="append", default=[], help="Target class; repeat for multiple labels. Required with --image.")
-    parser.add_argument("--execute", action="store_true", help="Request actual processing after user authorization; still abstains without a qualified model.")
-    parser.add_argument("--timeout", type=float, default=60, help="Job wait in seconds, 1..120 (default: 60); stop queued/running work on expiry. Transport/cleanup have separate bounds.")
+    source.add_argument(
+        "--capabilities",
+        action="store_true",
+        help="Inspect capabilities without uploading an image.",
+    )
+    source.add_argument(
+        "--image", type=Path, help="User-selected local PNG/JPEG/WebP; at most 8 MiB."
+    )
+    parser.add_argument(
+        "--class",
+        dest="classes",
+        action="append",
+        default=[],
+        help="Target class; repeat for multiple labels. Required with --image.",
+    )
+    parser.add_argument(
+        "--execute",
+        action="store_true",
+        help="Request actual processing after user authorization; still abstains without a qualified model.",
+    )
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=60,
+        help="Job wait in seconds, 1..120 (default: 60); stop queued/running work on expiry. Transport/cleanup have separate bounds.",
+    )
     args = parser.parse_args(argv)
     if not math.isfinite(args.timeout) or not 1 <= args.timeout <= 120:
         parser.error("--timeout must be finite and in 1..120")
-    if args.image is not None and (not args.classes or len(args.classes) > 100 or any(not label.strip() or len(label) > 128 for label in args.classes)):
-        parser.error("--image requires 1..100 non-empty --class labels of at most 128 characters")
+    if args.image is not None and (
+        not args.classes
+        or len(args.classes) > 100
+        or any(not label.strip() or len(label) > 128 for label in args.classes)
+    ):
+        parser.error(
+            "--image requires 1..100 non-empty --class labels of at most 128 characters"
+        )
     if args.capabilities and (args.classes or args.execute):
         parser.error("--class and --execute require --image")
     return args
@@ -143,11 +192,22 @@ def main(argv: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         return 130
     except Exception:
-        print(json.dumps({"ok": False, "error": "Local image request failed. Check the file, installed yolozu[mcp] runtime, and service diagnostics."}))
+        print(
+            json.dumps(
+                {
+                    "ok": False,
+                    "error": "Local image request failed. Check the file, installed yolozu[mcp] runtime, and service diagnostics.",
+                }
+            )
+        )
         return 2
     print(json.dumps(result, ensure_ascii=False))
     job = result.get("job", {})
-    if result.get("ok") is not True or job.get("status") in {"failed", "cancelled", "timed_out"}:
+    if result.get("ok") is not True or job.get("status") in {
+        "failed",
+        "cancelled",
+        "timed_out",
+    }:
         return 2
     return 0  # Transport success can still contain result.outcome == abstained.
 

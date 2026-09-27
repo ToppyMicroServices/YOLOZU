@@ -98,15 +98,12 @@ print(result.to_dict())
 同じ評価を release gate として実行し、検証可能な evidence pack を残せます。
 
 ```bash
-yolozu qualify-release create \
-  --dataset /absolute/path/to/dataset \
-  --predictions /absolute/path/to/predictions.json \
-  --output-dir reports/release_qualification \
-  --min-map50-95 0.40
+yolozu qualify-release create --spec yolozu.yaml
 yolozu qualify-release verify reports/release_qualification
 ```
 
-baseline との差分 gate、pack 比較、Python、MCP からの利用は
+strict YAML spec、再利用可能な GitHub Action、baseline との差分 gate、pack
+比較、Python、MCP からの利用は
 [`docs/release_qualification.md`](docs/release_qualification.md) を参照してください。
 
 AI client には、まず小さな guaranteed tool list だけを渡せます。

@@ -1,0 +1,120 @@
+name: YOLOZU Release Qualification
+description: Create and verify a portable CV release qualification pack from one strict YAML spec.
+author: ToppyMicroServices
+
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  spec:
+    description: Path to the qualification YAML spec after actions/checkout.
+    required: false
+    default: yolozu.yaml
+  package-spec:
+    description: Quoted pip requirement used to install YOLOZU.
+    required: false
+    default: yolozu[coco]==4.11.0
+  python-version:
+    description: Python version used by the qualification job.
+    required: false
+    default: "3.11"
+  artifact-name:
+    description: Name for the uploaded qualification pack artifact.
+    required: false
+    default: yolozu-qualification-pack
+  retention-days:
+    description: Artifact retention in days.
+    required: false
+    default: "14"
+  fail-on-hold:
+    description: Fail the Action when the decision is hold.
+    required: false
+    default: "true"
+
+outputs:
+  decision:
+    description: "Qualification decision: pass, hold, fail, or error."
+    value: ${{ steps.summary.outputs.decision }}
+  pack-digest:
+    description: Verified SHA-256 digest of the qualification pack.
+    value: ${{ steps.summary.outputs.pack-digest }}
+  pack-path:
+    description: Resolved path to the qualification pack.
+    value: ${{ steps.summary.outputs.pack-path }}
+  artifact-id:
+    description: GitHub artifact identifier when a valid pack was uploaded.
+    value: ${{ steps.upload.outputs.artifact-id }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install YOLOZU
+      shell: bash
+      env:
+        YOLOZU_PACKAGE_SPEC: ${{ inputs.package-spec }}
+      run: python -m pip install "$YOLOZU_PACKAGE_SPEC"
+
+    - name: Create qualification pack
+      id: qualify
+      shell: bash
+      env:
+        YOLOZU_SPEC: ${{ inputs.spec }}
+        YOLOZU_RESULT: ${{ runner.temp }}/yolozu-qualification-result.json
+      run: |
+        set +e
+        yolozu qualify-release create --spec "$YOLOZU_SPEC" > "$YOLOZU_RESULT"
+        status=$?
+        set -e
+        echo "status=$status" >> "$GITHUB_OUTPUT"
+        echo "result=$YOLOZU_RESULT" >> "$GITHUB_OUTPUT"
+        cat "$YOLOZU_RESULT"
+
+    - name: Verify pack and write summary
+      id: summary
+      shell: bash
+      env:
+        YOLOZU_COMMAND_STATUS: ${{ steps.qualify.outputs.status }}
+        YOLOZU_RESULT: ${{ steps.qualify.outputs.result }}
+      run: >-
+        python "$GITHUB_ACTION_PATH/render_summary.py"
+        --result "$YOLOZU_RESULT"
+        --command-status "$YOLOZU_COMMAND_STATUS"
+
+    - name: Upload qualification pack
+      id: upload
+      if: ${{ steps.summary.outputs.pack-exists == 'true' }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ steps.summary.outputs.pack-path }}
+        if-no-files-found: error
+        retention-days: ${{ inputs.retention-days }}
+        include-hidden-files: false
+
+    - name: Enforce qualification decision
+      shell: bash
+      env:
+        YOLOZU_DECISION: ${{ steps.summary.outputs.decision }}
+        YOLOZU_FAIL_ON_HOLD: ${{ inputs.fail-on-hold }}
+      run: |
+        case "$YOLOZU_FAIL_ON_HOLD" in
+          true|false) ;;
+          *) echo "fail-on-hold must be true or false" >&2; exit 2 ;;
+        esac
+        case "$YOLOZU_DECISION" in
+          pass) exit 0 ;;
+          hold)
+            if [[ "$YOLOZU_FAIL_ON_HOLD" == "true" ]]; then
+              exit 3
+            fi
+            exit 0
+            ;;
+          fail) exit 4 ;;
+          *) exit 2 ;;
+        esac

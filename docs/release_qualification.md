@@ -3,6 +3,30 @@
 YOLOZU can turn one candidate predictions artifact into a portable release
 decision. The same engine is available from the CLI, `yolozu.api`, and MCP.
 
+For CI, keep the complete request in one strict YAML file. Relative paths are
+resolved from the spec directory, unknown fields are rejected, and the pack
+records the semantic SHA-256 of the spec without copying its path or contents:
+
+```yaml
+schema_version: 1
+dataset: data/val
+predictions: reports/candidate_predictions.json
+output_dir: reports/release_qualification
+evaluation:
+  split: val
+  max_images: 500
+thresholds:
+  min_map50_95: 0.40
+```
+
+```bash
+yolozu qualify-release create --spec yolozu.yaml
+```
+
+The schema is
+[`release_qualification_spec.schema.json`](schemas/release_qualification_spec.schema.json).
+Direct CLI flags remain supported for interactive use.
+
 Install the COCO extra before asking for a passing quality decision:
 
 ```bash
@@ -76,24 +100,41 @@ Pack checksums detect accidental modification and internal inconsistency. They
 do not authenticate the publisher. Sign or externally pin the pack digest when
 publisher identity matters.
 
+## GitHub Action
+
+An external repository can use the same spec as a pull-request gate. Checkout
+must run first because the Action never fetches repository content itself.
+
+```yaml
+- uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v6
+- id: qualify
+  uses: ToppyMicroServices/YOLOZU/.github/actions/qualify-release@v4.11.0
+  with:
+    spec: yolozu.yaml
+```
+
+The Action installs the release-matched PyPI package, creates and verifies the
+pack, writes a job summary, exposes `decision`, `pack-digest`, `pack-path`, and
+`artifact-id`, then uploads the JSON-only pack. A `fail` always fails the job.
+A `hold` also fails by default; set `fail-on-hold: "false"` only for an
+explicitly non-blocking observation lane. The artifact upload happens before
+the gate is enforced, so failed and held decisions retain their evidence.
+
 ## Stable Python API
 
 ```python
-from yolozu.api import qualify_release, verify_qualification_pack
+from yolozu.api import qualify_release_from_spec, verify_qualification_pack
 
-result = qualify_release(
-    "/absolute/path/to/dataset",
-    "/absolute/path/to/predictions.json",
-    "/absolute/path/to/qualification_pack",
-    min_map50_95=0.40,
-)
+result = qualify_release_from_spec("/absolute/path/to/yolozu.yaml")
 assert result.passed
 assert verify_qualification_pack(result.pack_dir).ok
 ```
 
-The public types are `QualificationResult`, `PackVerificationResult`, and
-`QualificationError`. `diff_qualification_packs` provides the same compatible
-pack comparison used by the CLI.
+The direct `qualify_release` function remains available. The public types are
+`QualificationSpec`, `QualificationResult`, `PackVerificationResult`, and
+`QualificationError`. `load_qualification_spec` validates a spec without
+running it. `diff_qualification_packs` provides the same compatible pack
+comparison used by the CLI.
 
 ## MCP
 

@@ -800,8 +800,8 @@
   {
     "href": "commands.html#tool-qualify-release",
     "kind": "command",
-    "search_text": "qualify_release Create, verify, and compare portable release qualification packs with fail-closed pass, hold, and fail decisions over the Stable COCO evaluation engine. stable yolozu/cli.py  --dataset --predictions --output-dir --baseline-predictions --split --bbox-format --max-images --dry-run --min-map50-95 --max-map50-95-drop --force python3 -m yolozu qualify-release create --dataset data/smoke --predictions data/smoke/predictions/predictions_dummy.json --output-dir reports/qualification_smoke --split val --max-images 2 --dry-run python3 -m yolozu qualify-release verify reports/qualification_smoke python3 -m yolozu qualify-release --help",
-    "summary": "Create, verify, and compare portable release qualification packs with fail-closed pass, hold, and fail decisions over the Stable COCO evaluation engine.",
+    "search_text": "qualify_release Create, verify, and compare portable release qualification packs from direct options or one strict YAML spec, with fail-closed pass, hold, and fail decisions over the Stable COCO evaluation engine. stable yolozu/cli.py  --spec --dataset --predictions --output-dir --baseline-predictions --split --bbox-format --max-images --dry-run --min-map50-95 --max-map50-95-drop --force python3 -m yolozu qualify-release create --spec examples/release_qualification_action/yolozu.yaml python3 -m yolozu qualify-release create --dataset data/smoke --predictions data/smoke/predictions/predictions_dummy.json --output-dir reports/qualification_smoke --split val --max-images 2 --dry-run python3 -m yolozu qualify-release verify reports/qualification_smoke python3 -m yolozu qualify-release --help",
+    "summary": "Create, verify, and compare portable release qualification packs from direct options or one strict YAML spec, with fail-closed pass, hold, and fail decisions over the Stable COCO evaluation engine.",
     "title": "qualify_release"
   },
   {
@@ -1391,6 +1391,13 @@
     "search_text": "YOLOZU release qualification decision Checked-in YOLOZU JSON Schema. checks decision evaluator_version limitations pack_format passed protocol_fingerprint request_fingerprint schema_version docs/schemas/release_qualification.schema.json",
     "summary": "Checked-in YOLOZU JSON Schema.",
     "title": "YOLOZU release qualification decision"
+  },
+  {
+    "href": "schemas.html#schema-release-qualification-spec-schema",
+    "kind": "schema",
+    "search_text": "YOLOZU release qualification spec Checked-in YOLOZU JSON Schema. baseline_predictions dataset evaluation force output_dir predictions schema_version thresholds docs/schemas/release_qualification_spec.schema.json",
+    "summary": "Checked-in YOLOZU JSON Schema.",
+    "title": "YOLOZU release qualification spec"
   },
   {
     "href": "schemas.html#schema-research-lane-report-schema",

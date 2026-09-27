@@ -14,13 +14,6 @@ from yolozu.adapter_sdk import (
     load_adapter_plugin,
     test_adapter_plugin,
 )
-from yolozu.qualification import (
-    QualificationError,
-    diff_qualification_packs,
-    qualify_release,
-    verify_qualification_pack,
-)
-
 __all__ = ["add_platform_parsers", "handle_platform_command"]
 
 
@@ -35,24 +28,38 @@ def add_platform_parsers(sub: argparse._SubParsersAction) -> None:
         "create",
         help="Evaluate a candidate and atomically create a qualification pack.",
     )
-    create.add_argument("--dataset", required=True, help="YOLO-format dataset root.")
-    create.add_argument("--predictions", required=True, help="Candidate predictions JSON.")
-    create.add_argument("--output-dir", required=True, help="New qualification pack directory.")
-    create.add_argument("--baseline-predictions", help="Optional baseline predictions JSON.")
+    source = create.add_mutually_exclusive_group(required=True)
+    source.add_argument(
+        "--spec",
+        help="Strict YAML spec; relative paths resolve from the spec directory.",
+    )
+    source.add_argument("--dataset", help="YOLO-format dataset root.")
+    create.add_argument("--predictions", help="Candidate predictions JSON.")
+    create.add_argument("--output-dir", help="New qualification pack directory.")
+    create.add_argument(
+        "--baseline-predictions", help="Optional baseline predictions JSON."
+    )
     create.add_argument("--split", default=None, help="Dataset split override.")
     create.add_argument(
         "--bbox-format",
         choices=("cxcywh_norm", "cxcywh_abs", "xywh_abs", "xyxy_abs"),
-        default="cxcywh_norm",
-        help="Prediction bbox format (default: cxcywh_norm).",
+        default=None,
+        help="Prediction bbox format (direct mode default: cxcywh_norm).",
     )
-    create.add_argument("--max-images", type=int, default=None, help="Optional positive subset cap.")
+    create.add_argument(
+        "--max-images", type=int, default=None, help="Optional positive subset cap."
+    )
     create.add_argument(
         "--dry-run",
         action="store_true",
         help="Validate conversion without COCO metrics; decision will be hold.",
     )
-    create.add_argument("--min-map50-95", type=float, default=None, help="Minimum candidate mAP@[.50:.95].")
+    create.add_argument(
+        "--min-map50-95",
+        type=float,
+        default=None,
+        help="Minimum candidate mAP@[.50:.95].",
+    )
     create.add_argument(
         "--max-map50-95-drop",
         type=float,
@@ -65,10 +72,14 @@ def add_platform_parsers(sub: argparse._SubParsersAction) -> None:
         help="Replace only an existing pack that first passes verification.",
     )
 
-    verify = qualify_sub.add_parser("verify", help="Verify pack checksums and decision semantics.")
+    verify = qualify_sub.add_parser(
+        "verify", help="Verify pack checksums and decision semantics."
+    )
     verify.add_argument("pack", help="Qualification pack directory.")
 
-    diff = qualify_sub.add_parser("diff", help="Compare metrics from two verified compatible packs.")
+    diff = qualify_sub.add_parser(
+        "diff", help="Compare metrics from two verified compatible packs."
+    )
     diff.add_argument("baseline", help="Baseline qualification pack directory.")
     diff.add_argument("candidate", help="Candidate qualification pack directory.")
 
@@ -96,7 +107,9 @@ def add_platform_parsers(sub: argparse._SubParsersAction) -> None:
         help="Create one plugin adapter and run predictions interface conformance.",
     )
     test.add_argument("name", help="Entry-point name in yolozu.adapters.v1.")
-    test.add_argument("--config", default=None, help="Optional plugin config JSON object.")
+    test.add_argument(
+        "--config", default=None, help="Optional plugin config JSON object."
+    )
     test.add_argument(
         "--records",
         default=None,
@@ -130,8 +143,12 @@ def _read_records(path: str | None) -> list[dict[str, Any]] | None:
         raise AdapterSDKError(f"could not read records JSON: {exc}") from exc
     if isinstance(payload, dict):
         payload = payload.get("records")
-    if not isinstance(payload, list) or not all(isinstance(item, dict) for item in payload):
-        raise AdapterSDKError("records JSON must be a list of objects or an object with records")
+    if not isinstance(payload, list) or not all(
+        isinstance(item, dict) for item in payload
+    ):
+        raise AdapterSDKError(
+            "records JSON must be a list of objects or an object with records"
+        )
     return payload
 
 
@@ -140,20 +157,52 @@ def _emit(payload: dict[str, Any]) -> None:
 
 
 def _handle_qualify_release(args: argparse.Namespace) -> int:
+    from yolozu.qualification import (
+        QualificationError,
+        diff_qualification_packs,
+        qualify_release,
+        qualify_release_from_spec,
+        verify_qualification_pack,
+    )
+
     if args.qualify_release_command == "create":
-        result = qualify_release(
-            args.dataset,
-            args.predictions,
-            args.output_dir,
-            baseline_predictions=args.baseline_predictions,
-            split=args.split,
-            bbox_format=args.bbox_format,
-            max_images=args.max_images,
-            dry_run=bool(args.dry_run),
-            min_map50_95=args.min_map50_95,
-            max_map50_95_drop=args.max_map50_95_drop,
-            force=bool(args.force),
-        )
+        if args.spec is not None:
+            direct_values = {
+                "--predictions": args.predictions,
+                "--output-dir": args.output_dir,
+                "--baseline-predictions": args.baseline_predictions,
+                "--split": args.split,
+                "--bbox-format": args.bbox_format,
+                "--max-images": args.max_images,
+                "--min-map50-95": args.min_map50_95,
+                "--max-map50-95-drop": args.max_map50_95_drop,
+                "--dry-run": True if args.dry_run else None,
+                "--force": True if args.force else None,
+            }
+            mixed = [name for name, value in direct_values.items() if value is not None]
+            if mixed:
+                raise QualificationError(
+                    "--spec cannot be combined with direct options: " + ", ".join(mixed)
+                )
+            result = qualify_release_from_spec(args.spec)
+        else:
+            if args.predictions is None or args.output_dir is None:
+                raise QualificationError(
+                    "direct mode requires --dataset, --predictions, and --output-dir"
+                )
+            result = qualify_release(
+                args.dataset,
+                args.predictions,
+                args.output_dir,
+                baseline_predictions=args.baseline_predictions,
+                split=args.split,
+                bbox_format=args.bbox_format or "cxcywh_norm",
+                max_images=args.max_images,
+                dry_run=bool(args.dry_run),
+                min_map50_95=args.min_map50_95,
+                max_map50_95_drop=args.max_map50_95_drop,
+                force=bool(args.force),
+            )
         _emit(result.to_dict())
         return {"pass": 0, "hold": 3, "fail": 4}[result.decision]
     if args.qualify_release_command == "verify":
@@ -184,7 +233,9 @@ def _handle_adapter(args: argparse.Namespace) -> int:
         )
         return 0
     if args.adapter_command == "doctor":
-        plugin = load_adapter_plugin(args.name, allow_plugin_load=bool(args.allow_plugin_load))
+        plugin = load_adapter_plugin(
+            args.name, allow_plugin_load=bool(args.allow_plugin_load)
+        )
         checked = check_adapter_plugin(plugin, expected_name=args.name)
         _emit(
             {
@@ -212,12 +263,25 @@ def _handle_adapter(args: argparse.Namespace) -> int:
 
 
 def handle_platform_command(args: argparse.Namespace) -> int | None:
-    try:
-        if args.command == "qualify-release":
+    if args.command == "qualify-release":
+        from yolozu.qualification import QualificationError
+
+        try:
             return _handle_qualify_release(args)
+        except QualificationError as exc:
+            _emit(
+                {
+                    "schema_version": 1,
+                    "ok": False,
+                    "command": args.command,
+                    "error": {"category": type(exc).__name__, "message": str(exc)},
+                }
+            )
+            return 2
+    try:
         if args.command == "adapter":
             return _handle_adapter(args)
-    except (QualificationError, AdapterSDKError) as exc:
+    except AdapterSDKError as exc:
         _emit(
             {
                 "schema_version": 1,

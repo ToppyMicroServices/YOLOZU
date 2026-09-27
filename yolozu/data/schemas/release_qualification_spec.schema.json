@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.toppymicros.com/yolozu/schemas/release_qualification_spec.schema.json",
+  "title": "YOLOZU release qualification spec",
+  "type": "object",
+  "required": ["schema_version", "dataset", "predictions", "output_dir"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "dataset": {"type": "string", "minLength": 1},
+    "predictions": {"type": "string", "minLength": 1},
+    "output_dir": {"type": "string", "minLength": 1},
+    "baseline_predictions": {"type": "string", "minLength": 1},
+    "evaluation": {
+      "type": "object",
+      "properties": {
+        "split": {"type": "string", "minLength": 1},
+        "bbox_format": {
+          "enum": ["cxcywh_norm", "cxcywh_abs", "xywh_abs", "xyxy_abs"]
+        },
+        "max_images": {"type": "integer", "minimum": 1},
+        "dry_run": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "thresholds": {
+      "type": "object",
+      "properties": {
+        "min_map50_95": {"type": "number", "minimum": 0, "maximum": 1},
+        "max_map50_95_drop": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "force": {"type": "boolean"}
+  },
+  "additionalProperties": false
+}

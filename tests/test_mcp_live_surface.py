@@ -21,12 +21,12 @@ class TestMcpOptionalDependencyMetadata(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
         optional = project["project"]["optional-dependencies"]
-        self.assertIn("mcp>=1.26,<2", optional["mcp"])
-        self.assertIn("mcp>=1.26,<2", optional["full"])
-        lock = (root / "requirements-locks" / "requirements-docs-actions.lock").read_text(
-            encoding="utf-8"
-        )
-        self.assertIn("mcp==1.26.0", lock.splitlines())
+        self.assertIn("mcp>=2.2,<3", optional["mcp"])
+        self.assertIn("mcp>=2.2,<3", optional["full"])
+        lock = (
+            root / "requirements-locks" / "requirements-docs-actions.lock"
+        ).read_text(encoding="utf-8")
+        self.assertIn("mcp==2.2.0", lock.splitlines())
 
 
 @unittest.skipUnless(
@@ -35,8 +35,7 @@ class TestMcpOptionalDependencyMetadata(unittest.TestCase):
 )
 class TestMcpLiveSurface(unittest.TestCase):
     def test_stdio_round_trip_lists_and_calls_live_tools(self) -> None:
-        from mcp import ClientSession, StdioServerParameters
-        from mcp.client.stdio import stdio_client
+        from mcp import Client, StdioServerParameters
 
         repo_root = Path(__file__).resolve().parents[1]
 
@@ -49,35 +48,28 @@ class TestMcpLiveSurface(unittest.TestCase):
                 cwd=str(workspace),
                 env=env,
             )
-            async with stdio_client(params) as (read_stream, write_stream):
-                async with ClientSession(
-                    read_stream,
-                    write_stream,
-                ) as session:
-                    await session.initialize()
-                    listed = await session.list_tools()
-                    called = await session.call_tool(
-                        "ai_tools",
-                        {
-                            "guaranteed": True,
-                            "ids_only": True,
-                        },
-                    )
-                    return listed, called
+            async with Client(params, mode="legacy") as client:
+                listed = await client.list_tools()
+                called = await client.call_tool(
+                    "ai_tools",
+                    {
+                        "guaranteed": True,
+                        "ids_only": True,
+                    },
+                )
+                return str(client.protocol_version), listed, called
 
         with tempfile.TemporaryDirectory() as td:
             workspace = Path(td)
-            listed, called = asyncio.run(round_trip(workspace))
+            protocol_version, listed, called = asyncio.run(round_trip(workspace))
             self.assertFalse((workspace / "runs").exists())
+        self.assertEqual(protocol_version, "2025-11-25")
         reference = build_tool_surface_reference()
         self.assertEqual(
             [tool.name for tool in listed.tools],
-            [
-                item["name"]
-                for item in reference["mcp_live_tools"]
-            ],
+            [item["name"] for item in reference["mcp_live_tools"]],
         )
-        self.assertFalse(called.isError)
+        self.assertFalse(called.is_error)
         self.assertEqual(len(called.content), 1)
         payload = json.loads(called.content[0].text)
         self.assertEqual(
@@ -91,6 +83,24 @@ class TestMcpLiveSurface(unittest.TestCase):
         )
         self.assertEqual(payload["surface_counts"]["mcp_live"], 33)
         self.assertEqual(payload["surface_counts"]["image_service_safe"], 5)
+
+    def test_in_process_round_trip_uses_modern_protocol(self) -> None:
+        from mcp import Client
+
+        from yolozu.integrations.mcp_server import app
+
+        async def round_trip():
+            async with Client(app) as client:
+                listed = await client.list_tools()
+                called = await client.call_tool(
+                    "ai_tools", {"guaranteed": True, "ids_only": True}
+                )
+                return str(client.protocol_version), listed, called
+
+        protocol_version, listed, called = asyncio.run(round_trip())
+        self.assertEqual(protocol_version, "2026-07-28")
+        self.assertEqual(len(listed.tools), 33)
+        self.assertFalse(called.is_error)
 
     def test_live_names_and_input_schemas_match_generated_reference(self) -> None:
         from yolozu.integrations.mcp_server import app
@@ -110,7 +120,7 @@ class TestMcpLiveSurface(unittest.TestCase):
 
         for live, item in zip(live_tools, expected, strict=True):
             with self.subTest(tool=live.name):
-                self.assertEqual(live.inputSchema, item["input_schema"])
+                self.assertEqual(live.input_schema, item["input_schema"])
 
     def test_service_app_exposes_only_the_bounded_image_tools(self) -> None:
         from yolozu.integrations.mcp_server import service_app
@@ -299,7 +309,9 @@ class TestMcpLiveSurface(unittest.TestCase):
             finally:
                 os.chdir(previous)
 
-    def test_review_config_file_read_rejects_traversal_and_absolute_escape(self) -> None:
+    def test_review_config_file_read_rejects_traversal_and_absolute_escape(
+        self,
+    ) -> None:
         from yolozu.integrations.mcp_server import review_config_tool
 
         with tempfile.TemporaryDirectory() as td:
