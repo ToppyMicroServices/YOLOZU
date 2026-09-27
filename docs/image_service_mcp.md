@@ -46,7 +46,10 @@ yolozu-mcp \
 ```
 
 The endpoint is `http://127.0.0.1:8000/mcp`. Loopback is the default. DNS
-rebinding protection remains enabled.
+rebinding protection remains enabled. MCP SDK v2 serves modern `2026-07-28`
+clients without a session and continues to negotiate legacy clients. YOLOZU
+runs the legacy Streamable HTTP leg with `stateless_http=true` and JSON
+responses; stdio remains available for local clients.
 
 OpenAI can connect a local or private endpoint through its Secure MCP Tunnel.
 See the current [OpenAI MCP documentation](https://developers.openai.com/api/docs/guides/tools-connectors-mcp).

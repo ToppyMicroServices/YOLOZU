@@ -20,6 +20,11 @@ Use YOLOZU as an interface-contract-first execution layer where agents:
 
 ## 3) Official MCP support boundary
 
+The optional MCP surface uses official Python SDK v2 (`mcp>=2.2,<3`). Modern
+clients negotiate the sessionless `2026-07-28` protocol; legacy clients remain
+supported by the same server. YOLOZU's `job_id` tools do not claim the separate
+MCP Tasks extension.
+
 Guaranteed (deterministic/lightweight MCP tool ids):
 
 - `doctor`

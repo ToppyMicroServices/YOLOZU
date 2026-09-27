@@ -115,14 +115,9 @@ entry sequence in place of a path.
 ## Release qualification
 
 ```python
-from yolozu.api import qualify_release, verify_qualification_pack
+from yolozu.api import qualify_release_from_spec, verify_qualification_pack
 
-result = qualify_release(
-    "/absolute/path/to/dataset",
-    "/absolute/path/to/candidate_predictions.json",
-    "/absolute/path/to/qualification_pack",
-    min_map50_95=0.40,
-)
+result = qualify_release_from_spec("/absolute/path/to/yolozu.yaml")
 
 if not result.passed:
     raise RuntimeError(result.decision)
@@ -164,8 +159,11 @@ This page is the source of truth for the supported Python surface:
 | `validate_predictions` | Strict validation; `repair=True` is explicit opt-in |
 | `evaluate_coco` | Strict validation plus dry-run conversion or real COCOeval |
 | `QualificationResult` | Pack path, `pass`/`hold`/`fail` decision, and serialized evidence |
+| `QualificationSpec` | Validated one-file qualification request with resolved paths and semantic digest |
 | `PackVerificationResult` | Checksum and semantic verification result |
+| `load_qualification_spec` | Strictly validate a bounded YAML spec without running evaluation |
 | `qualify_release` | Create a deterministic, path-redacted qualification pack |
+| `qualify_release_from_spec` | Run the same engine from one strict YAML spec |
 | `verify_qualification_pack` | Verify pack checksums and recompute its decision |
 | `diff_qualification_packs` | Compare metrics only for compatible verified packs |
 | `QualificationError` | Invalid qualification request or pack |

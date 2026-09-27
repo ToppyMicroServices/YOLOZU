@@ -10,6 +10,11 @@ Run the shared MCP backend:
 yolozu-mcp
 ```
 
+The installed server uses official MCP Python SDK v2. Modern clients negotiate
+the sessionless `2026-07-28` protocol, while the same endpoint retains legacy
+client negotiation. Streamable HTTP is stateless and JSON-response based;
+local stdio remains supported.
+
 Inspect the compact registry and exact public surface sets:
 
 ```bash

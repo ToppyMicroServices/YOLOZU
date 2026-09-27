@@ -70,7 +70,7 @@ train = [
   "safetensors>=0.4",
 ]
 coco = ["pycocotools>=2.0.7"]
-mcp = ["mcp>=1.26,<2"]
+mcp = ["mcp>=2.2,<3"]
 actions = ["fastapi>=0.110", "uvicorn>=0.30", "pydantic>=2.0"]
 
 # Tools / integrations (optional)
@@ -114,7 +114,7 @@ full = [
   "onnxscript>=0.1",
   "safetensors>=0.4",
   "pycocotools>=2.0.7",
-  "mcp>=1.26,<2",
+  "mcp>=2.2,<3",
   "fastapi>=0.110",
   "uvicorn>=0.30",
   "pydantic>=2.0",

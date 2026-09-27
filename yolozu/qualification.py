@@ -17,15 +17,20 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, Mapping
 
+import yaml
+
 from yolozu import __version__
 
 BBoxFormat = Literal["cxcywh_norm", "cxcywh_abs", "xywh_abs", "xyxy_abs"]
 
 __all__ = [
     "QualificationError",
+    "QualificationSpec",
     "QualificationResult",
     "PackVerificationResult",
+    "load_qualification_spec",
     "qualify_release",
+    "qualify_release_from_spec",
     "verify_qualification_pack",
     "diff_qualification_packs",
 ]
@@ -37,10 +42,59 @@ PACK_FILES = (
     "qualification.json",
 )
 Decision = Literal["pass", "hold", "fail"]
+_SPEC_MAX_BYTES = 256 * 1024
+_SPEC_KEYS = frozenset(
+    {
+        "schema_version",
+        "dataset",
+        "predictions",
+        "output_dir",
+        "baseline_predictions",
+        "evaluation",
+        "thresholds",
+        "force",
+    }
+)
+_EVALUATION_KEYS = frozenset({"split", "bbox_format", "max_images", "dry_run"})
+_THRESHOLD_KEYS = frozenset({"min_map50_95", "max_map50_95_drop"})
 
 
 class QualificationError(ValueError):
     """The qualification request or pack is invalid."""
+
+
+@dataclass(frozen=True)
+class QualificationSpec:
+    """Validated one-file request for the shared qualification engine."""
+
+    path: Path
+    dataset: Path
+    predictions: Path
+    output_dir: Path
+    baseline_predictions: Path | None
+    split: str | None
+    bbox_format: BBoxFormat
+    max_images: int | None
+    dry_run: bool
+    min_map50_95: float | None
+    max_map50_95_drop: float | None
+    force: bool
+    semantic_digest: str
+
+    def qualification_kwargs(self) -> dict[str, Any]:
+        return {
+            "dataset": self.dataset,
+            "predictions": self.predictions,
+            "output_dir": self.output_dir,
+            "baseline_predictions": self.baseline_predictions,
+            "split": self.split,
+            "bbox_format": self.bbox_format,
+            "max_images": self.max_images,
+            "dry_run": self.dry_run,
+            "min_map50_95": self.min_map50_95,
+            "max_map50_95_drop": self.max_map50_95_drop,
+            "force": self.force,
+        }
 
 
 @dataclass(frozen=True)
@@ -114,6 +168,143 @@ def _read_json(path: Path) -> dict[str, Any]:
     return payload
 
 
+def _strict_keys(
+    payload: Mapping[str, Any],
+    *,
+    allowed: frozenset[str],
+    label: str,
+) -> None:
+    unknown = sorted(str(key) for key in payload if key not in allowed)
+    if unknown:
+        raise QualificationError(f"{label} contains unknown keys: {', '.join(unknown)}")
+
+
+def _spec_mapping(value: Any, *, label: str) -> dict[str, Any]:
+    if not isinstance(value, dict) or not all(isinstance(key, str) for key in value):
+        raise QualificationError(f"{label} must be an object")
+    return dict(value)
+
+
+def _spec_string(
+    value: Any,
+    *,
+    label: str,
+    optional: bool = False,
+) -> str | None:
+    if value is None and optional:
+        return None
+    if not isinstance(value, str) or not value.strip():
+        raise QualificationError(f"{label} must be a non-empty string")
+    if any(ord(character) < 32 or ord(character) == 127 for character in value):
+        raise QualificationError(f"{label} must not contain control characters")
+    return value
+
+
+def _spec_path(base: Path, value: Any, *, label: str) -> Path:
+    text = _spec_string(value, label=label)
+    assert text is not None
+    path = Path(text).expanduser()
+    return path.resolve() if path.is_absolute() else (base / path).resolve()
+
+
+def load_qualification_spec(path: str | Path) -> QualificationSpec:
+    """Load a bounded, strict YAML qualification spec.
+
+    Relative paths are resolved from the spec directory. Unknown fields and
+    YAML values that cannot be represented as JSON are rejected so the
+    semantic digest remains portable.
+    """
+
+    requested_path = Path(path).expanduser()
+    if requested_path.is_symlink():
+        raise QualificationError(f"qualification spec is not a regular file: {path}")
+    spec_path = requested_path.resolve()
+    if not spec_path.is_file():
+        raise QualificationError(f"qualification spec is not a regular file: {path}")
+    try:
+        content = spec_path.read_bytes()
+    except OSError as exc:
+        raise QualificationError(f"could not read qualification spec: {exc}") from exc
+    if len(content) > _SPEC_MAX_BYTES:
+        raise QualificationError("qualification spec exceeds 256 KiB")
+    try:
+        payload = yaml.safe_load(content.decode("utf-8"))
+    except (UnicodeDecodeError, yaml.YAMLError) as exc:
+        raise QualificationError(f"could not parse qualification spec: {exc}") from exc
+    document = _spec_mapping(payload, label="qualification spec")
+    _strict_keys(document, allowed=_SPEC_KEYS, label="qualification spec")
+    if document.get("schema_version") != 1:
+        raise QualificationError("qualification spec schema_version must be 1")
+
+    evaluation = _spec_mapping(document.get("evaluation", {}), label="evaluation")
+    thresholds = _spec_mapping(document.get("thresholds", {}), label="thresholds")
+    _strict_keys(evaluation, allowed=_EVALUATION_KEYS, label="evaluation")
+    _strict_keys(thresholds, allowed=_THRESHOLD_KEYS, label="thresholds")
+
+    split = _spec_string(
+        evaluation.get("split"), label="evaluation.split", optional=True
+    )
+    bbox_format = evaluation.get("bbox_format", "cxcywh_norm")
+    if bbox_format not in {"cxcywh_norm", "cxcywh_abs", "xywh_abs", "xyxy_abs"}:
+        raise QualificationError("evaluation.bbox_format is unsupported")
+    max_images = evaluation.get("max_images")
+    if max_images is not None and (
+        isinstance(max_images, bool)
+        or not isinstance(max_images, int)
+        or max_images <= 0
+    ):
+        raise QualificationError("evaluation.max_images must be a positive integer")
+    dry_run = evaluation.get("dry_run", False)
+    force = document.get("force", False)
+    if not isinstance(dry_run, bool):
+        raise QualificationError("evaluation.dry_run must be boolean")
+    if not isinstance(force, bool):
+        raise QualificationError("force must be boolean")
+
+    baseline_value = document.get("baseline_predictions")
+    baseline = (
+        None
+        if baseline_value is None
+        else _spec_path(spec_path.parent, baseline_value, label="baseline_predictions")
+    )
+    minimum = _validate_threshold(
+        "thresholds.min_map50_95", thresholds.get("min_map50_95")
+    )
+    maximum_drop = _validate_threshold(
+        "thresholds.max_map50_95_drop", thresholds.get("max_map50_95_drop")
+    )
+    if maximum_drop is not None and baseline is None:
+        raise QualificationError(
+            "baseline_predictions is required with thresholds.max_map50_95_drop"
+        )
+
+    try:
+        semantic_digest = _sha256_bytes(_canonical_bytes(document))
+    except (TypeError, ValueError) as exc:
+        raise QualificationError(
+            "qualification spec must contain only JSON values"
+        ) from exc
+    return QualificationSpec(
+        path=spec_path,
+        dataset=_spec_path(spec_path.parent, document.get("dataset"), label="dataset"),
+        predictions=_spec_path(
+            spec_path.parent, document.get("predictions"), label="predictions"
+        ),
+        output_dir=_spec_path(
+            spec_path.parent, document.get("output_dir"), label="output_dir"
+        ),
+        baseline_predictions=baseline,
+        split=split,
+        bbox_format=bbox_format,
+        max_images=max_images,
+        dry_run=dry_run,
+        min_map50_95=minimum,
+        max_map50_95_drop=maximum_drop,
+        force=force,
+        semantic_digest=semantic_digest,
+    )
+
+
 def _fingerprint_path(path: Path) -> dict[str, Any]:
     """Hash file content or a deterministic directory tree."""
 
@@ -165,7 +356,9 @@ def _validate_threshold(name: str, value: float | None) -> float | None:
     return normalized
 
 
-def _portable_evaluation(result: Any, *, dataset_label: str, predictions_label: str) -> dict[str, Any]:
+def _portable_evaluation(
+    result: Any, *, dataset_label: str, predictions_label: str
+) -> dict[str, Any]:
     payload = result.to_dict()
     payload.pop("timestamp", None)
     payload["dataset"] = dataset_label
@@ -228,7 +421,11 @@ def _decision_payload(
 
     maximum_drop = thresholds.get("max_map50_95_drop")
     if maximum_drop is not None:
-        drop = None if candidate_map is None or baseline_map is None else baseline_map - candidate_map
+        drop = (
+            None
+            if candidate_map is None or baseline_map is None
+            else baseline_map - candidate_map
+        )
         checks.append(
             {
                 "id": "max_map50_95_drop",
@@ -244,14 +441,18 @@ def _decision_payload(
             }
         )
 
-    requested = [check for check in checks if check["id"] != "candidate_metrics_available"]
+    requested = [
+        check for check in checks if check["id"] != "candidate_metrics_available"
+    ]
     if bool(evaluation.get("dry_run")):
         return "hold", checks
     if not requested:
         return "hold", checks
     if any(check["status"] == "fail" for check in requested):
         return "fail", checks
-    if candidate_map is None or any(check["status"] == "unknown" for check in requested):
+    if candidate_map is None or any(
+        check["status"] == "unknown" for check in requested
+    ):
         return "hold", checks
     return "pass", checks
 
@@ -282,6 +483,7 @@ def qualify_release(
     min_map50_95: float | None = None,
     max_map50_95_drop: float | None = None,
     force: bool = False,
+    _source_spec: Mapping[str, Any] | None = None,
 ) -> QualificationResult:
     """Create one self-checking release qualification pack atomically.
 
@@ -294,7 +496,9 @@ def qualify_release(
     minimum = _validate_threshold("min_map50_95", min_map50_95)
     maximum_drop = _validate_threshold("max_map50_95_drop", max_map50_95_drop)
     if maximum_drop is not None and baseline_predictions is None:
-        raise QualificationError("baseline_predictions is required with max_map50_95_drop")
+        raise QualificationError(
+            "baseline_predictions is required with max_map50_95_drop"
+        )
 
     dataset_path = Path(dataset).expanduser().resolve()
     predictions_path = Path(predictions).expanduser().resolve()
@@ -309,7 +513,9 @@ def qualify_release(
 
     dataset_input = _fingerprint_path(dataset_path)
     candidate_input = _fingerprint_path(predictions_path)
-    baseline_input = _fingerprint_path(baseline_path) if baseline_path is not None else None
+    baseline_input = (
+        _fingerprint_path(baseline_path) if baseline_path is not None else None
+    )
 
     protocol = {
         "evaluator": "coco_detection",
@@ -342,6 +548,8 @@ def qualify_release(
         },
         "protocol": protocol,
     }
+    if _source_spec is not None:
+        request["source_spec"] = dict(_source_spec)
     request["protocol_fingerprint"] = _protocol_fingerprint(request)
     request["request_fingerprint"] = _request_fingerprint(request)
 
@@ -409,8 +617,7 @@ def qualify_release(
             "schema_version": PACK_SCHEMA_VERSION,
             "algorithm": "sha256",
             "files": {
-                name: _sha256_file(temp_dir / name)
-                for name in sorted(artifact_names)
+                name: _sha256_file(temp_dir / name) for name in sorted(artifact_names)
             },
         }
         checksums["pack_digest"] = _sha256_bytes(_canonical_bytes(checksums["files"]))
@@ -435,6 +642,20 @@ def qualify_release(
         pack_dir=target,
         decision=decision,
         qualification=qualification,
+    )
+
+
+def qualify_release_from_spec(path: str | Path) -> QualificationResult:
+    """Create a release qualification pack from one strict YAML spec."""
+
+    spec = load_qualification_spec(path)
+    return qualify_release(
+        **spec.qualification_kwargs(),
+        _source_spec={
+            "schema_version": 1,
+            "label": spec.path.name,
+            "semantic_sha256": spec.semantic_digest,
+        },
     )
 
 
@@ -490,18 +711,42 @@ def verify_qualification_pack(pack_dir: str | Path) -> PackVerificationResult:
         if baseline_expected:
             expected_files.add("baseline_evaluation.json")
         if set(files) != expected_files:
-            errors.append("checksums file set does not match the pack interface contract")
+            errors.append(
+                "checksums file set does not match the pack interface contract"
+            )
         actual_json_files = {
             path.name
             for path in pack.iterdir()
-            if path.is_file() and path.suffix == ".json" and path.name != "checksums.json"
+            if path.is_file()
+            and path.suffix == ".json"
+            and path.name != "checksums.json"
         }
         if actual_json_files != expected_files:
-            errors.append("pack JSON file set does not match the pack interface contract")
+            errors.append(
+                "pack JSON file set does not match the pack interface contract"
+            )
         if request.get("request_fingerprint") != _request_fingerprint(request):
             errors.append("request_fingerprint mismatch")
         if request.get("protocol_fingerprint") != _protocol_fingerprint(request):
             errors.append("protocol_fingerprint mismatch")
+        source_spec = request.get("source_spec")
+        if source_spec is not None:
+            if not isinstance(source_spec, Mapping):
+                errors.append("request.source_spec must be an object")
+            else:
+                label = source_spec.get("label")
+                digest = source_spec.get("semantic_sha256")
+                if (
+                    source_spec.get("schema_version") != 1
+                    or not isinstance(label, str)
+                    or Path(label).name != label
+                    or not isinstance(digest, str)
+                    or len(digest) != 64
+                    or any(character not in "0123456789abcdef" for character in digest)
+                ):
+                    errors.append(
+                        "request.source_spec has an invalid interface contract"
+                    )
         expected_decision, expected_checks = _decision_payload(
             request=request,
             candidate=candidate,
@@ -529,7 +774,9 @@ def verify_qualification_pack(pack_dir: str | Path) -> PackVerificationResult:
                 if evidence is None:
                     continue
                 if evidence.get("ok") is not True or evidence.get("status") != "ok":
-                    errors.append(f"{evidence_name} evaluation is not successful evidence")
+                    errors.append(
+                        f"{evidence_name} evaluation is not successful evidence"
+                    )
                 for key in ("dry_run", "bbox_format", "max_images"):
                     if evidence.get(key) != evaluation_options.get(key):
                         errors.append(f"{evidence_name} evaluation {key} mismatch")
@@ -565,9 +812,8 @@ def diff_qualification_packs(
     candidate_root = candidate_verification.pack_dir
     baseline_request = _read_json(baseline_root / "request.json")
     candidate_request = _read_json(candidate_root / "request.json")
-    compatible = (
-        baseline_request.get("protocol_fingerprint")
-        == candidate_request.get("protocol_fingerprint")
+    compatible = baseline_request.get("protocol_fingerprint") == candidate_request.get(
+        "protocol_fingerprint"
     )
     if not compatible:
         return {
@@ -575,8 +821,12 @@ def diff_qualification_packs(
             "ok": True,
             "compatible": False,
             "reason": "protocol_fingerprint_mismatch",
-            "baseline_protocol_fingerprint": baseline_request.get("protocol_fingerprint"),
-            "candidate_protocol_fingerprint": candidate_request.get("protocol_fingerprint"),
+            "baseline_protocol_fingerprint": baseline_request.get(
+                "protocol_fingerprint"
+            ),
+            "candidate_protocol_fingerprint": candidate_request.get(
+                "protocol_fingerprint"
+            ),
         }
 
     baseline_evaluation = _read_json(baseline_root / "candidate_evaluation.json")

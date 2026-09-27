@@ -1,6 +1,27 @@
-# MCP extension architecture (YOLOZU v2)
+# MCP SDK v2 extension architecture
 
 This document fixes the extension layering and operational policy.
+
+## Protocol and SDK boundary
+
+The `mcp` extra requires the official Python SDK `mcp>=2.2,<3` and uses its
+`MCPServer` API. The same server supports both protocol eras:
+
+- modern clients use the sessionless `2026-07-28` protocol;
+- older clients negotiate the legacy initialize/session protocol;
+- stdio remains the local default;
+- Streamable HTTP uses JSON responses and `stateless_http=true`, so the legacy
+  leg also avoids worker-local sessions. The modern leg is stateless by
+  protocol design.
+
+Transport settings are passed to `MCPServer.run()` rather than stored on the
+server object. CI exercises a modern in-process client, a legacy stdio client,
+and authenticated stateless Streamable HTTP. Tool names and input schemas must
+remain byte-semantically aligned with the generated reference in both eras.
+
+The MCP Tasks extension is not used. YOLOZU's existing `job_id` tools remain
+ordinary application tools until the official Python SDK ships a stable Tasks
+extension and a separate migration is justified.
 
 ## Layer design
 

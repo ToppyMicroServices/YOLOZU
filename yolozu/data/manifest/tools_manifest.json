@@ -14567,6 +14567,7 @@
         "docs/README.md",
         "docs/release_qualification.md",
         "docs/schemas/release_qualification.schema.json",
+        "docs/schemas/release_qualification_spec.schema.json",
         "manual/chapters/20_llm_mcp_integrations.tex"
       ],
       "effects": {
@@ -14582,6 +14583,10 @@
       },
       "entrypoint": "yolozu/cli.py",
       "examples": [
+        {
+          "command": "python3 -m yolozu qualify-release create --spec examples/release_qualification_action/yolozu.yaml",
+          "description": "Run the shared qualification engine from one strict YAML spec whose relative paths resolve from the spec directory."
+        },
         {
           "command": "python3 -m yolozu qualify-release create --dataset data/smoke --predictions data/smoke/predictions/predictions_dummy.json --output-dir reports/qualification_smoke --split val --max-images 2 --dry-run",
           "description": "Create a deterministic validation pack whose decision remains hold because dry-run has no official metrics."
@@ -14601,6 +14606,13 @@
           "kind": "string",
           "name": "operation",
           "required": true
+        },
+        {
+          "description": "Strict YAML qualification request; cannot be combined with direct create options.",
+          "flag": "--spec",
+          "kind": "file",
+          "name": "spec",
+          "required": false
         },
         {
           "flag": "--dataset",
@@ -14697,7 +14709,7 @@
         ]
       },
       "runner": "python3",
-      "summary": "Create, verify, and compare portable release qualification packs with fail-closed pass, hold, and fail decisions over the Stable COCO evaluation engine.",
+      "summary": "Create, verify, and compare portable release qualification packs from direct options or one strict YAML spec, with fail-closed pass, hold, and fail decisions over the Stable COCO evaluation engine.",
       "tags": [
         "ai",
         "coco",

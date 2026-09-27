@@ -525,8 +525,19 @@ class TestMcpServerOptions(unittest.TestCase):
                 transport="streamable-http", surface="image-service",
                 host="::1", port=8000, auth_token="x" * 32,
             )
-        self.assertEqual(str(selected.settings.auth.issuer_url), "http://[::1]:8000/")
-        selected.run.assert_called_once_with(transport="streamable-http")
+        self.assertEqual(str(selected.settings.auth.issuer_url), "http://[::1]:8000")
+        selected.run.assert_called_once()
+        run_kwargs = selected.run.call_args.kwargs
+        self.assertEqual(run_kwargs["transport"], "streamable-http")
+        self.assertEqual(run_kwargs["host"], "::1")
+        self.assertEqual(run_kwargs["port"], 8000)
+        self.assertEqual(run_kwargs["streamable_http_path"], "/mcp")
+        self.assertTrue(run_kwargs["stateless_http"])
+        self.assertTrue(run_kwargs["json_response"])
+        self.assertEqual(
+            run_kwargs["transport_security"].allowed_hosts,
+            ["[::1]:8000"],
+        )
 
     @unittest.skipUnless(
         importlib.util.find_spec("mcp") is not None,

@@ -39,6 +39,7 @@ exercise Torch, ONNX, GPU inference, or external training runtimes.
 
 | Component | Declared install floor | Current repository-pinned evidence | Scope |
 |---|---|---|---|
+| MCP Python SDK | `mcp>=2.2,<3` in the `mcp` and `full` extras | `mcp==2.2.0` in `requirements-locks/requirements-docs-actions.lock` | Modern clients use the v2 sessionless protocol. The lightweight gate also exercises the SDK's explicit legacy-client mode. |
 | PyTorch | `torch>=2.10.0` in the Torch-backed extras | `torch==2.10.0+cpu` in `requirements-locks/requirements-ci.lock`; `torch==2.10.0` in the demo and RT-DETR locks | The CI pin qualifies repository CPU tests. Device, accelerator, and custom-wheel behavior remain environment-specific. |
 | Torchvision | `torchvision>=0.25.0` in the Torch-backed extras | `torchvision==0.25.0` in `requirements-locks/requirements-demo-extra.lock` | Applies to the demo/runtime bundle, not the dependency-free validation/evaluation core. |
 | ONNX | `onnx>=1.21.0` in ONNX-backed extras | `onnx==1.21.0` in the CI, TensorRT-tool, and RT-DETR locks | Regenerate and recheck exported artifacts when the runtime or exporter changes. |

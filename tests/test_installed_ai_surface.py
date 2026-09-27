@@ -554,17 +554,11 @@ print(json.dumps({{
                 payload["repaired_invalid"]["validation"]["mode"],
                 "repair",
             )
-            self.assertTrue(
-                payload["repaired_invalid"]["validation"][
-                    "repair_enabled"
-                ]
-            )
+            self.assertTrue(payload["repaired_invalid"]["validation"]["repair_enabled"])
             self.assertTrue(
                 any(
                     "score: out of range" in warning
-                    for warning in payload["repaired_invalid"][
-                        "validation"
-                    ]["warnings"]
+                    for warning in payload["repaired_invalid"]["validation"]["warnings"]
                 )
             )
             self.assertTrue(
@@ -624,8 +618,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+from mcp import Client, StdioServerParameters
 
 async def main():
     child_env = os.environ.copy()
@@ -635,9 +628,7 @@ async def main():
         cwd={str(workspace)!r},
         env=child_env,
     )
-    async with stdio_client(params) as streams:
-        async with ClientSession(*streams) as session:
-            await session.initialize()
+    async with Client(params, mode="legacy") as session:
             listed = await session.list_tools()
             called = await session.call_tool(
                 "validate_predictions",
@@ -665,11 +656,11 @@ async def main():
             )
             print(json.dumps({{
                 "names": [tool.name for tool in listed.tools],
-                "called_error": called.isError,
+                "called_error": called.is_error,
                 "called": json.loads(called.content[0].text),
-                "recommended_error": recommended.isError,
+                "recommended_error": recommended.is_error,
                 "recommended": recommendation_payload,
-                "processed_error": processed.isError,
+                "processed_error": processed.is_error,
                 "processed": json.loads(processed.content[0].text),
                 "adaptive_output_exists": Path("adaptive_mcp_output").exists(),
             }}, sort_keys=True))

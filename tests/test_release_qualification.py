@@ -1,5 +1,8 @@
+import json
 import os
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -9,7 +12,9 @@ from yolozu.qualification import (
     QualificationError,
     QualificationResult,
     diff_qualification_packs,
+    load_qualification_spec,
     qualify_release,
+    qualify_release_from_spec,
     verify_qualification_pack,
 )
 
@@ -64,19 +69,48 @@ class TestReleaseQualification(unittest.TestCase):
         self.dataset.mkdir()
         (self.dataset / "sample.txt").write_text("dataset-v1\n", encoding="utf-8")
         self.predictions = self.root / "predictions.json"
-        self.predictions.write_text('{"schema_version":1,"predictions":[]}\n', encoding="utf-8")
+        self.predictions.write_text(
+            '{"schema_version":1,"predictions":[]}\n', encoding="utf-8"
+        )
 
     def tearDown(self):
         self.temp.cleanup()
 
+    def write_spec(self, *, extra: str = "") -> Path:
+        spec = self.root / "qualification.yaml"
+        spec.write_text(
+            "\n".join(
+                [
+                    "schema_version: 1",
+                    "dataset: dataset",
+                    "predictions: predictions.json",
+                    "output_dir: action-pack",
+                    "evaluation:",
+                    "  split: val",
+                    "  dry_run: false",
+                    "thresholds:",
+                    "  min_map50_95: 0.5",
+                    extra,
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        return spec
+
     def test_packaged_qualification_schema_matches_docs(self):
         repo_root = Path(__file__).resolve().parents[1]
-        docs_schema = repo_root / "docs" / "schemas" / "release_qualification.schema.json"
-        packaged_schema = repo_root / "yolozu" / "data" / "schemas" / "release_qualification.schema.json"
-        self.assertEqual(
-            docs_schema.read_bytes(),
-            packaged_schema.read_bytes(),
-        )
+        for name in (
+            "release_qualification.schema.json",
+            "release_qualification_spec.schema.json",
+        ):
+            with self.subTest(schema=name):
+                docs_schema = repo_root / "docs" / "schemas" / name
+                packaged_schema = repo_root / "yolozu" / "data" / "schemas" / name
+                self.assertEqual(
+                    docs_schema.read_bytes(),
+                    packaged_schema.read_bytes(),
+                )
 
     @patch("yolozu.api.evaluate_coco", return_value=_Evaluation(0.55))
     def test_pass_pack_is_portable_and_verifiable(self, evaluate):
@@ -98,6 +132,90 @@ class TestReleaseQualification(unittest.TestCase):
         self.assertNotIn(str(self.root), combined)
         self.assertFalse((pack / "predictions.json").exists())
 
+    @patch("yolozu.api.evaluate_coco", return_value=_Evaluation(0.55))
+    def test_one_file_spec_resolves_relative_paths_and_records_digest(self, _evaluate):
+        spec_path = self.write_spec()
+
+        spec = load_qualification_spec(spec_path)
+        result = qualify_release_from_spec(spec_path)
+
+        self.assertEqual(spec.dataset, self.dataset.resolve())
+        self.assertEqual(spec.predictions, self.predictions.resolve())
+        self.assertEqual(result.decision, "pass")
+        request = json.loads(
+            (result.pack_dir / "request.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(request["source_spec"]["label"], "qualification.yaml")
+        self.assertEqual(
+            request["source_spec"]["semantic_sha256"], spec.semantic_digest
+        )
+        self.assertTrue(verify_qualification_pack(result.pack_dir).ok)
+        self.assertNotIn(str(self.root), json.dumps(request))
+
+    def test_spec_rejects_unknown_fields_and_recursive_yaml(self):
+        unknown = self.write_spec(extra="unknown: true")
+        with self.assertRaisesRegex(QualificationError, "unknown keys"):
+            load_qualification_spec(unknown)
+
+        recursive = self.root / "recursive.yaml"
+        recursive.write_text(
+            "&root {schema_version: 1, self: *root}\n", encoding="utf-8"
+        )
+        with self.assertRaises(QualificationError):
+            load_qualification_spec(recursive)
+
+    def test_spec_rejects_symlink(self):
+        spec = self.write_spec()
+        link = self.root / "linked.yaml"
+        link.symlink_to(spec)
+
+        with self.assertRaisesRegex(QualificationError, "not a regular file"):
+            load_qualification_spec(link)
+
+    def test_cli_runs_one_spec_and_returns_hold_status(self):
+        repo_root = Path(__file__).resolve().parents[1]
+        pack = self.root / "cli-pack"
+        spec = self.root / "cli.yaml"
+        spec.write_text(
+            "\n".join(
+                [
+                    "schema_version: 1",
+                    f"dataset: {repo_root / 'data' / 'smoke'}",
+                    "predictions: "
+                    f"{repo_root / 'data' / 'smoke' / 'predictions' / 'predictions_dummy.json'}",
+                    f"output_dir: {pack}",
+                    "evaluation:",
+                    "  split: val",
+                    "  max_images: 2",
+                    "  dry_run: true",
+                    "thresholds:",
+                    "  min_map50_95: 0.0",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "yolozu",
+                "qualify-release",
+                "create",
+                "--spec",
+                str(spec),
+            ],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 3, completed.stderr)
+        self.assertEqual(json.loads(completed.stdout)["decision"], "hold")
+        self.assertTrue(verify_qualification_pack(pack).ok)
+
     @patch("yolozu.api.evaluate_coco", return_value=_Evaluation(None, dry_run=True))
     def test_dry_run_never_passes(self, _evaluate):
         result = qualify_release(
@@ -111,7 +229,9 @@ class TestReleaseQualification(unittest.TestCase):
 
     @patch("yolozu.api.evaluate_coco", return_value=_Evaluation(0.55))
     def test_no_quality_threshold_never_passes(self, _evaluate):
-        result = qualify_release(self.dataset, self.predictions, self.root / "ungated-pack")
+        result = qualify_release(
+            self.dataset, self.predictions, self.root / "ungated-pack"
+        )
         self.assertEqual(result.decision, "hold")
 
     @patch("yolozu.api.evaluate_coco", return_value=_Evaluation(0.55))
@@ -119,12 +239,16 @@ class TestReleaseQualification(unittest.TestCase):
         pack = self.root / "pack"
         qualify_release(self.dataset, self.predictions, pack, min_map50_95=0.5)
         candidate = pack / "candidate_evaluation.json"
-        candidate.write_text(candidate.read_text(encoding="utf-8") + " ", encoding="utf-8")
+        candidate.write_text(
+            candidate.read_text(encoding="utf-8") + " ", encoding="utf-8"
+        )
 
         verification = verify_qualification_pack(pack)
 
         self.assertFalse(verification.ok)
-        self.assertIn("checksum mismatch: candidate_evaluation.json", verification.errors)
+        self.assertIn(
+            "checksum mismatch: candidate_evaluation.json", verification.errors
+        )
 
     @patch("yolozu.api.evaluate_coco")
     def test_baseline_drop_gate_and_compatible_diff(self, evaluate):
@@ -136,7 +260,9 @@ class TestReleaseQualification(unittest.TestCase):
             min_map50_95=0.4,
         )
         baseline_predictions = self.root / "baseline.json"
-        baseline_predictions.write_text('{"schema_version":1,"predictions":[]}\n', encoding="utf-8")
+        baseline_predictions.write_text(
+            '{"schema_version":1,"predictions":[]}\n', encoding="utf-8"
+        )
         second = qualify_release(
             self.dataset,
             self.predictions,
@@ -156,7 +282,9 @@ class TestReleaseQualification(unittest.TestCase):
     def test_baseline_drop_gate_fails_on_regression(self, evaluate):
         evaluate.side_effect = [_Evaluation(0.50), _Evaluation(0.60)]
         baseline_predictions = self.root / "baseline.json"
-        baseline_predictions.write_text('{"schema_version":1,"predictions":[]}\n', encoding="utf-8")
+        baseline_predictions.write_text(
+            '{"schema_version":1,"predictions":[]}\n', encoding="utf-8"
+        )
 
         result = qualify_release(
             self.dataset,
@@ -167,7 +295,11 @@ class TestReleaseQualification(unittest.TestCase):
         )
 
         self.assertEqual(result.decision, "fail")
-        drop_check = next(check for check in result.qualification["checks"] if check["id"] == "max_map50_95_drop")
+        drop_check = next(
+            check
+            for check in result.qualification["checks"]
+            if check["id"] == "max_map50_95_drop"
+        )
         self.assertEqual(drop_check["status"], "fail")
 
     def test_drop_threshold_requires_baseline(self):
@@ -184,13 +316,20 @@ class TestReleaseQualification(unittest.TestCase):
             "decision": "hold",
             "checks": [],
         }
-        result = QualificationResult(self.root / "reports" / "pack", "hold", qualification)
+        result = QualificationResult(
+            self.root / "reports" / "pack", "hold", qualification
+        )
         previous = Path.cwd()
         try:
             os.chdir(self.root)
             with (
-                patch("yolozu.qualification.qualify_release", return_value=result) as create,
-                patch("yolozu.integrations.tool_runner.collect_artifact_metadata", return_value={}),
+                patch(
+                    "yolozu.qualification.qualify_release", return_value=result
+                ) as create,
+                patch(
+                    "yolozu.integrations.tool_runner.collect_artifact_metadata",
+                    return_value={},
+                ),
             ):
                 payload = tool_runner.qualify_release(
                     "data",
@@ -206,7 +345,9 @@ class TestReleaseQualification(unittest.TestCase):
         self.assertTrue(create.call_args.args[1].is_absolute())
 
     def test_mcp_runner_rejects_workspace_escape(self):
-        with patch("yolozu.integrations.tool_runner.collect_artifact_metadata", return_value={}):
+        with patch(
+            "yolozu.integrations.tool_runner.collect_artifact_metadata", return_value={}
+        ):
             payload = tool_runner.qualify_release(
                 "../outside",
                 "predictions.json",
@@ -224,7 +365,10 @@ class TestReleaseQualification(unittest.TestCase):
         previous = Path.cwd()
         try:
             os.chdir(self.root)
-            with patch("yolozu.integrations.tool_runner.collect_artifact_metadata", return_value={}):
+            with patch(
+                "yolozu.integrations.tool_runner.collect_artifact_metadata",
+                return_value={},
+            ):
                 payload = tool_runner.qualify_release(
                     "linked-dataset",
                     "predictions.json",

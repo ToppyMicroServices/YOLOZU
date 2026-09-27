@@ -100,16 +100,13 @@ Turn the same evaluation into a verifiable release gate and portable evidence
 pack:
 
 ```bash
-yolozu qualify-release create \
-  --dataset /absolute/path/to/dataset \
-  --predictions /absolute/path/to/predictions.json \
-  --output-dir reports/release_qualification \
-  --min-map50-95 0.40
+yolozu qualify-release create --spec yolozu.yaml
 yolozu qualify-release verify reports/release_qualification
 ```
 
 See [`docs/release_qualification.md`](docs/release_qualification.md) for
-baseline regression gates, pack comparison, Python, and MCP use.
+the strict YAML spec, reusable GitHub Action, baseline regression gates, pack
+comparison, Python, and MCP use.
 
 Give an AI client the small guaranteed-tool list before exposing wider surfaces:
 
@@ -119,7 +116,7 @@ yolozu-mcp --print-tools --guaranteed --ids-only
 
 See [`docs/python_api.md`](docs/python_api.md) and
 [`docs/ai_first.md`](docs/ai_first.md) for typed errors, workspace boundaries,
-MCP setup, and larger opt-in discovery.
+MCP SDK v2 setup, legacy-client compatibility, and larger opt-in discovery.
 
 Before training, fail closed on an empty or invalid split and ask the train
 doctor for a machine-readable readiness decision:

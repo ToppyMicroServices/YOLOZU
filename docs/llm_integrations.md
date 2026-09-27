@@ -13,6 +13,12 @@ python3 -m pip install 'yolozu[mcp]'
 yolozu-mcp
 ```
 
+The extra installs official MCP Python SDK v2 (`mcp>=2.2,<3`). A v2 client
+uses the sessionless `2026-07-28` protocol automatically; the same server also
+negotiates the legacy initialize/session protocol for older clients. YOLOZU
+tests both eras and keeps stdio as the local default. Its application-level
+`job_id` tools are not the still-separate MCP Tasks extension.
+
 Exposed tools (minimum):
 - `doctor`
 - `generate_config`

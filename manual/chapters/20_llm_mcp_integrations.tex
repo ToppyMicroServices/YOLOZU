@@ -13,6 +13,13 @@ python3 -m pip install 'yolozu[mcp]'
 yolozu-mcp
 \end{lstlisting}
 
+The optional integration uses official MCP Python SDK v2
+(\cmd{mcp>=2.2,<3}). Modern clients negotiate the sessionless
+\cmd{2026-07-28} protocol. The same server retains legacy client negotiation,
+and CI exercises both protocol eras. Streamable HTTP uses stateless JSON
+responses; stdio remains the local default. The application-level
+\cmd{job\_id} tools do not claim the separate MCP Tasks extension.
+
 Core exposed tools:
 \begin{itemize}
   \item \cmd{doctor}
@@ -79,6 +86,13 @@ quality threshold. This tool writes the requested pack directory and depends
 on local data, so it is not part of \cmd{guaranteed_ai_safe}. The pack format,
 verification command, and checksum limits are documented in
 \path{docs/release_qualification.md}.
+
+The same release gate can be driven from one strict YAML spec with
+\cmd{yolozu qualify-release create --spec yolozu.yaml}. The reusable composite
+Action at \path{.github/actions/qualify-release/action.yml} installs the
+release-matched PyPI package, verifies the pack, writes a GitHub job summary,
+uploads the JSON evidence, and then enforces the decision. Held and failed
+packs are uploaded before the job exits nonzero.
 
 The Experimental \cmd{recommend\_image\_pipeline} tool accepts a typed image job
 and workspace-confined input. Optional registry, candidate-screening, evidence,
