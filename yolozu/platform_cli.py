@@ -14,14 +14,6 @@ from yolozu.adapter_sdk import (
     load_adapter_plugin,
     test_adapter_plugin,
 )
-from yolozu.qualification import (
-    QualificationError,
-    diff_qualification_packs,
-    qualify_release,
-    qualify_release_from_spec,
-    verify_qualification_pack,
-)
-
 __all__ = ["add_platform_parsers", "handle_platform_command"]
 
 
@@ -165,6 +157,14 @@ def _emit(payload: dict[str, Any]) -> None:
 
 
 def _handle_qualify_release(args: argparse.Namespace) -> int:
+    from yolozu.qualification import (
+        QualificationError,
+        diff_qualification_packs,
+        qualify_release,
+        qualify_release_from_spec,
+        verify_qualification_pack,
+    )
+
     if args.qualify_release_command == "create":
         if args.spec is not None:
             direct_values = {
@@ -263,12 +263,25 @@ def _handle_adapter(args: argparse.Namespace) -> int:
 
 
 def handle_platform_command(args: argparse.Namespace) -> int | None:
-    try:
-        if args.command == "qualify-release":
+    if args.command == "qualify-release":
+        from yolozu.qualification import QualificationError
+
+        try:
             return _handle_qualify_release(args)
+        except QualificationError as exc:
+            _emit(
+                {
+                    "schema_version": 1,
+                    "ok": False,
+                    "command": args.command,
+                    "error": {"category": type(exc).__name__, "message": str(exc)},
+                }
+            )
+            return 2
+    try:
         if args.command == "adapter":
             return _handle_adapter(args)
-    except (QualificationError, AdapterSDKError) as exc:
+    except AdapterSDKError as exc:
         _emit(
             {
                 "schema_version": 1,
