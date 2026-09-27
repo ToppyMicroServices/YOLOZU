@@ -1,5 +1,5 @@
 {
-  "docs_version": "4.9.0",
+  "docs_version": "4.10.0",
   "entrypoints": {
     "agent_guide": "https://www.toppymicros.com/yolozu/docs/agents.md",
     "llms": "https://www.toppymicros.com/yolozu/docs/llms.txt",
@@ -24,14 +24,14 @@
     {
       "description": "Command inputs, examples, side effects, dependencies, and maturity.",
       "id": "cli_manifest",
-      "source_sha256": "6074d4feae9103852caa06513cff3c53d3d9ef9b5239c5855777a1977e5a3d39",
+      "source_sha256": "811116318ae6df705aa13af6006ab3351c2fe8c2f36e3b39f48f93b2c548fe9c",
       "title": "CLI tool manifest",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/tools/manifest.json"
     },
     {
       "description": "Exact generated tool surfaces and MCP input schemas; registration is not execution qualification.",
       "id": "mcp_reference",
-      "source_sha256": "c985e553f7f3c29a56de39f8485045bdf7225146aa86e3edb22b3b5f284727c9",
+      "source_sha256": "619c54be141e2e12057c59336c02463e41b6df6b1e632b33154ad74dd2f0fafb",
       "title": "MCP and Actions reference JSON",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/generated/mcp_actions_tool_reference.json"
     },
@@ -45,14 +45,14 @@
     {
       "description": "Typed input, result, and error interfaces for local validation and evaluation.",
       "id": "python_api",
-      "source_sha256": "e7255fac4be5d7d44ab6f2ca39984022408b3dd839b44c7091940648bea7dd7a",
+      "source_sha256": "e8d38867d230e4ba28e2c90e0c319811e5deef927a7ced21893e972f629c00ed",
       "title": "Stable Python API",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/python_api.md"
     },
     {
       "description": "Client connection options and workspace boundaries.",
       "id": "mcp_clients",
-      "source_sha256": "ac716f504dcb294b41180ad401cdd67cbb8ee2d374e191ae9fd6fcac86fad611",
+      "source_sha256": "d2523403828be31c92c0a74e5de77a29708cc1fca12553567198bfa3e6749ce2",
       "title": "LLM and MCP integration",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/llm_integrations.md"
     },
@@ -149,6 +149,7 @@
         "validate_predictions",
         "validate_dataset",
         "eval_coco",
+        "qualify_release",
         "predict_images",
         "recommend_image_pipeline",
         "process_images",

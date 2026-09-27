@@ -6,10 +6,12 @@ Keep narrative docs short and link here for the full command surface.
 ## Top-level `yolozu --help`
 
 ```text
-usage: yolozu [-h] [--version] {guide,doctor,dr,list,fetch,prepare-torchvision-maskrcnn,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,promote-image-pipeline,scout-algorithms,check-qualification-freshness,registry,completion,comp} ...
+usage: yolozu [-h] [--version] {qualify-release,adapter,guide,doctor,dr,list,fetch,prepare-torchvision-maskrcnn,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,promote-image-pipeline,scout-algorithms,check-qualification-freshness,registry,completion,comp} ...
 
 positional arguments:
-  {guide,doctor,dr,list,fetch,prepare-torchvision-maskrcnn,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,promote-image-pipeline,scout-algorithms,check-qualification-freshness,registry,completion,comp}
+  {qualify-release,adapter,guide,doctor,dr,list,fetch,prepare-torchvision-maskrcnn,export,export-dataset,predict-images,eval-coco,calibrate,eval-long-tail,long-tail-recipe,benchmark,parity,predictions,validate,eval-instance-seg,onnxrt,resources,migrate,import,train,train-orchestrate,test,demo,qualify-image-pipeline,activate-qualification-evidence,review-image-pipeline-support-profiles,update-image-pipeline-lifecycle,promote-image-pipeline,scout-algorithms,check-qualification-freshness,registry,completion,comp}
+    qualify-release     Create, verify, or compare portable release qualification packs.
+    adapter             Discover and check packaged third-party adapter plugins.
     guide               Show beginner-friendly routes and copy-paste commands.
     doctor (dr)         Check the environment. Use --explain for beginner-friendly next actions.
     list                List registries and built-in catalogs.
@@ -182,6 +184,7 @@ Contact: develop@toppymicros.com
 |---|---|---|---|
 | activate_qualification_evidence | experimental | tools/activate_qualification_evidence.py | Dry-run or atomically append an explicit reviewed activation, supersession, or terminal revocation for one exact current qualification report; report presence alone never activates evidence. |
 | adapter_parity_suite | experimental | tools/adapter_parity_suite.py | Run parity checks for multiple adapter outputs against a reference adapter predictions file. |
+| adapter_sdk | stable | yolozu/cli.py | Discover installed yolozu.adapters.v1 metadata without imports, then explicitly load and check a reviewed adapter plugin against the Stable predictions interface contract. |
 | announce_release | stable | tools/announce_release.py | Generate (and optionally post) release announcement bundle for LinkedIn/X/Reddit from GitHub release event payload. |
 | audit_backend_support | experimental | tools/audit_backend_support.py | Audit YOLOX/YOLOv8/Detectron2/MMDetection exporters, with verified execution evidence for selected non-dry backends. |
 | audit_docs_examples_drift | stable | tools/audit_docs_examples_drift.py | Audit README/docs examples against yolozu help, manual CLI drift, and manifest help drift gates. |
@@ -285,6 +288,7 @@ Contact: develop@toppymicros.com
 | qualify_artifact_research | research | tools/qualify_artifact_research.py | Qualify offline prediction distillation and Hessian refinement with three deterministic repetitions, stable COCO metrics, hashes, measured cost, rollback, and explicit hold gates. |
 | qualify_finetune_lanes | experimental | tools/qualify_finetune_lanes.py | Qualify real-image and external fine-tuning execution in one command while failing closed on projection-only non-dry lanes. Exit 0 means protocol_complete, while promotion remains a separate hold/pass decision and Experimental maturity is retained when labels or task-native metrics are insufficient. |
 | qualify_image_pipeline | experimental | tools/qualify_image_pipeline.py | Measure one exact registered local image pipeline, including a qualification-only Candidate, with pinned inputs/assets, a code-owned local COCO evaluator, bounded child-process cancellation, exact aggregates, and atomic unactivated evidence output. |
+| qualify_release | stable | yolozu/cli.py | Create, verify, and compare portable release qualification packs with fail-closed pass, hold, and fail decisions over the Stable COCO evaluation engine. |
 | qualify_sdft_continual | research | tools/qualify_sdft_continual.py | Qualify checkpoint-distillation continual learning across fixed seeds and real COCOeval, including the prospective naive/SDFT-response/replay/combined ablation with selected-query and replay execution gates. |
 | recommend_image_pipeline | experimental | yolozu/integrations/mcp_server.py | Return an explainable read-only qualified local image-pipeline selection or explicit abstention from bounded typed inputs; this tool does not execute a model. |
 | refine_predictions_hessian | research | tools/refine_predictions_hessian.py | Refine pose-related prediction fields with an engine-external Newton/finite-diff Hessian stepper and optional research_report log boundary; the public CLI rollout is offsets-first and opt-in. |

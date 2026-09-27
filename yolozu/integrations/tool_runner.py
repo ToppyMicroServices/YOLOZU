@@ -50,6 +50,21 @@ def _workspace_path(value: str, *, label: str, kind: str) -> Path:
     return resolve_workspace_path(path)
 
 
+def _workspace_tree(path: Path, *, label: str) -> Path:
+    """Reject descendant symlinks that resolve outside the MCP workspace."""
+
+    root = workspace_root()
+    if path.is_dir():
+        for candidate in path.rglob("*"):
+            try:
+                candidate.resolve().relative_to(root)
+            except ValueError as exc:
+                raise ValueError(
+                    f"{label} contains a path that escapes the workspace: {candidate}"
+                ) from exc
+    return path
+
+
 def _with_meta(payload: dict[str, Any]) -> dict[str, Any]:
     payload.setdefault("meta", collect_artifact_metadata())
     return payload
@@ -217,6 +232,74 @@ def eval_coco_public(
     if repair:
         args.append("--repair")
     return _with_meta(run_cli_tool_redacted("eval_coco", args, artifacts={"report": output}))
+
+
+def qualify_release(
+    dataset: str,
+    predictions: str,
+    *,
+    output_dir: str = "reports/qualification_pack",
+    baseline_predictions: str | None = None,
+    split: str | None = None,
+    bbox_format: str = "cxcywh_norm",
+    max_images: int | None = None,
+    dry_run: bool = True,
+    min_map50_95: float | None = None,
+    max_map50_95_drop: float | None = None,
+    force: bool = False,
+) -> dict[str, Any]:
+    """Create one workspace-confined qualification pack through the shared engine."""
+
+    from yolozu.qualification import qualify_release as create_pack
+
+    try:
+        dataset_path = _workspace_tree(
+            _workspace_path(dataset, label="dataset", kind="dir"),
+            label="dataset",
+        )
+        predictions_path = _workspace_path(predictions, label="predictions", kind="file")
+        output_path = _workspace_path(output_dir, label="output_dir", kind="output")
+        baseline_path = (
+            _workspace_path(
+                baseline_predictions,
+                label="baseline_predictions",
+                kind="file",
+            )
+            if baseline_predictions is not None
+            else None
+        )
+        result = create_pack(
+            dataset_path,
+            predictions_path,
+            output_path,
+            baseline_predictions=baseline_path,
+            split=split,
+            bbox_format=bbox_format,
+            max_images=max_images,
+            dry_run=dry_run,
+            min_map50_95=min_map50_95,
+            max_map50_95_drop=max_map50_95_drop,
+            force=force,
+        )
+    except Exception as exc:
+        return _with_meta(
+            fail_response(
+                "qualify_release",
+                message=str(exc),
+                exc=exc,
+            )
+        )
+    data = result.to_dict()
+    data["pack_dir"] = output_dir
+    return _with_meta(
+        {
+            "ok": True,
+            "tool": "qualify_release",
+            "summary": f"qualification decision: {result.decision}",
+            "exit_code": 0,
+            "result": data,
+        }
+    )
 
 
 def predict_images(

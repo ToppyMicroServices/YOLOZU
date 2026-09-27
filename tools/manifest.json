@@ -62,6 +62,7 @@
         "validate_predictions",
         "validate_dataset",
         "eval_coco",
+        "qualify_release",
         "predict_images",
         "recommend_image_pipeline",
         "process_images",
@@ -250,6 +251,11 @@
       "producer": "python3 tools/run_reference_adapter_regression.py",
       "schema": "docs/schemas/reference_adapter_regression_report.schema.json",
       "summary": "Reference adapter regression report with schema/consistency/metric/speed gate results."
+    },
+    "release_qualification_pack": {
+      "producer": "yolozu qualify-release create",
+      "schema": "docs/schemas/release_qualification.schema.json",
+      "summary": "Portable directory with normalized input digests, path-redacted COCO evaluation evidence, explicit pass/hold/fail checks, and SHA-256 verification metadata."
     },
     "research_lane_report_json": {
       "schema": "docs/schemas/research_lane_report.schema.json",
@@ -634,6 +640,90 @@
       "tags": [
         "adapter",
         "parity",
+        "validation"
+      ]
+    },
+    {
+      "docs": [
+        "docs/adapter_contract.md",
+        "docs/adapter_templates.md",
+        "docs/README.md",
+        "manual/chapters/03_concepts_contracts.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": []
+      },
+      "entrypoint": "yolozu/cli.py",
+      "examples": [
+        {
+          "command": "python3 -m yolozu adapter list",
+          "description": "List installed adapter metadata without importing third-party plugin code."
+        },
+        {
+          "command": "python3 -m yolozu adapter test dummy --allow-plugin-load",
+          "description": "Explicitly load the packaged network-free dummy plugin and run the predictions interface conformance check."
+        },
+        {
+          "command": "python3 -m yolozu adapter --help",
+          "description": "Inspect the packaged adapter SDK commands."
+        }
+      ],
+      "id": "adapter_sdk",
+      "inputs": [
+        {
+          "kind": "string",
+          "name": "operation",
+          "required": true
+        },
+        {
+          "kind": "string",
+          "name": "name",
+          "required": false
+        },
+        {
+          "flag": "--config",
+          "kind": "file",
+          "name": "config",
+          "required": false
+        },
+        {
+          "flag": "--records",
+          "kind": "file",
+          "name": "records",
+          "required": false
+        },
+        {
+          "flag": "--allow-plugin-load",
+          "kind": "string",
+          "name": "allow_plugin_load",
+          "required": false
+        }
+      ],
+      "maturity": "stable",
+      "outputs": [
+        {
+          "description": "Machine-readable discovery, metadata check, or prediction conformance result.",
+          "kind": "stdout",
+          "name": "adapter_sdk_result"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "notes": "The list operation reads metadata only. doctor/test execute the selected third-party provider after --allow-plugin-load; review the distribution and use external isolation when provider-defined effects are not trusted.",
+        "python_packages": []
+      },
+      "runner": "python3",
+      "summary": "Discover installed yolozu.adapters.v1 metadata without imports, then explicitly load and check a reviewed adapter plugin against the Stable predictions interface contract.",
+      "tags": [
+        "adapter",
+        "plugin",
+        "sdk",
         "validation"
       ]
     },
@@ -14456,6 +14546,165 @@
         "experimental",
         "local-inference",
         "qualification"
+      ]
+    },
+    {
+      "contracts": {
+        "consumes": [
+          "predictions_json"
+        ],
+        "produces": [
+          "release_qualification_pack"
+        ]
+      },
+      "docs": [
+        "README.md",
+        "Readme_jp.md",
+        "docs/ai_first.md",
+        "docs/llm_integrations.md",
+        "docs/openai_mcp_actions.md",
+        "docs/python_api.md",
+        "docs/README.md",
+        "docs/release_qualification.md",
+        "docs/schemas/release_qualification.schema.json",
+        "manual/chapters/20_llm_mcp_integrations.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Atomically creates a bounded qualification evidence directory; --force replaces only a pack that first passes verification.",
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "entrypoint": "yolozu/cli.py",
+      "examples": [
+        {
+          "command": "python3 -m yolozu qualify-release create --dataset data/smoke --predictions data/smoke/predictions/predictions_dummy.json --output-dir reports/qualification_smoke --split val --max-images 2 --dry-run",
+          "description": "Create a deterministic validation pack whose decision remains hold because dry-run has no official metrics."
+        },
+        {
+          "command": "python3 -m yolozu qualify-release verify reports/qualification_smoke",
+          "description": "Verify checksums, request fingerprints, and decision semantics."
+        },
+        {
+          "command": "python3 -m yolozu qualify-release --help",
+          "description": "Inspect the Stable qualification-pack interface contract."
+        }
+      ],
+      "id": "qualify_release",
+      "inputs": [
+        {
+          "kind": "string",
+          "name": "operation",
+          "required": true
+        },
+        {
+          "flag": "--dataset",
+          "kind": "dir",
+          "name": "dataset",
+          "required": false
+        },
+        {
+          "flag": "--predictions",
+          "kind": "file",
+          "name": "predictions",
+          "required": false
+        },
+        {
+          "flag": "--output-dir",
+          "kind": "dir",
+          "name": "output_dir",
+          "required": false
+        },
+        {
+          "flag": "--baseline-predictions",
+          "kind": "file",
+          "name": "baseline_predictions",
+          "required": false
+        },
+        {
+          "flag": "--split",
+          "kind": "string",
+          "name": "split",
+          "required": false
+        },
+        {
+          "default": "cxcywh_norm",
+          "flag": "--bbox-format",
+          "kind": "string",
+          "name": "bbox_format",
+          "required": false
+        },
+        {
+          "flag": "--max-images",
+          "kind": "number",
+          "name": "max_images",
+          "required": false
+        },
+        {
+          "flag": "--dry-run",
+          "kind": "string",
+          "name": "dry_run",
+          "required": false
+        },
+        {
+          "flag": "--min-map50-95",
+          "kind": "number",
+          "name": "min_map50_95",
+          "required": false
+        },
+        {
+          "flag": "--max-map50-95-drop",
+          "kind": "number",
+          "name": "max_map50_95_drop",
+          "required": false
+        },
+        {
+          "flag": "--force",
+          "kind": "string",
+          "name": "force",
+          "required": false
+        }
+      ],
+      "maturity": "stable",
+      "outputs": [
+        {
+          "description": "Qualification decision and pack location.",
+          "kind": "stdout",
+          "name": "qualification_result"
+        },
+        {
+          "default": "<output-dir>",
+          "description": "Portable evidence directory with request, evaluation, decision, and checksum JSON files.",
+          "kind": "dir",
+          "name": "release_qualification_pack"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "requires": {
+        "notes": "The core package supports dry-run validation; real COCO metrics require the coco extra.",
+        "python_packages": [
+          "pycocotools"
+        ]
+      },
+      "runner": "python3",
+      "summary": "Create, verify, and compare portable release qualification packs with fail-closed pass, hold, and fail decisions over the Stable COCO evaluation engine.",
+      "tags": [
+        "ai",
+        "coco",
+        "evidence",
+        "qualification",
+        "release",
+        "validation"
       ]
     },
     {

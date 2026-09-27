@@ -46,6 +46,7 @@ from .tool_runner import (
     jobs_status,
     parity_check,
     predict_images,
+    qualify_release,
     process_images,
     recommend_image_pipeline,
     run_scenarios,
@@ -362,6 +363,36 @@ def eval_coco_tool(
         output=output,
         max_images=max_images,
         repair=repair,
+    )
+
+
+@app.tool(name="qualify_release")
+def qualify_release_tool(
+    dataset: str,
+    predictions: str,
+    output_dir: str = "reports/qualification_pack",
+    baseline_predictions: str | None = None,
+    split: str | None = None,
+    bbox_format: str = "cxcywh_norm",
+    max_images: int | None = None,
+    dry_run: bool = True,
+    min_map50_95: float | None = None,
+    max_map50_95_drop: float | None = None,
+    force: bool = False,
+) -> dict:
+    """Create a portable qualification pack; dry-run decisions remain hold."""
+    return qualify_release(
+        dataset=dataset,
+        predictions=predictions,
+        output_dir=output_dir,
+        baseline_predictions=baseline_predictions,
+        split=split,
+        bbox_format=bbox_format,
+        max_images=max_images,
+        dry_run=dry_run,
+        min_map50_95=min_map50_95,
+        max_map50_95_drop=max_map50_95_drop,
+        force=force,
     )
 
 

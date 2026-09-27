@@ -42,6 +42,12 @@ __all__ = [
     "CocoEvaluationResult",
     "validate_predictions",
     "evaluate_coco",
+    "QualificationError",
+    "QualificationResult",
+    "PackVerificationResult",
+    "qualify_release",
+    "verify_qualification_pack",
+    "diff_qualification_packs",
 ]
 
 JsonObject = dict[str, Any]
@@ -705,3 +711,16 @@ def _write_json_atomic(path: Path, payload: Mapping[str, Any]) -> None:
         encoding="utf-8",
     )
     temporary.replace(path)
+
+
+# Imported after the evaluation implementation so qualification can call back
+# into this module without creating an import cycle.  These names are part of
+# the same Stable Python API surface.
+from yolozu.qualification import (  # noqa: E402
+    PackVerificationResult,
+    QualificationError,
+    QualificationResult,
+    diff_qualification_packs,
+    qualify_release,
+    verify_qualification_pack,
+)

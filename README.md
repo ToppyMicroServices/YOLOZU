@@ -96,6 +96,21 @@ print(result.to_dict())
 This API example is a dry run. With `yolozu[coco]` installed, use
 `dry_run=False` to compute metrics from your predictions and ground truth.
 
+Turn the same evaluation into a verifiable release gate and portable evidence
+pack:
+
+```bash
+yolozu qualify-release create \
+  --dataset /absolute/path/to/dataset \
+  --predictions /absolute/path/to/predictions.json \
+  --output-dir reports/release_qualification \
+  --min-map50-95 0.40
+yolozu qualify-release verify reports/release_qualification
+```
+
+See [`docs/release_qualification.md`](docs/release_qualification.md) for
+baseline regression gates, pack comparison, Python, and MCP use.
+
 Give an AI client the small guaranteed-tool list before exposing wider surfaces:
 
 ```bash

@@ -16,7 +16,7 @@ Inspect the compact registry and exact public surface sets:
 yolozu-mcp --print-tools --guaranteed --ids-only
 ```
 
-Use `yolozu-mcp --print-tools --supported --ids-only` to inspect all 32
+Use `yolozu-mcp --print-tools --supported --ids-only` to inspect all 33
 registered MCP operations.
 
 Use these tools:
@@ -26,6 +26,7 @@ Use these tools:
 - `validate_predictions`
 - `validate_dataset`
 - `eval_coco`
+- `qualify_release` (Stable, MCP-only, dry-run by default)
 - `run_scenarios`
 - `convert_dataset`
 
@@ -34,10 +35,16 @@ Why MCP first:
 - same JSON response shape as other integrations
 - minimal glue code
 
-The generated machine-readable reference separates the 32 live MCP tool ids,
+The generated machine-readable reference separates the 33 live MCP tool ids,
 the four guaranteed AI-safe ids, the five bounded image-service ids, the two
 config-review ids, and the 21 canonical Actions operations. A live registration
 is not by itself a deterministic or dependency-free guarantee.
+
+The MCP-only `qualify_release` operation creates a workspace-confined evidence
+pack through the same Stable engine as the CLI and Python API. Its default dry
+run remains `hold`; a pass requires real metrics and an explicit threshold.
+It is not an Actions endpoint. See
+[`release_qualification.md`](release_qualification.md).
 
 The MCP-only `recommend_image_pipeline` operation is Experimental and read-only.
 It can return a selected or abstained SelectionDecision for a structured local

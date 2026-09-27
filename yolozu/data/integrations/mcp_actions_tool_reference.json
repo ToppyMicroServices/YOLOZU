@@ -11,6 +11,7 @@
         "validate_predictions",
         "validate_dataset",
         "eval_coco",
+        "qualify_release",
         "predict_images",
         "recommend_image_pipeline",
         "process_images",
@@ -1160,6 +1161,430 @@
       },
       "requires": {
         "notes": "Required for real COCOeval only; --dry-run performs strict validation/conversion without pycocotools.",
+        "python_packages": [
+          "pycocotools"
+        ]
+      },
+      "metadata_source": "tools_manifest+mcp_ast"
+    },
+    {
+      "name": "qualify_release",
+      "function": "qualify_release_tool",
+      "summary": "Create a portable qualification pack; dry-run decisions remain hold.",
+      "category": "mcp",
+      "surface_tiers": [
+        "mcp_live"
+      ],
+      "maturity": "stable",
+      "maturity_source": "tools_manifest",
+      "tags": [
+        "ai",
+        "coco",
+        "evidence",
+        "qualification",
+        "release",
+        "validation"
+      ],
+      "tags_source": "tools_manifest",
+      "params": [
+        {
+          "name": "dataset",
+          "required": true
+        },
+        {
+          "name": "predictions",
+          "required": true
+        },
+        {
+          "name": "output_dir",
+          "required": false,
+          "default": "reports/qualification_pack"
+        },
+        {
+          "name": "baseline_predictions",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "split",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "bbox_format",
+          "required": false,
+          "default": "cxcywh_norm"
+        },
+        {
+          "name": "max_images",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "dry_run",
+          "required": false,
+          "default": true
+        },
+        {
+          "name": "min_map50_95",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "max_map50_95_drop",
+          "required": false,
+          "default": null
+        },
+        {
+          "name": "force",
+          "required": false,
+          "default": false
+        }
+      ],
+      "inputs": [
+        {
+          "name": "dataset",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Dataset"
+          }
+        },
+        {
+          "name": "predictions",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "title": "Predictions"
+          }
+        },
+        {
+          "name": "output_dir",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Output Dir",
+            "default": "reports/qualification_pack"
+          }
+        },
+        {
+          "name": "baseline_predictions",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Predictions",
+            "default": null
+          }
+        },
+        {
+          "name": "split",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split",
+            "default": null
+          }
+        },
+        {
+          "name": "bbox_format",
+          "required": false,
+          "schema": {
+            "type": "string",
+            "title": "Bbox Format",
+            "default": "cxcywh_norm"
+          }
+        },
+        {
+          "name": "max_images",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Images",
+            "default": null
+          }
+        },
+        {
+          "name": "dry_run",
+          "required": false,
+          "schema": {
+            "type": "boolean",
+            "title": "Dry Run",
+            "default": true
+          }
+        },
+        {
+          "name": "min_map50_95",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Map50 95",
+            "default": null
+          }
+        },
+        {
+          "name": "max_map50_95_drop",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Map50 95 Drop",
+            "default": null
+          }
+        },
+        {
+          "name": "force",
+          "required": false,
+          "schema": {
+            "type": "boolean",
+            "title": "Force",
+            "default": false
+          }
+        }
+      ],
+      "input_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "title": "Dataset"
+          },
+          "predictions": {
+            "type": "string",
+            "title": "Predictions"
+          },
+          "output_dir": {
+            "type": "string",
+            "title": "Output Dir",
+            "default": "reports/qualification_pack"
+          },
+          "baseline_predictions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Predictions",
+            "default": null
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Split",
+            "default": null
+          },
+          "bbox_format": {
+            "type": "string",
+            "title": "Bbox Format",
+            "default": "cxcywh_norm"
+          },
+          "max_images": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Images",
+            "default": null
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run",
+            "default": true
+          },
+          "min_map50_95": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Map50 95",
+            "default": null
+          },
+          "max_map50_95_drop": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Map50 95 Drop",
+            "default": null
+          },
+          "force": {
+            "type": "boolean",
+            "title": "Force",
+            "default": false
+          }
+        },
+        "title": "qualify_release_toolArguments",
+        "type": "object",
+        "required": [
+          "dataset",
+          "predictions"
+        ]
+      },
+      "parameter_schema": {
+        "properties": {
+          "dataset": {
+            "type": "string"
+          },
+          "predictions": {
+            "type": "string"
+          },
+          "output_dir": {
+            "type": "string",
+            "default": "reports/qualification_pack"
+          },
+          "baseline_predictions": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "split": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "bbox_format": {
+            "type": "string",
+            "default": "cxcywh_norm"
+          },
+          "max_images": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "dry_run": {
+            "type": "boolean",
+            "default": true
+          },
+          "min_map50_95": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "max_map50_95_drop": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "force": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "dataset",
+          "predictions"
+        ]
+      },
+      "examples": [
+        {
+          "command": "python3 -m yolozu qualify-release create --dataset data/smoke --predictions data/smoke/predictions/predictions_dummy.json --output-dir reports/qualification_smoke --split val --max-images 2 --dry-run",
+          "description": "Create a deterministic validation pack whose decision remains hold because dry-run has no official metrics."
+        },
+        {
+          "command": "python3 -m yolozu qualify-release verify reports/qualification_smoke",
+          "description": "Verify checksums, request fingerprints, and decision semantics."
+        },
+        {
+          "command": "python3 -m yolozu qualify-release --help",
+          "description": "Inspect the Stable qualification-pack interface contract."
+        }
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Atomically creates a bounded qualification evidence directory; --force replaces only a pack that first passes verification.",
+            "flag": "--output-dir",
+            "kind": "dir",
+            "scope": "tree"
+          }
+        ]
+      },
+      "requires": {
+        "notes": "The core package supports dry-run validation; real COCO metrics require the coco extra.",
         "python_packages": [
           "pycocotools"
         ]

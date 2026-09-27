@@ -30,7 +30,7 @@ class TestAiFirstMcpSurface(unittest.TestCase):
             ],
         )
         supported = list_manifest_tools(supported=True, ids_only=True)
-        self.assertEqual(len(supported), 32)
+        self.assertEqual(len(supported), 33)
         self.assertIn("eval_coco", supported)
         self.assertIn("validate_predictions", supported)
         self.assertIn("recommend_image_pipeline", supported)
@@ -331,7 +331,7 @@ class TestAiFirstMcpSurface(unittest.TestCase):
                 compact["manifest_tools"],
                 compact["selected_tool_ids"],
             )
-            self.assertEqual(compact["surface_counts"]["mcp_live"], 32)
+            self.assertEqual(compact["surface_counts"]["mcp_live"], 33)
             self.assertEqual(
                 compact["surface_counts"]["image_service_safe"],
                 5,

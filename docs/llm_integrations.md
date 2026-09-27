@@ -30,6 +30,7 @@ Also available in the same backend surface:
   `submit_image_job`, `get_image_job`, `cancel_image_job`
 - inference/calibration: `predict_images`, `parity_check`, `calibrate_predictions`
 - evaluation: `eval_instance_seg`, `eval_long_tail`
+- release evidence: `qualify_release` (Stable, MCP-only, dry-run by default)
 - async jobs: `train_job`, `export_predictions_job`, `test_job`, `ttt_job`, `ctta_job`
 - compatibility alias: `export_onnx_job` (same behavior as `export_predictions_job`)
 - job/run control: `jobs_list`, `jobs_status`, `jobs_cancel`, `runs_list`, `runs_describe`
@@ -37,7 +38,7 @@ Also available in the same backend surface:
 Guaranteed AI-safe support:
 - `doctor`, `generate_config`, `review_config`, `validate_predictions`
 
-The server also registers a broader 32-tool live MCP surface. The generated
+The server also registers a broader 33-tool live MCP surface. The generated
 reference distinguishes that live set from the four guaranteed tools, the two
 config-review tools, the five-tool `image_service_safe` surface, and the 21
 canonical Actions operations. Registration does not promote
@@ -51,7 +52,7 @@ mkdir -p reports
 # Inspect the four guaranteed AI-safe tools as JSON
 yolozu-mcp --print-tools --guaranteed --ids-only > reports/mcp_tool_ids.json
 
-# Inspect all 32 registered MCP operations
+# Inspect all 33 registered MCP operations
 yolozu-mcp --print-tools --supported --ids-only > reports/mcp_live_tool_ids.json
 
 # Deterministic sample I/O (useful for client wiring tests)
@@ -68,6 +69,12 @@ python3 tools/check_mcp_settings.py --output reports/mcp_settings_check.json
 Here “registered” means discoverable through the live MCP schema. It does not
 promise that environment-dependent execution will succeed; only the four-tool
 `guaranteed_ai_safe` set carries the lightweight deterministic guarantee.
+
+`qualify_release` creates a workspace-confined evidence pack through the same
+Stable engine used by the CLI and Python API. Its default dry run produces
+`hold`, not `pass`; real metrics and an explicit threshold are required for a
+passing decision. It is not exposed through Actions. See
+[`release_qualification.md`](release_qualification.md).
 
 `recommend_image_pipeline` accepts a structured image job and local input. It
 returns a selected or abstained SelectionDecision without inference, downloads,

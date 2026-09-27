@@ -1,4 +1,4 @@
-# Adapter contract (v1)
+# Adapter interface contract (v1)
 
 Adapters are small wrappers that let an inference backend emit YOLOZU-compatible
 prediction artifacts.
