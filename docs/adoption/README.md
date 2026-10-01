@@ -22,6 +22,8 @@ feedback, not from individual usage tracking.
 - [`2026-09-03-baseline.md`](2026-09-03-baseline.md)
 - [`2026-09-10-baseline.md`](2026-09-10-baseline.md)
 - [`2026-09-17-baseline.md`](2026-09-17-baseline.md)
+- 2026-09-24: scheduled collection missed; not backfilled
+- [`2026-10-01-baseline.md`](2026-10-01-baseline.md)
 
 ## Monthly feedback review
 
