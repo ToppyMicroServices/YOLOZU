@@ -49,7 +49,11 @@ from yolozu.adaptive.bundles import (
 )
 from yolozu.adaptive.canonical import canonical_json_v1, canonical_sha256_v1
 from yolozu.adaptive.inventory import pin_decoded_inputs
-from yolozu.adaptive.lifecycle import _load_state, update_image_pipeline_lifecycle
+from yolozu.adaptive.lifecycle import (
+    _load_state,
+    _utc as _lifecycle_utc,
+    update_image_pipeline_lifecycle,
+)
 from yolozu.adaptive.promotion import (
     _compare_stable_reports,
     promote_image_pipeline,
@@ -1060,7 +1064,10 @@ class PromotionCliTests(unittest.TestCase):
             "--approve",
         ]
         stdout = io.StringIO()
-        with redirect_stdout(stdout):
+        with patch("yolozu.adaptive.promotion._utc") as promotion_utc, redirect_stdout(stdout):
+            promotion_utc.side_effect = lambda value: _lifecycle_utc(
+                "2026-08-26T00:00:00Z" if value is None else value
+            )
             exit_code = cli_main(argv)
         self.assertEqual(exit_code, 0)
         self.assertIn('"status": "applied"', stdout.getvalue())
