@@ -109,6 +109,30 @@ class TestWebDocsGeneration(TestCase):
         self.assertEqual(result["stale"], [])
         self.assertEqual(result["extra"], [])
 
+    def test_public_pages_use_the_shared_site_format(self) -> None:
+        stylesheet = self._read("assets/styles.css")
+        for token in (
+            "color-scheme: dark;",
+            "--bg: #02213b;",
+            "--fg: #f5fbff;",
+            "--muted: #b4cad9;",
+            "--card: #072d4a;",
+            "--accent: #62d2ff;",
+            "--maxw: 1040px;",
+            "--navh: 72px;",
+            "border-radius: 6px;",
+            'font-family: "Plus Jakarta Sans",',
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, stylesheet)
+        self.assertNotIn("gradient(", stylesheet)
+        self.assertNotIn("prefers-color-scheme: light", stylesheet)
+        for page in self.output.glob("*.html"):
+            with self.subTest(page=page.name):
+                html = page.read_text(encoding="utf-8")
+                self.assertIn('<meta name="theme-color" content="#02213b" />', html)
+                self.assertIn('<meta name="color-scheme" content="dark" />', html)
+
     def test_command_reference_covers_every_manifest_entry(self) -> None:
         manifest = json.loads(
             (self.repo_root / "tools" / "manifest.json").read_text(encoding="utf-8")

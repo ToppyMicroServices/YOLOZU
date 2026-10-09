@@ -339,7 +339,8 @@ def _layout(
   <title>{html.escape(full_title)}</title>
   <meta name="description" content="{html.escape(description, quote=True)}" />
   <meta name="robots" content="index,follow" />
-  <meta name="theme-color" content="#07111f" />
+  <meta name="theme-color" content="#02213b" />
+  <meta name="color-scheme" content="dark" />
   <link rel="canonical" href="{html.escape(canonical, quote=True)}" />
   <link rel="describedby" href="llms.txt" />
   {markdown_link}

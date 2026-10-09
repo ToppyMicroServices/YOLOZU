@@ -106,6 +106,12 @@ response remains the execution reference.
 Stable, Bridge, Benchmark, and Research cards use separate visual states.
 Research examples link back to a Stable artifact or the Stable tutorial.
 
+The visual format follows the ToppyMicroServices homepage: a flat `#02213b`
+background, `#072d4a` panels, Plus Jakarta Sans, a 1040px content width, and
+6px component corners. The header, heading sizes, and spacing use the same
+site settings. The dark color scheme stays consistent across browser
+preferences; lane colors and labels still distinguish maturity.
+
 The entry and completion links emit aggregate Plausible events containing only
 the fixed page and target labels. Search text is not sent to analytics.
 
