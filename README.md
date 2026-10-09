@@ -12,6 +12,10 @@ Its stable product lane validates and evaluates existing vision predictions thro
 
 You keep your model and inference stack. YOLOZU reads a wrapped `predictions.json` and ground-truth labels, then writes a JSON evaluation report. It does not improve model accuracy by itself.
 
+New to YOLOZU? [Create your first evaluation report](docs/labeled_sample.md)
+with generated images and labels, then try a verifiable release gate.
+[日本語の手順](docs/labeled_sample_ja.md). No model or dataset download is needed.
+
 ### Install and evaluate your predictions
 
 Requires Python 3.10 or newer. On macOS/Linux, start in a virtual environment

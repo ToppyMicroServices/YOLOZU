@@ -12,6 +12,10 @@ YOLOZU 是由 ToppyMicroServices OÜ 开发、免费提供的商业产品。仓�
 
 保留已有模型和推理环境，将 wrapped `predictions.json` 与真实标签交给 YOLOZU，即可生成 JSON 评估 report。安装 YOLOZU 本身不会提高模型精度。
 
+首次使用？参见[生成第一份评估报告（English）](docs/labeled_sample.md)
+或[日本語](docs/labeled_sample_ja.md)。从本地生成的图像和标签开始，
+再尝试可验证的 release gate，无需下载模型或 dataset。
+
 ### 安装并评估已有预测结果
 
 需要 Python 3.10 或更新版本。macOS/Linux 用户可先创建虚拟环境；
