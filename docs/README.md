@@ -8,6 +8,12 @@ Already have predictions and ground truth? Start with the
 [installed-CLI evaluation steps](../README.md#install-and-evaluate-your-predictions).
 They explain the required input format and produce measured COCO metrics.
 
+For a first evaluation with generated images and labels, follow the
+[labeled-sample walkthrough](labeled_sample.md) or
+[日本語の手順](labeled_sample_ja.md). It includes report checks and an optional
+release gate. To introduce YOLOZU to others, use the
+[sharing kit](adoption/sharing_kit.md).
+
 ## Try without a model or dataset
 
 On macOS/Linux, create a Python 3.10+ virtual environment and run the explicit

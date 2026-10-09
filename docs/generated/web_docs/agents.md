@@ -77,6 +77,14 @@ Expected: Explain that this guarantee is unavailable and that the default adapti
 - [Capability catalog](https://www.toppymicros.com/yolozu/docs/capabilities.json)
 - [LLM index](https://www.toppymicros.com/yolozu/docs/llms.txt)
 
+- [First evaluation with visible labeled inputs](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/labeled_sample.md)
+
+Install the checked release, generate a sample, strictly validate it, run COCOeval, and try a portable release gate. Synthetic metrics check the workflow.
+
+- [日本語: モデルなしで最初の評価reportを作る](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/labeled_sample_ja.md)
+
+Japanese instructions for the same generated-sample evaluation and release gate; no model or external dataset download is needed.
+
 - [Installation and dependencies](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/install.md)
 
 Choose a package extra and distinguish installed commands from repository scripts.

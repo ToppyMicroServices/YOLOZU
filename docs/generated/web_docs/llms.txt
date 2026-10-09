@@ -14,6 +14,10 @@ A compact, optional documentation index for agents. It grants no permissions and
 
 ## Reference
 
+- [First evaluation with visible labeled inputs](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/labeled_sample.md): Install the checked release, generate a sample, strictly validate it, run COCOeval, and try a portable release gate. Synthetic metrics check the workflow.
+
+- [日本語: モデルなしで最初の評価reportを作る](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/labeled_sample_ja.md): Japanese instructions for the same generated-sample evaluation and release gate; no model or external dataset download is needed.
+
 - [Installation and dependencies](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/install.md): Choose a package extra and distinguish installed commands from repository scripts.
 
 - [CLI tool manifest](https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/tools/manifest.json): Command inputs, examples, side effects, dependencies, and maturity.

@@ -15,6 +15,20 @@
   "project": "YOLOZU",
   "resources": [
     {
+      "description": "Install the checked release, generate a sample, strictly validate it, run COCOeval, and try a portable release gate. Synthetic metrics check the workflow.",
+      "id": "first_evaluation",
+      "source_sha256": "5208d9e362d6ade1a71f5742e14a286175fd4872ed4d815049ef981bd413f4e9",
+      "title": "First evaluation with visible labeled inputs",
+      "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/labeled_sample.md"
+    },
+    {
+      "description": "Japanese instructions for the same generated-sample evaluation and release gate; no model or external dataset download is needed.",
+      "id": "first_evaluation_ja",
+      "source_sha256": "bdb4ec3137b807d6e4f5cc6e125e3dea08c3e0bf93161d904044b749230cdfe4",
+      "title": "日本語: モデルなしで最初の評価reportを作る",
+      "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/labeled_sample_ja.md"
+    },
+    {
       "description": "Choose a package extra and distinguish installed commands from repository scripts.",
       "id": "install",
       "source_sha256": "cef8bc14261454137682c5da8fda064cc0c6580ca4b2f35b85bc037c0c13e07b",

@@ -12,6 +12,10 @@ Stable な機能は、stable predictions interface contract による既存の�
 
 既存のモデルと推論環境をそのまま使い、wrapped `predictions.json` と正解ラベルを YOLOZU に渡すと、JSON の評価 report を得られます。YOLOZU の導入自体でモデル精度が上がるわけではありません。
 
+初めて使う方は、[モデルなしで最初の評価reportを作る](docs/labeled_sample_ja.md)から始められます。
+画像とラベルを生成して評価し、release gateまで試せます。
+モデルやdatasetのダウンロードは不要です。
+
 ### インストールして既存の予測結果を評価する
 
 Python 3.10 以上が必要です。macOS/Linux では仮想環境から始めます。
@@ -62,7 +66,7 @@ yolozu demo instance-seg --background synthetic --inference none --run-dir repor
 画像と YOLO ラベルを流用するには、バージョン 4.8.0 以降の
 `yolozu demo dataset --run-dir reports/labeled_sample` で、8 枚のサンプル、
 ラベル確認用画像、既知の予測を生成できます。
-[評価・流用の手順](docs/labeled_sample.md)を参照してください。
+[評価・流用の手順](docs/labeled_sample_ja.md)を参照してください。
 
 対応するチェックリスト: `configs/quickstart/instance_seg_demo.yaml`
 CPU-only の完全な DoD path（`doctor --proof -> demo -> validate -> eval`）は

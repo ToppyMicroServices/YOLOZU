@@ -49,6 +49,10 @@ aggregate-use consent. Security reports remain on the private path in
 
 ## Consented onboarding observations
 
+For public introductions, use the [sharing kit](sharing_kit.md) and its checked
+English/Japanese first-evaluation walkthroughs. The copy is ready to share;
+publication and external use must be recorded separately.
+
 For consented onboarding observations, use the
 [`design_partner_observation_kit.md`](design_partner_observation_kit.md).
 Its maintainer-only procedural rehearsal is recorded in

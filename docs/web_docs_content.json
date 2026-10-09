@@ -68,6 +68,18 @@
     ],
     "resources": [
       {
+        "id": "first_evaluation",
+        "title": "First evaluation with visible labeled inputs",
+        "description": "Install the checked release, generate a sample, strictly validate it, run COCOeval, and try a portable release gate. Synthetic metrics check the workflow.",
+        "source": "docs/labeled_sample.md"
+      },
+      {
+        "id": "first_evaluation_ja",
+        "title": "日本語: モデルなしで最初の評価reportを作る",
+        "description": "Japanese instructions for the same generated-sample evaluation and release gate; no model or external dataset download is needed.",
+        "source": "docs/labeled_sample_ja.md"
+      },
+      {
         "id": "install",
         "title": "Installation and dependencies",
         "description": "Choose a package extra and distinguish installed commands from repository scripts.",
@@ -247,6 +259,19 @@
         "instance_seg_demo_report.json",
         "overlays/*.png",
         "demo_config.json"
+      ]
+    },
+    {
+      "id": "labeled-first-evaluation",
+      "title": "First COCO evaluation and release gate",
+      "lane": "stable",
+      "description": "Generate eight visible labeled images with yolozu demo dataset, strictly validate the inputs, and run COCOeval before trying a portable release qualification pack. Known synthetic predictions check the workflow, not model accuracy.",
+      "source": "docs/labeled_sample.md",
+      "expected_files": [
+        "labeled_preview.png",
+        "labeled_sample_coco.json",
+        "labeled_sample_qualification/qualification.json",
+        "labeled_sample_qualification/checksums.json"
       ]
     },
     {
