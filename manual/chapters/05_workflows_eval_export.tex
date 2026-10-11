@@ -524,6 +524,14 @@ yolozu migrate dataset   --from coco   --coco-root /path/to/coco_like_root   --s
 yolozu validate dataset data/coco_yolo_like --strict
 \end{lstlisting}
 
+COCO-to-YOLO migration refuses an existing \path{dataset.json} before changing
+labels or images unless \cmd{--force} is supplied. Migration and detection
+exports reject flat filename collisions before writing; YOLO/KITTI also require
+unique label stems. A copied YOLO export omits \cmd{path} in \path{data.yaml},
+so image paths resolve from the YAML directory and the complete export can be
+moved. Only the selected split is exported; the other train/val key is
+\cmd{null}. Symlink exports still depend on their original assets.
+
 To export that wrapper into external training layouts:
 \begin{lstlisting}[language=bash]
 yolozu export-dataset yolo   --dataset data/coco_yolo_like   --split val2017   --out-dir data/coco_yolo_export   --force

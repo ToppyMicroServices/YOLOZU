@@ -335,7 +335,7 @@ def main(argv: list[str] | None = None) -> int:
     export_dataset.add_argument("--force", action="store_true", help="Overwrite the output directory if it exists.")
 
     predict = sub.add_parser("predict-images", help="Run folder inference and write predictions JSON + overlays + HTML.")
-    parse_common_export_args(predict)
+    parse_common_export_args(predict, include_labels=False)
     predict.add_argument("-i", "--input-dir", required=True, help="Folder containing images.")
     predict.add_argument("--glob", action="append", default=None, help="Glob pattern under --input-dir (repeatable).")
     predict.add_argument("-v", "--overlays-dir", default="reports/overlays", help="Directory to write overlay images.")
@@ -896,6 +896,7 @@ def main(argv: list[str] | None = None) -> int:
 
     train_p = sub.add_parser(
         "train",
+        allow_abbrev=False,
         help=(
             "Train with the RT-DETR pose reference trainer by default, or use "
             "--external-backend yolox|detectron2|mmdetection|mmpose|mmseg|tao|ultralytics|hf-detr for external training lanes."
@@ -947,7 +948,12 @@ def main(argv: list[str] | None = None) -> int:
     train_p.add_argument(
         "--resume-from",
         default=None,
-        help="Forwarded checkpoint path for external fine-tune/resume flows.",
+        help="Checkpoint path forwarded to the reference trainer or selected external training helper.",
+    )
+    train_p.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume the reference trainer from the run-contract last checkpoint.",
     )
     train_p.add_argument(
         "--tao-task",
@@ -1719,6 +1725,11 @@ def main(argv: list[str] | None = None) -> int:
     if platform_result is not None:
         return platform_result
     if args.command == "train":
+        train_extra_argv = list(extra_argv or [])
+        if getattr(args, "resume_from", None) is not None:
+            train_extra_argv.extend(["--resume-from", str(args.resume_from)])
+        if bool(getattr(args, "resume", False)):
+            train_extra_argv.append("--resume")
         if getattr(args, "import_from", None) and getattr(args, "external_backend", None):
             raise SystemExit("train cannot combine --import preview with --external-backend")
         if getattr(args, "import_from", None):
@@ -1726,13 +1737,15 @@ def main(argv: list[str] | None = None) -> int:
             if not getattr(args, "config", None):
                 return 0
         if getattr(args, "external_backend", None):
-            return _cmd_train_external(args, extra_args=list(extra_argv or []))
+            if bool(getattr(args, "resume", False)):
+                parser.error("--resume is only supported by the reference trainer; use --resume-from for external training")
+            return _cmd_train_external(args, extra_args=train_extra_argv)
         if not getattr(args, "config", None):
             raise SystemExit("train config is required unless using --import preview-only mode")
         config_path = Path(args.config)
         if not config_path.exists():
             raise SystemExit(f"config not found: {config_path}")
-        return _cmd_train(config_path, extra_args=list(extra_argv or []))
+        return _cmd_train(config_path, extra_args=train_extra_argv)
     if args.command == "test":
         config_path = Path(args.config)
         if not config_path.exists():

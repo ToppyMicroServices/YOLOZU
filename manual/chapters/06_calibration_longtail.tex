@@ -19,6 +19,10 @@ In these cases, post-hoc calibration can improve operating points (threshold cho
 \yolozu{} provides a unified CLI for several calibration methods.
 Conceptually, calibration modifies only \textbf{confidence scores}; the geometric outputs (bounding boxes, masks, keypoints, and pose fields) are left unchanged.
 The command writes (1) a calibrated predictions artifact and (2) a small JSON statistics report to make the transformation reproducible.
+Supplied exporter metadata is preserved, with calibration provenance under
+\cmd{meta.posthoc\_calibration}. Without exporter metadata, provenance is stored
+at top-level \cmd{posthoc\_calibration}; calibration does not invent an inference history.
+The resulting artifact can be validated against the predictions interface contract before evaluation.
 
 Example: fit FRACAL statistics for bounding boxes and write calibrated outputs:
 \begin{lstlisting}[language=bash]

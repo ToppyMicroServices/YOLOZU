@@ -485,12 +485,12 @@ def build_accel_backend_command(*, args: argparse.Namespace, backend: str, datas
     return cmd
 
 
-def parse_common_export_args(p: argparse.ArgumentParser) -> None:
+def parse_common_export_args(p: argparse.ArgumentParser, *, include_labels: bool = True) -> None:
     p.add_argument(
         "--backend",
-        choices=("dummy", "torch", "onnxrt", "trt", "executorch", "yolox", "opencv-dnn", "opencv-dnn-rtdetr", "opencv-dnn-yolo"),
+        choices=("dummy",) + (("labels",) if include_labels else ()) + ("torch", "onnxrt", "trt", "executorch", "yolox", "opencv-dnn", "opencv-dnn-rtdetr", "opencv-dnn-yolo"),
         default="dummy",
-        help="Inference backend (default: dummy).",
+        help=("Export backend (default: dummy; labels copies ground truth for an oracle self-check, without inference)." if include_labels else "Inference backend (default: dummy)."),
     )
     p.add_argument("--dataset", default=None, help="YOLO-format dataset root (defaults to data/coco128).")
     p.add_argument("--split", default=None, help="Dataset split under images/ and labels/ (default: auto).")
@@ -756,9 +756,46 @@ def export_with_backend(
         raise SystemExit("--torch-compile-* options require --torch-compile")
 
     adapter = None
+    labels_payload: dict[str, Any] | None = None
     config_fp: dict[str, Any]
 
-    if backend in ("dummy", "torch"):
+    if backend == "labels":
+        from yolozu.predictions import validate_predictions_payload
+        from yolozu.predictions.export import export_labels_predictions
+
+        if dataset_override is not None:
+            raise SystemExit("--backend labels requires a ground-truth dataset; use yolozu export, not predict-images")
+        validate_torch_only_flags(args=args, backend=backend)
+        inference_options = bool(
+            args.model or args.checkpoint or args.onnx or args.exp or args.weights
+            or args.runtime_output_json or args.image_size
+            or str(args.config) != "rtdetr_pose/configs/base.json"
+            or str(args.device) != "cpu"
+            or float(args.score_threshold) != 0.3
+            or int(args.max_detections) != 50
+            or str(args.input_name) != "images"
+            or str(args.combined_output) != "output0"
+            or str(args.boxes_scale) != "abs"
+            or float(args.min_score) != 0.0 or int(args.topk) != 300
+            or int(args.imgsz) != 640 or float(args.score_thr) != 0.01
+            or args.keep_aspect or str(args.dnn_backend) != "opencv"
+            or str(args.dnn_target) != "cpu" or float(args.nms_iou) != 0.45
+            or args.agnostic_nms or str(args.raw_format) != "yolo_84"
+            or str(args.decode) != "auto" or args.preprocess or args.dump_io
+            or args.dry_run
+        )
+        if args.ttt or inference_options:
+            raise SystemExit("--backend labels copies ground truth; model inference and TTT options are not supported")
+        labels_payload, labels_run = export_labels_predictions(
+            dataset_root=dataset,
+            split=args.split,
+            max_images=args.max_images,
+        )
+        validate_predictions_payload(labels_payload, strict=True)
+        config_fp = dict(labels_run["config_fingerprint"])
+        config_fp["dataset"] = str(dataset_fp)
+        config_fp["predictions_sha256"] = sha256_json(labels_payload["predictions"])
+    elif backend in ("dummy", "torch"):
         if backend == "dummy":
             compile_opts_changed = bool(
                 bool(args.torch_compile)
@@ -993,7 +1030,7 @@ def export_with_backend(
     else:
         raise SystemExit(f"unknown backend: {backend}")
 
-    if backend not in ("dummy", "torch"):
+    if backend not in ("dummy", "labels", "torch"):
         config_fp["ttt_lite"] = {
             "enabled": bool(args.ttt and args.ttt_lite_non_torch),
             "temperature": float(args.ttt_lite_temperature),
@@ -1064,7 +1101,11 @@ def export_with_backend(
             if stale_path is not None and stale_path.exists():
                 stale_path.unlink()
 
-    if backend in ("dummy", "torch"):
+    if backend == "labels":
+        if labels_payload is None:  # pragma: no cover
+            raise SystemExit("internal error: missing label-oracle predictions")
+        write_json(out_path, labels_payload)
+    elif backend in ("dummy", "torch"):
         if adapter is None:
             raise SystemExit("internal error: missing adapter")
         cmd = [

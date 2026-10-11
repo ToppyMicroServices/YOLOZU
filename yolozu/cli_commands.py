@@ -709,6 +709,8 @@ def _cmd_train_external(args: argparse.Namespace, extra_args: list[str] | None =
         cmd.extend(["--model", config_value])
     elif backend == "hf-detr" and config_value:
         cmd.extend(["--model-id", config_value])
+    if backend == "tao" and getattr(args, "tao_task", None) is not None:
+        cmd.extend(["--tao-task", str(args.tao_task)])
     if extra_args:
         cmd.extend(list(extra_args))
 
@@ -2713,8 +2715,7 @@ def _cmd_calibrate(args: argparse.Namespace) -> int:
     calibration_report["task"] = task
     calibration_report["stats_source"] = stats_source
 
-    out_meta: dict[str, Any] = dict(wrapped_meta or {})
-    out_meta["posthoc_calibration"] = {
+    calibration_provenance = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "method": method,
         "report": calibration_report,
@@ -2723,8 +2724,13 @@ def _cmd_calibrate(args: argparse.Namespace) -> int:
     payload = {
         "schema_version": 1,
         "predictions": calibrated_entries,
-        "meta": out_meta,
     }
+    if wrapped_meta is not None:
+        payload["meta"] = {**wrapped_meta, "posthoc_calibration": calibration_provenance}
+    else:
+        # No inference metadata was supplied. Keep calibration provenance separate
+        # rather than inventing an incomplete exporter meta object.
+        payload["posthoc_calibration"] = calibration_provenance
 
     if task == "seg":
         out_path = Path(str(args.output)).expanduser()
@@ -2999,15 +3005,18 @@ def _cmd_migrate(args: argparse.Namespace) -> int:
                 )
                 print(str(out))
                 return 0
-            out = migrate_coco_dataset_wrapper(
-                coco_root=str(coco_root),
-                split=effective_split,
-                instances_json=(str(args.instances_json) if args.instances_json else None),
-                output=str(args.output),
-                mode=str(args.mode),
-                include_crowd=bool(args.include_crowd),
-                force=bool(args.force),
-            )
+            try:
+                out = migrate_coco_dataset_wrapper(
+                    coco_root=str(coco_root),
+                    split=effective_split,
+                    instances_json=(str(args.instances_json) if args.instances_json else None),
+                    output=str(args.output),
+                    mode=str(args.mode),
+                    include_crowd=bool(args.include_crowd),
+                    force=bool(args.force),
+                )
+            except (FileExistsError, ValueError) as exc:
+                raise SystemExit(str(exc)) from exc
         elif from_format == "segmentation":
             dataset_path = getattr(args, "dataset", None)
             if not dataset_path:

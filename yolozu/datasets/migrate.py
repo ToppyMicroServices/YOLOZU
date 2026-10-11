@@ -226,6 +226,18 @@ def migrate_coco_dataset_wrapper(
     out_root = Path(output)
     if out_root.suffix.lower() == ".json":
         raise ValueError("--output must be a directory for --from coco (got .json path)")
+    descriptor_path = out_root / "dataset.json"
+    if descriptor_path.exists() and not force:
+        raise FileExistsError(f"output already exists: {descriptor_path} (use --force to overwrite)")
+
+    from .coco_convert import _validate_flat_image_names, convert_coco_instances_to_yolo_labels
+
+    instances_doc = _load_json(instances_path)
+    images = instances_doc.get("images") or []
+    if not isinstance(images, list):
+        raise ValueError("invalid COCO instances JSON: images must be a list")
+    _validate_flat_image_names(str(image.get("file_name") or "") for image in images)
+
     out_root.mkdir(parents=True, exist_ok=True)
 
     labels_dir = out_root / "labels" / split
@@ -233,9 +245,6 @@ def migrate_coco_dataset_wrapper(
     labels_dir.mkdir(parents=True, exist_ok=True)
     images_out.mkdir(parents=True, exist_ok=True)
 
-    from .coco_convert import convert_coco_instances_to_yolo_labels
-
-    instances_doc = _load_json(instances_path)
     convert_coco_instances_to_yolo_labels(
         instances_json=instances_doc,
         images_dir=images_src,
@@ -244,9 +253,6 @@ def migrate_coco_dataset_wrapper(
     )
 
     if mode in ("copy", "symlink"):
-        images = instances_doc.get("images") or []
-        if not isinstance(images, list):
-            raise ValueError("invalid COCO instances JSON: images must be a list")
         for img in images:
             file_name = str(img.get("file_name") or "").strip()
             if not file_name:

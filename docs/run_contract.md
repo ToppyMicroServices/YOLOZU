@@ -97,6 +97,14 @@ yolozu train configs/examples/train_contract.yaml --run-id exp01 --resume
 This resumes from:
 - `runs/<run_id>/checkpoints/last.pt`
 
+For a checkpoint at another path, use `--resume-from /path/to/checkpoint_bundle.pt`.
+Both options reach the reference trainer; a missing checkpoint stops the run.
+`epochs` is the total target, not the number of additional epochs. For example,
+pass `--epochs 2` to continue a completed one-epoch run for one more epoch.
+External training lanes accept `--resume-from`, with resume or fine-tune behavior
+defined by the selected backend. `--resume` selects the reference run-contract
+checkpoint; it is not an external-backend switch.
+
 The contracted checkpoint bundle restores (when present):
 - model weights
 - optimizer + scheduler state
@@ -104,6 +112,11 @@ The contracted checkpoint bundle restores (when present):
 - EMA state
 - progress counters (epoch/global_step)
 - RNG state (torch/cuda + python + optional numpy)
+
+These full-state bundles are resume artifacts. For the prediction adapter, use
+the model state dict produced by `--checkpoint-out` (or `checkpoint.pt` under
+`--run-dir`), as shown in `training_inference_export.md`. The public prediction
+loader does not accept arbitrary full-state Python checkpoint containers.
 
 ## ONNX parity gate
 

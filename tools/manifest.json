@@ -21447,6 +21447,10 @@
         "docs/interop_yolox.md",
         "docs/byop_quickstarts.md",
         "docs/training_inference_export.md",
+        "docs/dataset_processing_matrix.md",
+        "docs/score_calibration.md",
+        "docs/predictions_schema.md",
+        "docs/openai_mcp_actions.md",
         "manual/chapters/04_cli_reference.tex",
         "manual/chapters/05_workflows_eval_export.tex",
         "docs/training_backend_interface.md",
@@ -21467,7 +21471,7 @@
         "fixed_writes": [],
         "writes": [
           {
-            "description": "Writes JSON output (predictions / reports depending on subcommand). Torch compile export validates requested/actual execution evidence; a forced replacement removes the prior target before inference.",
+            "description": "Writes JSON output (predictions / reports depending on subcommand). Labels export copies ground truth without inference. Calibration preserves supplied meta or writes top-level posthoc_calibration when meta is absent. Torch compile export validates requested/actual execution evidence; a forced replacement removes the prior target before inference.",
             "flag": "--output",
             "kind": "file",
             "scope": "path"
@@ -21515,7 +21519,7 @@
             "scope": "path"
           },
           {
-            "description": "Writes exported dataset layouts under --out-dir (for example YOLO data.yaml/images/labels, COCO images/annotations, KITTI image_2/label_2, or semantic-segmentation images/masks + dataset.json).",
+            "description": "Writes exported dataset layouts under --out-dir (for example YOLO data.yaml/images/labels, COCO images/annotations, KITTI image_2/label_2, or semantic-segmentation images/masks + dataset.json). Detection exports reject flat filename collisions before replacing output; copied YOLO exports use relative data.yaml paths.",
             "flag": "--out-dir",
             "kind": "dir",
             "scope": "tree"
@@ -21605,6 +21609,10 @@
           "description": "Export dummy predictions with run meta."
         },
         {
+          "command": "python3 -m yolozu export --backend labels --dataset data/smoke --split val --output reports/label_oracle_predictions.json",
+          "description": "Copy all ground-truth bboxes, including empty images, for an evaluation-pipeline oracle self-check. No model inference runs."
+        },
+        {
           "command": "python3 -m yolozu predict-images --backend dummy --input-dir data/coco128/images/val2017 --max-images 5 --output reports/predict_images_dummy.json --overlays-dir reports/overlays_dummy --html reports/predict_images_dummy.html --progress",
           "description": "Folder input to predictions JSON + PNG overlays + HTML (dummy backend), with stderr progress."
         },
@@ -21621,8 +21629,16 @@
           "description": "Run a sweep config directly via the repo-local sweep helper (dry-run)."
         },
         {
-          "command": "python3 -m yolozu calibrate --method fracal --dataset data/coco128 --predictions reports/predictions.json --output reports/predictions_calibrated.json && python3 -m yolozu eval-long-tail --dataset data/coco128 --predictions reports/predictions_calibrated.json --output reports/long_tail_eval.json",
-          "description": "Long-tail post-hoc calibration + standardized eval."
+          "command": "python3 -m yolozu calibrate --method fracal --dataset data/coco128 --predictions reports/predictions.json --output reports/predictions_calibrated.json && python3 -m yolozu validate predictions reports/predictions_calibrated.json --strict && python3 -m yolozu eval-long-tail --dataset data/coco128 --predictions reports/predictions_calibrated.json --output reports/long_tail_eval.json",
+          "description": "Long-tail post-hoc calibration, strict predictions validation, and standardized eval."
+        },
+        {
+          "command": "python3 -m yolozu train configs/examples/train_contract.yaml --run-id exp01 --resume --epochs 2",
+          "description": "Resume the reference run-contract last checkpoint toward a total of two epochs; missing checkpoints stop the run."
+        },
+        {
+          "command": "python3 -m yolozu train configs/examples/train_contract.yaml --resume-from /path/to/checkpoint_bundle.pt --epochs 2",
+          "description": "Forward an explicit full-state reference checkpoint for resume; use raw checkpoint.pt weights for prediction inference."
         },
         {
           "command": "python3 -m yolozu train --import auto --cfg /path/to/args_or_config.{yaml,py} --resolved-config-out reports/train_config_resolved_import.json",
@@ -21694,7 +21710,7 @@
         },
         {
           "command": "python3 -m yolozu export-dataset yolo --dataset reports/conversion_tiny_wrapper --split val2017 --out-dir reports/conversion_tiny_yolo --force",
-          "description": "Export a YOLOZU wrapper into a standalone YOLO-style data.yaml/images/labels layout."
+          "description": "Export a YOLOZU wrapper into a copied, relocatable YOLO-style data.yaml/images/labels layout; flat filename collisions stop before writing."
         },
         {
           "command": "python3 -m yolozu export-dataset kitti --dataset reports/conversion_tiny_wrapper --split val2017 --out-dir reports/conversion_tiny_kitti --force",
@@ -21795,6 +21811,7 @@
           "required": false
         },
         {
+          "description": "Backend selector. export --backend labels copies dataset ground-truth bboxes for an oracle self-check without model inference; inference backends remain separate.",
           "flag": "--backend",
           "kind": "string",
           "name": "backend",
@@ -21943,7 +21960,14 @@
           "required": false
         },
         {
-          "description": "Forwarded checkpoint path for external fine-tune/resume flows.",
+          "description": "Resume the reference trainer's last run-contract checkpoint. Explicit flag, not an abbreviation of --resume-from; unsupported for external training lanes.",
+          "flag": "--resume",
+          "kind": "string",
+          "name": "resume",
+          "required": false
+        },
+        {
+          "description": "Checkpoint path forwarded to the reference trainer or selected external training helper. Reference resume restores full state; external resume/fine-tune semantics are backend-specific.",
           "flag": "--resume-from",
           "kind": "file",
           "name": "resume_from",
@@ -23172,7 +23196,7 @@
           "required": false
         },
         {
-          "description": "Asset materialization mode for `yolozu export-dataset`; `copy` duplicates files, `symlink` keeps a lightweight export tree.",
+          "description": "Asset materialization mode for `yolozu export-dataset`; `copy` duplicates files, `symlink` keeps a lightweight export tree that still depends on source assets.",
           "flag": "--image-mode",
           "kind": "string",
           "name": "image_mode",
@@ -23183,7 +23207,7 @@
       "outputs": [
         {
           "default": null,
-          "description": "Primary output artifact controlled by --output (subcommand-dependent).",
+          "description": "Primary output artifact controlled by --output (subcommand-dependent). Labels predictions identify ground-truth input and inference_executed=false; calibration adds provenance without creating exporter meta when none was supplied.",
           "kind": "file",
           "name": "output_json"
         },
@@ -23207,7 +23231,7 @@
         },
         {
           "default": null,
-          "description": "Dataset export root written by `yolozu export-dataset` when --out-dir is provided.",
+          "description": "Dataset export root written by `yolozu export-dataset` when --out-dir is provided; copied YOLO layouts omit path to anchor images to the YAML directory. Only the selected split is exported, with the other train/val key null; the complete directory can be relocated.",
           "kind": "dir",
           "name": "export_dataset_root"
         },

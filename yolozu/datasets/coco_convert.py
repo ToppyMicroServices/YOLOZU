@@ -7,8 +7,10 @@ label files, and builds a deterministic category ↔ class mapping.
 from __future__ import annotations
 
 import json
+import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterable
 
 __all__ = [
     "CocoCategoryMap",
@@ -25,6 +27,30 @@ class CocoCategoryMap:
     category_id_to_class_id: dict[int, int]
     class_id_to_category_id: dict[int, int]
     class_names: list[str]
+
+
+def _validate_flat_image_names(file_names: Iterable[str], *, label_stems: bool = True) -> None:
+    """Reject image identities that collide in a portable flat output layout."""
+    image_names: dict[str, str] = {}
+    stems: dict[str, str] = {}
+    for file_name in file_names:
+        if not file_name:
+            continue
+        path = Path(file_name)
+        keys = [(image_names, path.name, "image basename")]
+        if label_stems:
+            keys.append((stems, path.stem, "label stem"))
+        for seen, name, kind in keys:
+            key = unicodedata.normalize("NFC", name).casefold()
+            if key in seen:
+                raise ValueError(
+                    f"flat dataset {kind} collision: {seen[key]!r} and {file_name!r}; "
+                    "use unique image basenames and label stems before conversion "
+                    "(case and Unicode normalization do not distinguish output names). "
+                    "For a read-only COCO wrapper that retains source paths, use "
+                    "import dataset --from coco-instances."
+                )
+            seen[key] = file_name
 
 
 def build_category_map_from_coco(annotations: dict) -> CocoCategoryMap:
@@ -93,6 +119,7 @@ def convert_coco_instances_to_yolo_labels(
     if not isinstance(images, list) or not isinstance(annotations, list):
         raise ValueError("invalid COCO instances JSON (images/annotations)")
 
+    _validate_flat_image_names(str(image.get("file_name") or "") for image in images)
     cat_map = build_category_map_from_coco(instances_json)
 
     image_id_to_meta: dict[int, dict] = {}
@@ -152,4 +179,3 @@ def convert_coco_instances_to_yolo_labels(
     (labels_dir / "classes.txt").write_text("\n".join(cat_map.class_names) + "\n")
 
     return cat_map
-

@@ -174,10 +174,10 @@ def export_labels_predictions(
     max_images: int | None = None,
     score: float = 1.0,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Export predictions from dataset labels (perfect predictions).
+    """Export bbox predictions from dataset ground-truth labels.
 
-    This is useful for smoke-testing the evaluation pipeline without requiring
-    an inference backend.
+    This is an oracle self-check of the evaluation pipeline, not model inference
+    or evidence of a model's accuracy.
     """
 
     from yolozu.dataset import build_manifest
@@ -245,6 +245,9 @@ def export_labels_predictions(
         "timestamp": _now_utc(),
         "generator": "yolozu export --backend labels",
         "adapter": "labels",
+        "prediction_source": "ground_truth_labels",
+        "inference_executed": False,
+        "purpose": "evaluation_pipeline_oracle_self_check",
         "config": str(dataset_root),
         "images": int(len(preds)),
         "tta": _default_tta_meta(),

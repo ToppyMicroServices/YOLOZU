@@ -63,6 +63,11 @@ normalized. `class_id` must be an integer, not a JSON boolean.
 }
 ```
 
+Calibration keeps existing exporter `meta` intact and appends
+`meta.posthoc_calibration`. For an input without exporter metadata, it writes
+top-level `posthoc_calibration` instead; this is transformation provenance, not
+evidence that inference ran. See [score calibration](score_calibration.md).
+
 ### Optional runtime-execution evidence in Shape B
 
 Runtime-execution evidence is optional wrapper metadata, not a hard invariant
