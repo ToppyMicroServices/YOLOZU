@@ -597,6 +597,14 @@ yolozu train configs/examples/train_contract.yaml --run-id exp01
 yolozu train configs/examples/train_contract.yaml --run-id exp01 --resume
 \end{lstlisting}
 
+\cmd{--resume-from} forwards an explicit checkpoint to the reference trainer or
+selected external helper. Reference resume stops if the checkpoint is missing;
+\cmd{--epochs} is the total target, not an additional epoch count.
+\cmd{--resume} selects the reference run-interface-contract last checkpoint and
+is not supported for external lanes. Full-state bundles are resume artifacts;
+prediction inference uses the raw model state dict from \cmd{--checkpoint-out}
+or \path{checkpoint.pt} under \cmd{--run-dir}.
+
 \section{Backbone modification (adapter-scoped architecture switch)}
 Backbone-specific configurations are not primarily governed by solver flags; rather, they are derived from the model configuration file specified by \texttt{model\_config} in the training YAML.
 This section applies to the in-repo \path{rtdetr_pose} adapter boundary.

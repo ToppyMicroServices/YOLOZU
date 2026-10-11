@@ -161,6 +161,15 @@ An accepted request returns a `job_id`; poll `GET /jobs/{job_id}`. Missing or
 non-full checkpoints fail before queueing with `stage=preflight`. The resulting
 predictions and TTT report are local diagnostics, not efficacy evidence.
 
+`export_predictions_job` and `POST /jobs/export-predictions` copy every dataset
+ground-truth bbox into a predictions artifact through `export --backend labels`.
+This is an oracle self-check of validation and evaluation, not model inference.
+The artifact records `prediction_source: ground_truth_labels` and
+`inference_executed: false`. Poll the job, check its result, then pass the
+returned `artifacts.predictions` path to validation or evaluation. The legacy
+`export_onnx_job` / `/jobs/export-onnx` names remain compatibility aliases for
+this same predictions export; they do not create an ONNX model.
+
 ## Operational notes
 
 - Prefer MCP for day-to-day automation; add Actions only when OpenAPI registration is mandatory.

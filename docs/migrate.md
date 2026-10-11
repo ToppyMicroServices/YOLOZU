@@ -112,6 +112,12 @@ This writes:
 - `data/coco_yolo_like/labels/val2017/*.txt`
 - `data/coco_yolo_like/dataset.json` (points at `images_dir` and `labels_dir`)
 
+If `dataset.json` exists, migration refuses before changing labels or images
+unless `--force` is supplied. Flat-output basename and label-stem collisions
+are rejected before writing, including case and Unicode-normalization variants.
+For repeated source names, keep their paths with
+`import dataset --from coco-instances` or use distinct filenames.
+
 If the COCO root only exposes `person_keypoints_<split>.json`,
 `yolozu import dataset --from auto` detects that automatically. You can also
 select the lane explicitly:
@@ -209,6 +215,13 @@ YOLO export writes:
 - `data/coco_yolo_export/data.yaml`
 - `data/coco_yolo_export/images/<split>/*`
 - `data/coco_yolo_export/labels/<split>/*.txt`
+
+The YAML omits `path` so image paths resolve relative to the YAML directory.
+A copied export remains usable when the complete directory is moved. Only the
+selected split is exported; the other train/val key is `null`, not a fabricated
+second split. Symlink exports still need their original source assets.
+YOLO/COCO/KITTI export rejects colliding flat image names before replacing an
+existing output, even with `--force`; YOLO/KITTI also require unique label stems.
 
 COCO export writes:
 - `data/coco_export/images/<split>/*`

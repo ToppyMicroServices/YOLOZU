@@ -49,6 +49,11 @@ yolozu eval-coco \
 前処理、export 設定を揃えます。`--dry-run` を付けると入力変換の確認だけを行い、
 COCOeval は実行しません。その場合の `null` metrics は精度の測定値ではありません。
 
+[dataset 変換](docs/dataset_processing_matrix.md)は、平坦な出力形式で画像名が
+衝突する場合に書込み前に停止します。コピーした YOLO export は移動後も使えます。
+[score calibration](docs/score_calibration.md)は予測の geometry を保持し、
+推論履歴を作り足さずに補正の provenance を記録します。
+
 ## モデルや dataset なしで試す
 
 有効化した仮想環境で、標準 install だけで CPU デモを実行できます。

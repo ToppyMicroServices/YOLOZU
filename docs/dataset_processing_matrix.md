@@ -26,6 +26,22 @@ training intake. A Stable parent command does not make every row Stable.
   selected adapter. Referenced source images are not silently duplicated.
 - `export-dataset` creates a target-layout tree. `--image-mode copy`
   materializes image bytes; `--image-mode symlink` keeps links.
+- COCO-to-YOLO migration and YOLO/COCO/KITTI exports use flat image directories.
+  They reject colliding image basenames before writing, including case and
+  Unicode-normalization variants. YOLO/KITTI output and COCO-to-YOLO migration
+  also require unique label stems, so `frame.jpg` and `frame.png` cannot share
+  one label split. A collision rejection leaves an existing output unchanged,
+  even with `--force`. Use distinct names or a read-only
+  `import dataset --from coco-instances` wrapper to retain repeated source
+  filenames in separate directories.
+- COCO migration checks an existing `dataset.json` before writing labels or
+  images. `--force` explicitly permits rewriting the wrapper and labels.
+- YOLO export writes one selected split in `data.yaml` and leaves the unexported
+  `train` or `val` key null; it does not create a second split. It omits `path`
+  so YOLOZU and Ultralytics resolve images from the YAML's parent directory.
+  Move the complete copied export directory to preserve those references.
+  Symlink exports still depend on their original assets. For training and
+  validation, export and configure genuinely separate splits.
 - `make_subset_dataset.py` creates an ownership-marked subset. By default it
   links selected assets; `--copy` materializes them. Referenced mask, depth, and
   CAD sidecars and `classes.json` keypoint metadata are retained. `subset.json`

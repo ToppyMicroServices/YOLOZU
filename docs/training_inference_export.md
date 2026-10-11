@@ -554,6 +554,8 @@ python3 -m yolozu train \
   --output reports/train_external_tao_bbox.json
 ```
 
+The public CLI forwards an explicit `--tao-task` to the TAO helper; its dry-run
+report and launcher template retain that task. A dry-run does not launch TAO.
 The standardized handoff bundle still lands under `work_dir/reports/` even
 though the TAO runtime itself remains external.
 
@@ -677,6 +679,18 @@ yolozu train configs/examples/train_contract.yaml --run-id exp01
 # Resume (from runs/exp01/checkpoints/last.pt)
 yolozu train configs/examples/train_contract.yaml --run-id exp01 --resume
 ```
+
+`--resume` selects the reference trainer's last run-contract checkpoint.
+`--resume-from /path/to/checkpoint_bundle.pt` selects an explicit checkpoint and
+is also forwarded to external training helpers. Missing reference checkpoints
+stop training. The `epochs` setting is the total target: use `--epochs 2` when
+continuing a completed one-epoch run for one additional epoch.
+
+Full-state bundles are for resume. For prediction inference, use the raw model
+state dict from `--checkpoint-out` or the `checkpoint.pt` produced by `--run-dir`,
+as in the copy-paste flow above. Keep the prediction loader's restricted
+deserialization policy; do not treat a resume bundle as a supported inference
+container.
 
 Contracted artifacts live under `runs/<run_id>/...`:
 - `checkpoints/{last,best}.pt`
@@ -960,6 +974,21 @@ Then validate and evaluate in this repo.
 
 - python3 tools/validate_predictions.py reports/predictions.json
 - python3 tools/eval_coco.py --dataset data/coco128 --predictions reports/predictions.json --bbox-format cxcywh_norm --max-images 50
+
+For an evaluation-pipeline self-check without model inference, use:
+
+```bash
+yolozu export --backend labels --dataset data/smoke --split val \
+  --output reports/label_oracle_predictions.json
+```
+
+The labels backend copies all ground-truth bboxes with score `1.0`, including
+empty images. Its metadata identifies ground-truth input and records that no
+inference ran. Metrics from this artifact are not model-accuracy evidence.
+TTA, TTT, and LoRA are not supported for this backend. Non-default model,
+checkpoint, runtime, and decoder settings are rejected rather than ignored.
+Use `export` with a labeled dataset; the image-folder `predict-images` route
+does not accept the labels backend.
 
 ## Scenario suite (local evaluation)
 

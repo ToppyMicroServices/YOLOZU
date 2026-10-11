@@ -126,6 +126,16 @@ yolozu calibrate \
 
 The same methods can be compared across `--task bbox|seg|pose`.
 
+The output preserves supplied exporter `meta` and adds `meta.posthoc_calibration`.
+If the input has no exporter metadata, calibration provenance is instead stored
+at the wrapper's top-level `posthoc_calibration`; no inference metadata is invented.
+Both forms remain valid predictions interface contract artifacts. Check the output
+before evaluation:
+
+```bash
+yolozu validate predictions reports/predictions_fracal.json --strict
+```
+
 ## Legacy helper
 
 This repo also keeps a lightweight temperature-scaling helper script for quick experiments.

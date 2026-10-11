@@ -49,6 +49,11 @@ and the evaluated image/detection counts. Compare models with the same dataset,
 class mapping, preprocessing, and export settings. Adding `--dry-run` checks
 input conversion without COCOeval; its `null` metrics are not measured accuracy.
 
+For reusable inputs, [dataset conversion](docs/dataset_processing_matrix.md)
+checks flat-output filename collisions before writing and keeps copied YOLO
+exports relocatable. [Score calibration](docs/score_calibration.md) preserves
+prediction geometry and writes provenance without inventing inference metadata.
+
 ## Try without a model or dataset
 
 In an activated virtual environment, the core install can run this CPU demo.

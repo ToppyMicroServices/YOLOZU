@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from yolozu.core.image_size import get_image_size
+from yolozu.datasets.coco_convert import _validate_flat_image_names
 from yolozu.datasets.dataset_contract import normalize_label_bbox
 
 __all__ = [
@@ -353,6 +354,7 @@ def export_coco_dataset(
     if not isinstance(records, list):
         raise ValueError("invalid dataset manifest (expected list under 'images')")
 
+    _validate_flat_image_names((str(record.get("image")) for record in records), label_stems=False)
     out_root = _prepare_output_root(out_dir, force=force)
     images_dir = out_root / "images" / split_effective
     ann_dir = out_root / "annotations"
@@ -469,6 +471,7 @@ def export_yolo_dataset(
     if not isinstance(records, list):
         raise ValueError("invalid dataset manifest (expected list under 'images')")
 
+    _validate_flat_image_names(str(record.get("image")) for record in records)
     out_root = _prepare_output_root(out_dir, force=force)
     images_dir = out_root / "images" / split_effective
     labels_dir = out_root / "labels" / split_effective
@@ -492,8 +495,10 @@ def export_yolo_dataset(
 
     split_alias = "train" if split_effective.lower().startswith("train") else "val"
     yaml_lines = [
-        f"path: {out_root}",
-        f"{split_alias}: images/{split_effective}",
+        # Without path, both YOLOZU and Ultralytics resolve from the YAML parent.
+        # Keep the unexported split explicit without inventing validation data.
+        f"train: {'images/' + split_effective if split_alias == 'train' else 'null'}",
+        f"val: {'images/' + split_effective if split_alias == 'val' else 'null'}",
         "names:",
     ]
     if class_names:
@@ -524,6 +529,7 @@ def export_kitti_dataset(
     if not isinstance(records, list):
         raise ValueError("invalid dataset manifest (expected list under 'images')")
 
+    _validate_flat_image_names(str(record.get("image")) for record in records)
     out_root = _prepare_output_root(out_dir, force=force)
     images_dir = out_root / "image_2"
     labels_dir = out_root / "label_2"
