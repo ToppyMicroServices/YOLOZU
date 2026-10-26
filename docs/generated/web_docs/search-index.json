@@ -329,6 +329,13 @@
     "title": "eval_keypoints"
   },
   {
+    "href": "commands.html#tool-eval-part-inspection",
+    "kind": "command",
+    "search_text": "eval_part_inspection Compare fixed predictions with part-level acceptance rules, paired errors and abstentions; no inference or production qualification. experimental tools/eval_part_inspection.py --help --predictions --mapping --rules --protocol --output python3 tools/eval_part_inspection.py --help python3 tools/eval_part_inspection.py --predictions docs/examples/part_inspection/predictions.json --mapping docs/examples/part_inspection/mapping.json --rules docs/examples/part_inspection/rules.json --protocol docs/examples/part_inspection/protocol.json --output reports/part_inspection_example.json",
+    "summary": "Compare fixed predictions with part-level acceptance rules, paired errors and abstentions; no inference or production qualification.",
+    "title": "eval_part_inspection"
+  },
+  {
     "href": "commands.html#tool-eval-pose",
     "kind": "command",
     "search_text": "eval_pose Evaluate one pose-aware predictions artifact against dataset sidecars and report pose6d_error metrics, success rates, and optional CAD-point metrics. experimental tools/eval_pose.py --dataset --predictions --split --output --iou-threshold --min-score --success-rot-deg --success-trans --keep-per-image --max-images python3 tools/eval_pose.py --dataset /path/to/yolo_pose_dataset --predictions reports/predictions_pose.json --output reports/pose_eval.json python3 tools/eval_pose.py --dataset /path/to/yolo_pose_dataset --predictions reports/predictions_pose.json --iou-threshold 0.5 --success-rot-deg 15 --success-trans 0.1 --output reports/pose_eval_thresholded.json",

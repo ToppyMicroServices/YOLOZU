@@ -221,6 +221,7 @@ Contact: develop@toppymicros.com
 | eval_depth | experimental | tools/eval_depth.py | Evaluate one predicted depth map against one ground-truth map and report depth_error metrics. |
 | eval_instance_segmentation | stable | tools/eval_instance_segmentation.py | Evaluate instance segmentation predictions (mask mAP) from binary PNG masks with optional HTML/overlays. |
 | eval_keypoints | stable | tools/eval_keypoints.py | Evaluate keypoint predictions using PCK (bbox-normalized distance) with optional COCO OKS mAP, HTML, and overlays. |
+| eval_part_inspection | experimental | tools/eval_part_inspection.py | Compare fixed predictions with part-level acceptance rules, paired errors and abstentions; no inference or production qualification. |
 | eval_pose | experimental | tools/eval_pose.py | Evaluate one pose-aware predictions artifact against dataset sidecars and report pose6d_error metrics, success rates, and optional CAD-point metrics. |
 | eval_segmentation | stable | tools/eval_segmentation.py | Evaluate semantic segmentation predictions (mIoU / per-class IoU) with ignore_index support and optional HTML/overlays. |
 | eval_suite | stable | tools/eval_suite.py | Evaluate prediction JSONs and preserve declared exporter settings in a single suite report. |

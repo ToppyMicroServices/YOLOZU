@@ -1,8 +1,10 @@
 # Part-level multi-view inspection evaluation
 
-Reviewed: 2026-10-26. Status: **proposal; not implemented in YOLOZU**.
-Research intake: `YOLOZU-9x3e`. Implementation follow-up: `YOLOZU-yz67`.
+Reviewed: 2026-10-26. Status: **Experimental offline implementation**.
+Research intake: `YOLOZU-9x3e`. Implementation: `YOLOZU-yz67`.
 Beads remains the source of truth for task status.
+See [the executable workflow and input interface contract](../part_inspection.md).
+Verification uses synthetic fixtures, not the paper's industrial dataset.
 
 ## Evidence motivating the proposal
 
@@ -39,12 +41,12 @@ acceptance limit. No YOLOZU reproduction or production qualification is claimed;
 access and permissions for the original data and weights are not established
 by this review.
 
-## Proposed YOLOZU scope
+## YOLOZU scope
 
-Add an opt-in, offline comparison over **existing predictions**, with physical
+The implementation is an opt-in, offline comparison over **existing predictions**, with physical
 parts as the evaluation unit. Keep the Stable predictions interface contract
-and image-level evaluators unchanged. The proposed names below are design
-fields, not shipped schemas, CLI options or public APIs.
+and image-level evaluators unchanged. The linked usage guide defines the
+implemented fields and rule semantics; the rationale below records the design.
 
 Inputs should bind each image to a `part_id`, `view_id` and `region_id`, with
 the expected view set and independently obtained part-level OK/NOK labels.
@@ -70,7 +72,7 @@ Rule ordering and overlap resolution must be explicit, deterministic and traced.
 Do not copy the paper's pixel limits into a universal preset. Do not sum repeated
 views as independent physical-defect counts. A cross-view physical-defect count
 would need a separately evaluated correspondence method and is outside this
-proposal. Independent rule-group ablations must each start from the same raw
+implementation. Independent rule-group ablations must each start from the same raw
 predictions; label cumulative experiments separately.
 
 Missing/duplicate views, inconsistent mappings, unsupported rules and missing
@@ -114,7 +116,7 @@ release products.
 
 ## Implementation acceptance checks
 
-`YOLOZU-yz67` should cover these checks before being closed:
+The regression suite for `YOLOZU-yz67` covers:
 
 - Small deterministic CPU fixtures exercise every decision transition, including
   a filter that reduces false rejects but introduces a missed NOK part.
@@ -127,8 +129,7 @@ release products.
 - Synthetic tests establish wiring and accounting only. Any industrial benefit
   claim needs a separate frozen evaluation with authorized data.
 
-If implementation adds a CLI, it must support `-h/--help` and update both tool
-manifests and related docs in the same PR. Until then, do not document an
-executable command for this proposal. Use the existing
+The CLI supports `-h/--help`; both tool manifests and related docs describe it.
+Use the existing
 [evaluation protocol template](../evaluation_protocol_template.md) to record
 the fixed inputs and evidence boundaries.

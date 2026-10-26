@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "ruleset_id": "synthetic-size-filter",
+  "version": "1",
+  "precedence": "first_match",
+  "regions": {
+    "seat": {"adapter": "detections", "defect_class_ids": [0], "bad_view_threshold": 1}
+  },
+  "rules": [
+    {
+      "rule_id": "scratch-width",
+      "region_id": "seat",
+      "class_id": 0,
+      "priority": 0,
+      "min_count": 1,
+      "min_width": 10,
+      "unit": "px",
+      "source": "Synthetic illustration only; this threshold is not a product acceptance specification."
+    }
+  ],
+  "calibrations": {}
+}

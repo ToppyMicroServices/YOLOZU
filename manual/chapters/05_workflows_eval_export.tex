@@ -113,6 +113,15 @@ python3 tools/eval_suite.py --dataset /path/to/yolo-dataset --predictions-glob '
 \end{lstlisting}
 The suite helper requires a source checkout.
 
+\paragraph{Experimental part-level inspection.}
+\path{tools/eval_part_inspection.py} compares fixed predictions before and after
+region, dimension and per-frame count rules. It groups expected views by physical
+part and reports false rejects, missed NOK parts and abstentions with separate
+denominators. Missing views never silently produce OK. Use \cmd{--help} and
+\path{docs/part_inspection.md} for the four JSON inputs and a runnable synthetic
+example. The report does not replace image-level evaluation or authorize model
+activation or product release; its validation evidence is synthetic only.
+
 \section{Workflow B: Run inference and export predictions}
 Choose this path when you want \yolozu{} to be the boundary that turns backend-specific execution into a stable predictions artifact.
 

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "label_source": "Synthetic part labels, not model-derived or industrial ground truth",
+  "parts": [
+    {"part_id": "ok-small", "label": "OK", "split": "test", "expected_views": [{"view_id": "a", "region_id": "seat"}, {"view_id": "b", "region_id": "seat"}]},
+    {"part_id": "nok-large", "label": "NOK", "split": "test", "expected_views": [{"view_id": "a", "region_id": "seat"}, {"view_id": "b", "region_id": "seat"}]},
+    {"part_id": "nok-small", "label": "NOK", "split": "test", "expected_views": [{"view_id": "a", "region_id": "seat"}, {"view_id": "b", "region_id": "seat"}]}
+  ],
+  "views": [
+    {"image": "ok-small-a.png", "part_id": "ok-small", "view_id": "a", "region_id": "seat", "width_px": 100, "height_px": 100},
+    {"image": "ok-small-b.png", "part_id": "ok-small", "view_id": "b", "region_id": "seat", "width_px": 100, "height_px": 100},
+    {"image": "nok-large-a.png", "part_id": "nok-large", "view_id": "a", "region_id": "seat", "width_px": 100, "height_px": 100},
+    {"image": "nok-large-b.png", "part_id": "nok-large", "view_id": "b", "region_id": "seat", "width_px": 100, "height_px": 100},
+    {"image": "nok-small-a.png", "part_id": "nok-small", "view_id": "a", "region_id": "seat", "width_px": 100, "height_px": 100},
+    {"image": "nok-small-b.png", "part_id": "nok-small", "view_id": "b", "region_id": "seat", "width_px": 100, "height_px": 100}
+  ]
+}

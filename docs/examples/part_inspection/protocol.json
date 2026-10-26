@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "protocol_id": "synthetic-inspection-example-v1",
+  "split": "test",
+  "evidence_kind": "synthetic",
+  "sampling": "independent_parts",
+  "models": {
+    "seat": {
+      "model_id": "synthetic-no-model",
+      "model_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "inference_settings": {"origin": "handwritten synthetic predictions; no inference"}
+    }
+  },
+  "class_map": {"0": "scratch"},
+  "score_threshold": 0.5
+}
