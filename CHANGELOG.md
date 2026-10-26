@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.12.0] - 2026-10-26
+
+### Added
+- Add an Experimental offline inspection CLI and Python API that group fixed
+  predictions by part and view, apply explicit acceptance rules, and compare
+  decisions with an any-defect baseline.
+- Report paired errors, abstentions, coverage, and input hashes. Include
+  synthetic examples that show both reduced false rejects and introduced misses;
+  these examples do not establish industrial efficacy or activate a CNN model.
+
+### Changed
+- Improve bilingual first-evaluation guidance and generated web documentation,
+  including search and mobile layout.
+
+### Fixed
+- Repair dataset and prediction handoffs in the workflow runtime.
+- Check shared CLI backend choices without rejecting wrapper-only options.
+
 ## [4.11.0] - 2026-09-28
 
 ### Added
