@@ -38,7 +38,7 @@
     {
       "description": "Command inputs, examples, side effects, dependencies, and maturity.",
       "id": "cli_manifest",
-      "source_sha256": "8e77991f17288078e7032e5ea46115adc6353fefae9741ad1a3c290d1012d59c",
+      "source_sha256": "4bcc6ba6d590a270c8de949d3816ccf17222222849e2bf8c4211dc70567800cd",
       "title": "CLI tool manifest",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/tools/manifest.json"
     },

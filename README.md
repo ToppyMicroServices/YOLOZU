@@ -465,6 +465,7 @@ Framework-native evaluation is convenient inside one stack, but it is harder to 
 
 ## Secondary And Research Lanes
 
+- Experimental part-level inspection: [compare fixed predictions before and after acceptance rules](docs/part_inspection.md), including false rejects, missed NOK parts and abstentions. Offline source-checkout tool; synthetic validation only.
 - Training, export, benchmark, SynthGen, and research workflows feed or extend the evaluation boundary.
 - External training bridge: YOLOX first, optional Ultralytics and HF DETR bridges second
 - SynthGen handoff: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md)

@@ -10,6 +10,7 @@ Source of truth:
 
 ## Workflow maturity at a glance
 
+- Experimental part-level inspection: `python3 tools/eval_part_inspection.py --help`; [fixed-prediction comparison and input formats](part_inspection.md). No inference, activation or production qualification.
 - Stable: prediction validation/evaluation and the predictions interface contract
 - Experimental: backend parity, benchmark orchestration, SynthGen handoff, macOS/MPS qualification paths, TTA
 - Research: continual learning, TTT, Hessian refinement

@@ -1,4 +1,5 @@
 import subprocess
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -41,9 +42,12 @@ class TestCLISurfaceReadiness(unittest.TestCase):
             for token in critical_commands:
                 self.assertIn(token, proc.stdout, f"missing {token} in {' '.join(cmd)}")
 
-    def test_predict_images_advanced_backend_surface_matches_wrapper(self):
+    def test_predict_images_critical_backend_surface_matches_wrapper(self):
+        required_backends = {
+            "dummy", "torch", "onnxrt", "trt", "executorch", "yolox",
+            "opencv-dnn", "opencv-dnn-rtdetr", "opencv-dnn-yolo",
+        }
         expected_tokens = [
-            "--backend {dummy,torch,onnxrt,trt,executorch,yolox,opencv-dnn,opencv-dnn-rtdetr,opencv-dnn-yolo}",
             "--config",
             "--checkpoint",
             "--ttt",
@@ -59,6 +63,13 @@ class TestCLISurfaceReadiness(unittest.TestCase):
             proc = self._run(cmd)
             if proc.returncode != 0:
                 self.fail(f"{' '.join(cmd)} failed:\n{proc.stdout}\n{proc.stderr}")
+            # The legacy wrapper also exposes the labels fixture backend.
+            # Compare required choices without depending on help line wrapping
+            # or rejecting additional, entrypoint-specific choices.
+            choices = re.search(r"--backend\s+\{([^}]+)\}", proc.stdout)
+            self.assertIsNotNone(choices, f"missing backend choices in {' '.join(cmd)}")
+            actual = set(re.sub(r"\s+", "", choices.group(1)).split(","))
+            self.assertTrue(required_backends <= actual, f"missing backends: {required_backends - actual}")
             for token in expected_tokens:
                 self.assertIn(token, proc.stdout, f"missing {token} in {' '.join(cmd)}")
 

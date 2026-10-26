@@ -5426,6 +5426,100 @@
     },
     {
       "docs": [
+        "docs/part_inspection.md",
+        "docs/roadmaps/part_level_inspection.md",
+        "docs/tools_index.md",
+        "README.md",
+        "Readme_jp.md",
+        "manual/chapters/05_workflows_eval_export.tex"
+      ],
+      "effects": {
+        "fixed_writes": [],
+        "writes": [
+          {
+            "description": "Atomically creates a new local comparison report; creates parent directories, removes its temporary file, and refuses any existing output. --help writes no files.",
+            "flag": "--output",
+            "kind": "file",
+            "scope": "path"
+          }
+        ]
+      },
+      "entrypoint": "tools/eval_part_inspection.py",
+      "examples": [
+        {
+          "command": "python3 tools/eval_part_inspection.py --help",
+          "description": "Inspect the offline input and output flags."
+        },
+        {
+          "command": "python3 tools/eval_part_inspection.py --predictions docs/examples/part_inspection/predictions.json --mapping docs/examples/part_inspection/mapping.json --rules docs/examples/part_inspection/rules.json --protocol docs/examples/part_inspection/protocol.json --output reports/part_inspection_example.json",
+          "description": "Run synthetic evidence that repairs a false reject but introduces a missed NOK part. Use a new output path."
+        }
+      ],
+      "id": "eval_part_inspection",
+      "inputs": [
+        {
+          "flag": "--help",
+          "kind": "string",
+          "name": "help",
+          "required": false
+        },
+        {
+          "flag": "--predictions",
+          "kind": "file",
+          "name": "predictions",
+          "required": true
+        },
+        {
+          "flag": "--mapping",
+          "kind": "file",
+          "name": "mapping",
+          "required": true
+        },
+        {
+          "flag": "--rules",
+          "kind": "file",
+          "name": "rules",
+          "required": true
+        },
+        {
+          "flag": "--protocol",
+          "kind": "file",
+          "name": "protocol",
+          "required": true
+        },
+        {
+          "flag": "--output",
+          "kind": "file",
+          "name": "output",
+          "required": true
+        }
+      ],
+      "maturity": "experimental",
+      "outputs": [
+        {
+          "default": null,
+          "description": "Experimental part-level counts, rates, paired transitions, traces and input hashes; comparison only.",
+          "kind": "file",
+          "name": "report_json"
+        }
+      ],
+      "platform": {
+        "cpu_ok": true,
+        "gpu_required": false,
+        "linux_ok": true,
+        "macos_ok": true
+      },
+      "runner": "python3",
+      "summary": "Compare fixed predictions with part-level acceptance rules, paired errors and abstentions; no inference or production qualification.",
+      "tags": [
+        "evaluation",
+        "inspection",
+        "multi_view",
+        "offline"
+      ]
+    },
+    {
+      "docs": [
         "docs/tools_index.md",
         "manual/chapters/16_depth_6dof_symmetry.tex",
         "docs/continual_learning.md",

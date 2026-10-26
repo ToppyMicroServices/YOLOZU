@@ -46,7 +46,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">152 manifest entries with declared maturity, inputs,
+  <p class="lead">153 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -653,6 +653,21 @@ python3 tools/eval_depth.py --pred-depth /path/to/pred_depth.npy --gt-depth /pat
   <pre><code>python3 tools/eval_keypoints.py --dataset data/coco128 --predictions reports/predictions.json --output reports/keypoints_eval.json
 python3 tools/eval_keypoints.py --dataset data/coco128 --predictions reports/predictions.json --oks --output reports/keypoints_eval_oks.json</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/eval_keypoints.py" target="_blank" rel="noopener noreferrer">Implementation</a> · No dedicated prose page.</p>
+</details>
+
+<details class="card" id="tool-eval-part-inspection" data-tool-id="eval_part_inspection"
+  data-search-card data-search-text="eval_part_inspection Compare fixed predictions with part-level acceptance rules, paired errors and abstentions; no inference or production qualification. experimental tools/eval_part_inspection.py python3 tools/eval_part_inspection.py --help python3 tools/eval_part_inspection.py --predictions docs/examples/part_inspection/predictions.json --mapping docs/examples/part_inspection/mapping.json --rules docs/examples/part_inspection/rules.json --protocol docs/examples/part_inspection/protocol.json --output reports/part_inspection_example.json">
+  <summary><code>eval_part_inspection</code> — Compare fixed predictions with part-level acceptance rules, paired errors and abstentions; no inference or production qualification.</summary>
+  <div class="meta">
+    <span class="badge badge-experimental">experimental</span>
+    <span><code>tools/eval_part_inspection.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--help</code> — string</li><li><code>--predictions</code> — required, file</li><li><code>--mapping</code> — required, file</li><li><code>--rules</code> — required, file</li><li><code>--protocol</code> — required, file</li><li><code>--output</code> — required, file</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/eval_part_inspection.py --help
+python3 tools/eval_part_inspection.py --predictions docs/examples/part_inspection/predictions.json --mapping docs/examples/part_inspection/mapping.json --rules docs/examples/part_inspection/rules.json --protocol docs/examples/part_inspection/protocol.json --output reports/part_inspection_example.json</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/eval_part_inspection.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/part_inspection.md" target="_blank" rel="noopener noreferrer">part_inspection.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/roadmaps/part_level_inspection.md" target="_blank" rel="noopener noreferrer">part_level_inspection.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/tools_index.md" target="_blank" rel="noopener noreferrer">tools_index.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/Readme_jp.md" target="_blank" rel="noopener noreferrer">Readme_jp.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/05_workflows_eval_export.tex" target="_blank" rel="noopener noreferrer">05_workflows_eval_export.tex</a></p>
 </details>
 
 <details class="card" id="tool-eval-pose" data-tool-id="eval_pose"

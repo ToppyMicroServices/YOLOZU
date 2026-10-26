@@ -454,6 +454,7 @@ managed training platform、hosted inference service、保証付き support / SL
 
 ## Secondary / Research lanes
 
+- Experimental な[部品単位の外観検査比較](docs/part_inspection.md): 同一の予測結果で合否ルールの適用前後を比較し、誤排除・見逃し・判定保留を報告します。source checkout 用のオフラインツールで、検証は合成データによるものです。
 - training、export、benchmark、SynthGen、research workflow は、この evaluation boundary に接続する secondary lane です。
 - External training bridge: YOLOX first、optional Ultralytics / HF DETR bridges second
 - SynthGen handoff: [`docs/synthgen_repo_integration.md`](docs/synthgen_repo_integration.md)

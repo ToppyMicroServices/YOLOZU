@@ -387,6 +387,7 @@ jobs:
             tests/test_check_map_targets_contract.py \
             tests/test_yolo26_protocol.py \
             tests/test_predictions.py \
+            tests/test_part_inspection.py \
             tests/test_manifest_docs_references.py \
             tests/test_docs_examples_drift.py \
             tests/test_generated_cli_reference.py \
