@@ -399,7 +399,7 @@
     "tools/validate_synthgen_contract.py": "14868ae3ea8f36265beff1a513e1c8a9c36a0575010ba4c59937b61c7f5e013c",
     "tools/validate_tool_manifest.py": "4a0a1eea42b4d91d7a85477f7117cf568932fde401924d839ad11394af8ff434",
     "tools/yolo26_quality_gate.sh": "c359925202330940e9600db41cd78c50926be814a28835e16570419f952b19e5",
-    "yolozu/__init__.py": "8a86f2073dbb08ef78996a13ad7441012ebf56a171c5739456bac3011a9901d0",
+    "yolozu/__init__.py": "5405b319198d5edb08751c71dd5291b41a0e18cb2a5a0ece6a7fe5846e1e1938",
     "yolozu/cli.py": "ac34bb541c829d55e999a44e38883dd7a9177531845e6e2f68a14e8428870718",
     "yolozu/data/manifest/README.md": "da9cec2ea3b4bc0aa693d9d5734d0c50ea66f1511af50d0f8ebd7419e5b413b4",
     "yolozu/data/manifest/benchmark_support.json": "a516a17a90ed291bf61bf670570fd244c4f6b047f22c8e245838edf6840b8c7d",

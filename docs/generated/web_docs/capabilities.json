@@ -1,5 +1,5 @@
 {
-  "docs_version": "4.11.0",
+  "docs_version": "4.12.0",
   "entrypoints": {
     "agent_guide": "https://www.toppymicros.com/yolozu/docs/agents.md",
     "llms": "https://www.toppymicros.com/yolozu/docs/llms.txt",
