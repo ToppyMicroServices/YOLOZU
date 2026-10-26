@@ -12,6 +12,7 @@ This `docs/` folder keeps longer-form planning notes for context:
 - `yolozu/data/manifest/adaptive_vision_roadmap.json` — dated, packaged public projection of the adaptive local-vision scope and guardrails
 - `reports/adaptive_vision_roadmap.md` — human-readable report generated from that projection
 - `docs/oss_support_scope.md` — mandatory OSS boundary and explicitly optional or not-planned evidence work
+- [`docs/roadmaps/part_level_inspection.md`](roadmaps/part_level_inspection.md) — proposed fixed-prediction, part-level multi-view inspection comparison; not implemented (`YOLOZU-yz67`)
 - `docs/roadmaps/pytorch_trt.md` — PyTorch/ONNX/TensorRT implementation notes (historical)
 - `docs/roadmaps/yolo26_competition.md` — YOLO26 toolchain goals (historical; see bd epic)
 - `docs/roadmaps/symmetry_commonsense_realtime.md` — Symmetry/commonsense constraint plan (historical)
