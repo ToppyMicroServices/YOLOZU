@@ -7,6 +7,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+from contextlib import closing
 from pathlib import Path
 from unittest import TestCase, main, mock
 
@@ -95,37 +96,33 @@ class ManagedOutputTransactionTests(TestCase):
 
     def test_staged_parent_failure_closes_new_descriptor(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            transaction = ManagedOutputTransaction(
+            with ManagedOutputTransaction(
                 root=Path(temporary), destination="result",
                 declared_paths=("nested/result.json",), limits=LIMITS,
-            )
-            opened = []
-            original = managed_output._open_directory_at
+            ) as transaction:
+                opened = []
+                original = managed_output._open_directory_at
 
-            def record(parent, name):
-                descriptor = original(parent, name)
-                opened.append(descriptor)
-                return descriptor
+                def record(parent, name):
+                    descriptor = original(parent, name)
+                    opened.append(descriptor)
+                    return descriptor
 
-            def fail(step):
-                if step == "after_create_directory:nested":
-                    raise _InjectedFailure("directory hook failed")
+                def fail(step):
+                    if step == "after_create_directory:nested":
+                        raise _InjectedFailure("directory hook failed")
 
-            try:
-                transaction.fault_hook = fail
-                with mock.patch.object(managed_output, "_open_directory_at", side_effect=record):
-                    with self.assertRaises(_InjectedFailure):
-                        transaction.write_bytes("nested/result.json", b"{}")
-                self.assertEqual(len(opened), 1)
-                with self.assertRaises(OSError):
-                    os.fstat(opened[0])
-            finally:
-                managed_output._close_all(opened)
-                transaction.fault_hook = None
                 try:
-                    transaction.abort()
+                    transaction.fault_hook = fail
+                    with mock.patch.object(managed_output, "_open_directory_at", side_effect=record):
+                        with self.assertRaises(_InjectedFailure):
+                            transaction.write_bytes("nested/result.json", b"{}")
+                    self.assertEqual(len(opened), 1)
+                    with self.assertRaises(OSError):
+                        os.fstat(opened[0])
                 finally:
-                    transaction.close()
+                    managed_output._close_all(opened)
+                    transaction.fault_hook = None
 
     def test_parent_pin_interruption_closes_descriptor(self) -> None:
         descriptors = []
@@ -145,11 +142,10 @@ class ManagedOutputTransactionTests(TestCase):
     def test_replaced_staged_file_rejects_abort_and_closes_descriptors(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            transaction = ManagedOutputTransaction(
+            with closing(ManagedOutputTransaction(
                 root=root, destination="result", declared_paths=("predictions.json",), limits=LIMITS,
-            )
-            descriptors = [transaction._guard.root_fd, transaction._stage_fd]
-            try:
+            )) as transaction:
+                descriptors = [transaction._guard.root_fd, transaction._stage_fd]
                 with self.assertRaises(ManagedOutputError):
                     with transaction:
                         transaction.write_bytes("predictions.json", b"owned")
@@ -160,17 +156,14 @@ class ManagedOutputTransactionTests(TestCase):
                 for descriptor in descriptors:
                     with self.assertRaises(OSError):
                         os.fstat(descriptor)
-            finally:
-                transaction.close()
 
     def test_abort_rejection_still_closes_owned_descriptors(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            transaction = ManagedOutputTransaction(
+            with closing(ManagedOutputTransaction(
                 root=Path(temporary), destination="result",
                 declared_paths=("predictions.json",), limits=LIMITS,
-            )
-            descriptors = [transaction._guard.root_fd, transaction._stage_fd]
-            try:
+            )) as transaction:
+                descriptors = [transaction._guard.root_fd, transaction._stage_fd]
                 with mock.patch.object(transaction, "abort", side_effect=_InjectedFailure("abort rejected")):
                     with self.assertRaisesRegex(_InjectedFailure, "abort rejected"):
                         with transaction:
@@ -178,8 +171,6 @@ class ManagedOutputTransactionTests(TestCase):
                 for descriptor in descriptors:
                     with self.assertRaises(OSError):
                         os.fstat(descriptor)
-            finally:
-                transaction.close()
 
     def test_read_only_destination_preflight_requires_exact_managed_tree(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
