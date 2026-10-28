@@ -18,7 +18,7 @@ with generated images and labels, then try a verifiable release gate.
 
 ### Install and evaluate your predictions
 
-Requires Python 3.10 or newer. On macOS/Linux, start in a virtual environment
+Requires Python 3.11 or newer. On macOS/Linux, start in a virtual environment
 ([Windows and other setup options](docs/install.md)):
 
 ```bash
@@ -150,7 +150,7 @@ flowchart LR
 ```
 
 [![PyPI](https://img.shields.io/pypi/v/yolozu?logo=pypi&logoColor=white)](https://pypi.org/project/yolozu/)
-[![Python >=3.10](https://img.shields.io/badge/python-3.10%2B-3776AB)](https://pypi.org/project/yolozu/)
+[![Python >=3.11](https://img.shields.io/badge/python-3.11%2B-3776AB)](https://pypi.org/project/yolozu/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![CI](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
 

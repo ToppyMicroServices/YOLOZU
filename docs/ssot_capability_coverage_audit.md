@@ -77,8 +77,8 @@ instead of promoting it by inference.
   Linux/macOS jobs for Python 3.10 through 3.14 in
   [workflow run 29421807474](https://github.com/ToppyMicroServices/YOLOZU/actions/runs/29421807474).
   This records only the tested matrix and does not establish evidence for other
-  Python versions or platforms; package metadata separately declares
-  `Python >=3.10`.
+  Python versions or platforms. That release declared `Python >=3.10`;
+  the current candidate requires Python 3.11+ for Pillow 13 security fixes.
 - Targeted manifest, training, benchmark, predictions, evaluation, research, SynthGen, and MPS tests pass; the only skip is the hardware-dependent MPS probe when MPS is unavailable.
 
 ## Confirmed gaps and disposition

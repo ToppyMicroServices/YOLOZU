@@ -16,7 +16,7 @@ release gate. To introduce YOLOZU to others, use the
 
 ## Try without a model or dataset
 
-On macOS/Linux, create a Python 3.10+ virtual environment and run the explicit
+On macOS/Linux, create a Python 3.11+ virtual environment and run the explicit
 synthetic CPU demo. See [install.md](install.md) for Windows setup.
 
 ```bash

@@ -7,6 +7,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+from contextlib import closing
 from pathlib import Path
 from unittest import TestCase, main, mock
 
@@ -16,7 +17,10 @@ from yolozu.adaptive.managed_output import (
     ManagedOutputTransaction,
     recover_managed_output,
     validate_managed_output_destination,
+    _ParentGuard,
+    _open_relative_parent,
 )
+from yolozu.adaptive import managed_output
 
 
 LIMITS = ManagedOutputLimits(
@@ -44,6 +48,130 @@ class _InjectedFailure(RuntimeError):
 
 
 class ManagedOutputTransactionTests(TestCase):
+    def test_constructor_interrupt_closes_stage_and_parent(self) -> None:
+        for interruption in (KeyboardInterrupt, SystemExit):
+            with self.subTest(interruption=interruption), tempfile.TemporaryDirectory() as temporary:
+                def interrupt(step):
+                    if step == "after_create_stage":
+                        raise interruption("injected")
+
+                transaction = ManagedOutputTransaction.__new__(ManagedOutputTransaction)
+                try:
+                    with self.assertRaises(interruption):
+                        transaction.__init__(
+                            root=Path(temporary), destination="result",
+                            declared_paths=("result.json",), limits=LIMITS, fault_hook=interrupt,
+                        )
+                    self.assertIsNone(transaction._stage_fd)
+                    with self.assertRaises(OSError):
+                        os.fstat(transaction._guard.root_fd)
+                    self.assertEqual(list(Path(temporary).iterdir()), [])
+                finally:
+                    transaction.close()
+
+    def test_failed_relative_walk_closes_earlier_descriptors(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "first").mkdir()
+            base = os.open(root, os.O_RDONLY)
+            opened = []
+            original = managed_output._open_directory_at
+
+            def record(parent, name):
+                descriptor = original(parent, name)
+                opened.append(descriptor)
+                return descriptor
+
+            try:
+                with mock.patch.object(managed_output, "_open_directory_at", side_effect=record):
+                    with self.assertRaises(ManagedOutputError):
+                        _open_relative_parent(base, ("first", "missing", "file"))
+                self.assertEqual(len(opened), 1)
+                with self.assertRaises(OSError):
+                    os.fstat(opened[0])
+                os.fstat(base)
+            finally:
+                managed_output._close_all(opened)
+                os.close(base)
+
+    def test_staged_parent_failure_closes_new_descriptor(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            with ManagedOutputTransaction(
+                root=Path(temporary), destination="result",
+                declared_paths=("nested/result.json",), limits=LIMITS,
+            ) as transaction:
+                opened = []
+                original = managed_output._open_directory_at
+
+                def record(parent, name):
+                    descriptor = original(parent, name)
+                    opened.append(descriptor)
+                    return descriptor
+
+                def fail(step):
+                    if step == "after_create_directory:nested":
+                        raise _InjectedFailure("directory hook failed")
+
+                try:
+                    transaction.fault_hook = fail
+                    with mock.patch.object(managed_output, "_open_directory_at", side_effect=record):
+                        with self.assertRaises(_InjectedFailure):
+                            transaction.write_bytes("nested/result.json", b"{}")
+                    self.assertEqual(len(opened), 1)
+                    with self.assertRaises(OSError):
+                        os.fstat(opened[0])
+                finally:
+                    managed_output._close_all(opened)
+                    transaction.fault_hook = None
+
+    def test_parent_pin_interruption_closes_descriptor(self) -> None:
+        descriptors = []
+
+        def interrupt(descriptor):
+            descriptors.append(descriptor)
+            raise KeyboardInterrupt("injected")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            with mock.patch("yolozu.adaptive.managed_output.os.fstat", side_effect=interrupt):
+                with self.assertRaises(KeyboardInterrupt):
+                    _ParentGuard(Path(temporary), ())
+            self.assertEqual(len(descriptors), 1)
+            with self.assertRaises(OSError):
+                os.fstat(descriptors[0])
+
+    def test_replaced_staged_file_rejects_abort_and_closes_descriptors(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            with closing(ManagedOutputTransaction(
+                root=root, destination="result", declared_paths=("predictions.json",), limits=LIMITS,
+            )) as transaction:
+                descriptors = [transaction._guard.root_fd, transaction._stage_fd]
+                with self.assertRaises(ManagedOutputError):
+                    with transaction:
+                        transaction.write_bytes("predictions.json", b"owned")
+                        replacement = root / "replacement"
+                        replacement.write_bytes(b"caller data")
+                        replacement.replace(root / transaction._stage_name / "predictions.json")
+                self.assertEqual((root / transaction._stage_name / "predictions.json").read_bytes(), b"caller data")
+                for descriptor in descriptors:
+                    with self.assertRaises(OSError):
+                        os.fstat(descriptor)
+
+    def test_abort_rejection_still_closes_owned_descriptors(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            with closing(ManagedOutputTransaction(
+                root=Path(temporary), destination="result",
+                declared_paths=("predictions.json",), limits=LIMITS,
+            )) as transaction:
+                descriptors = [transaction._guard.root_fd, transaction._stage_fd]
+                with mock.patch.object(transaction, "abort", side_effect=_InjectedFailure("abort rejected")):
+                    with self.assertRaisesRegex(_InjectedFailure, "abort rejected"):
+                        with transaction:
+                            pass
+                for descriptor in descriptors:
+                    with self.assertRaises(OSError):
+                        os.fstat(descriptor)
+
     def test_read_only_destination_preflight_requires_exact_managed_tree(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

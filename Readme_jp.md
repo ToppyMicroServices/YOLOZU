@@ -18,7 +18,7 @@ Stable な機能は、stable predictions interface contract による既存の�
 
 ### インストールして既存の予測結果を評価する
 
-Python 3.10 以上が必要です。macOS/Linux では仮想環境から始めます。
+Python 3.11 以上が必要です。macOS/Linux では仮想環境から始めます。
 [Windows などのセットアップ手順](docs/install.md)も参照できます。
 
 ```bash
@@ -148,7 +148,7 @@ flowchart LR
 ```
 
 [![PyPI](https://img.shields.io/pypi/v/yolozu?logo=pypi&logoColor=white)](https://pypi.org/project/yolozu/)
-[![Python >=3.10](https://img.shields.io/badge/python-3.10%2B-3776AB)](https://pypi.org/project/yolozu/)
+[![Python >=3.11](https://img.shields.io/badge/python-3.11%2B-3776AB)](https://pypi.org/project/yolozu/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![CI](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
 

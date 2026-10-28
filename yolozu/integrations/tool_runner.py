@@ -875,6 +875,14 @@ def jobs_list() -> dict[str, Any]:
 
 
 def jobs_status(job_id: str) -> dict[str, Any]:
+    return _jobs_status(job_id, public=False)
+
+
+def jobs_status_public(job_id: str) -> dict[str, Any]:
+    return _jobs_status(job_id, public=True)
+
+
+def _jobs_status(job_id: str, *, public: bool) -> dict[str, Any]:
     status = _job_manager().status(job_id)
     if status is None:
         return {
@@ -885,6 +893,20 @@ def jobs_status(job_id: str) -> dict[str, Any]:
             "job_id": job_id,
             "meta": collect_artifact_metadata(),
         }
+    if public:
+        # Persisted jobs may originate from local callers with full diagnostics.
+        # Project a copy so public reads never alter those local diagnostics.
+        status = dict(status)
+        if status.get("error"):
+            status["error"] = "job failed"
+        result = status.get("result")
+        if status.get("status") == "failed" and result is not None:
+            status["result"] = {
+                "ok": False,
+                "summary": "job failed",
+                "error": "job failed",
+                "exit_code": result.get("exit_code", 1) if isinstance(result, dict) else 1,
+            }
     failed = status.get("status") == "failed"
     error = str(status.get("error") or "job failed") if failed else None
     summary = (
@@ -1128,6 +1150,15 @@ def _ttt_export_job(
             ),
         }
     except Exception as exc:
+        if public:
+            payload = fail_response(
+                job_name,
+                message="TTT job prerequisite check failed before queueing. Check the dataset, checkpoint and configuration.",
+                exit_code=2,
+            )
+            payload["stage"] = "preflight"
+            payload["queued"] = False
+            return payload
         payload = fail_response(
             job_name,
             message=(

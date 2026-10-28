@@ -18,7 +18,7 @@ from .tool_runner import (
     export_onnx_job_public as export_onnx_job,
     jobs_cancel,
     jobs_list,
-    jobs_status,
+    jobs_status_public as jobs_status,
     parity_check_public as parity_check,
     predict_images_public as predict_images,
     run_scenarios_public as run_scenarios,
