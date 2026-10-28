@@ -57,6 +57,14 @@ skipped. The workflow regression job always supplies the bundle.
 
 ## Tiers
 
+The scheduled algorithm scout and qualification freshness monitor use a separate
+CPython 3.12/Linux x86_64 set, `requirements-locks/requirements-scheduled.lock`.
+It pins all runtime/build dependencies and their PyPI wheel hashes before
+download. The local CLI wheel is then built without build isolation and installed
+without dependency resolution. Other locks passed to `install_with_hashes.py`
+pin top-level versions and hash the resolved downloads; they do not provide the
+same pre-recorded transitive dependency check.
+
 1. `core`
 - Install: `python3 tools/ci/install_with_hashes.py --requirements requirements-locks/requirements-runtime.lock --install-local-wheel`
 - Purpose: packaging and CLI/runtime smoke only.

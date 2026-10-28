@@ -36,12 +36,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {os: ubuntu-latest, python: "3.10", dependencies: latest}
           - {os: ubuntu-latest, python: "3.11", dependencies: latest}
           - {os: ubuntu-latest, python: "3.12", dependencies: latest}
           - {os: ubuntu-latest, python: "3.13", dependencies: latest}
           - {os: ubuntu-latest, python: "3.14", dependencies: latest}
-          - {os: ubuntu-latest, python: "3.10", dependencies: minimum}
+          - {os: ubuntu-latest, python: "3.11", dependencies: minimum}
           - {os: macos-14, python: "3.14", dependencies: latest}
           - {os: windows-latest, python: "3.12", dependencies: latest}
     defaults:
@@ -76,7 +75,7 @@ jobs:
           subprocess.run([str(interpreter), "-m", "pip", "install", "--upgrade", "pip"], check=True)
           requirements = [str(wheels[0]) + "[coco]"]
           if os.environ["DEPENDENCY_MODE"] == "minimum":
-              requirements += ["numpy==1.24.0", "PyYAML==6.0", "Pillow==12.2.0", "typing_extensions==4.8.0", "pycocotools==2.0.7"]
+              requirements += ["numpy==1.24.0", "PyYAML==6.0", "Pillow==13.0.0", "typing_extensions==4.8.0", "pycocotools==2.0.7"]
           subprocess.run([str(interpreter), "-m", "pip", "install", "--only-binary=:all:", "--upgrade", *requirements], check=True)
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"python={interpreter}\nwheel={wheels[0]}\n")

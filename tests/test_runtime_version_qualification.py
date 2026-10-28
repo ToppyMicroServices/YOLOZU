@@ -49,7 +49,7 @@ class TestRuntimeVersionQualification(unittest.TestCase):
         expected = {
             "torch": "torch>=2.10.0",
             "torchvision": "torchvision>=0.25.0",
-            "onnx": "onnx>=1.21.0",
+            "onnx": "onnx>=1.22.0",
             "onnxruntime": "onnxruntime>=1.17",
         }
         for package, requirement in expected.items():
@@ -77,17 +77,17 @@ class TestRuntimeVersionQualification(unittest.TestCase):
                 "torchvision",
                 "0.25.0",
             ),
-            ("requirements-locks/requirements-ci.lock", "onnx", "1.21.0"),
-            ("requirements-locks/requirements-trt-tools.lock", "onnx", "1.21.0"),
+            ("requirements-locks/requirements-ci.lock", "onnx", "1.22.0"),
+            ("requirements-locks/requirements-trt-tools.lock", "onnx", "1.22.0"),
             (
                 "requirements-locks/requirements-rtdetr-pose-extra.lock",
                 "onnx",
-                "1.21.0",
+                "1.22.0",
             ),
             (
                 "requirements-locks/requirements-rtdetr-pose-image-extra.lock",
                 "onnx",
-                "1.21.0",
+                "1.22.0",
             ),
             (
                 "requirements-locks/requirements-ci.lock",
@@ -137,7 +137,7 @@ class TestRuntimeVersionQualification(unittest.TestCase):
         workflow = (
             self.repo_root / ".github" / "workflows" / "ngc_test.yml"
         ).read_text(encoding="utf-8")
-        image = "nvcr.io/nvidia/tensorrt:24.08-py3"
+        image = "nvcr.io/nvidia/tensorrt:24.12-py3@sha256:611db29a3f616636065e96819ed1aea7ec0913bf14d97a80718e641cd685a021"
         self.assertIn(image, workflow)
         self.assertIn(f"`{image}`", self.versions)
         self.assertIn("configured", self.versions)

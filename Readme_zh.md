@@ -18,7 +18,7 @@ YOLOZU 是由 ToppyMicroServices OÜ 开发、免费提供的商业产品。仓�
 
 ### 安装并评估已有预测结果
 
-需要 Python 3.10 或更新版本。macOS/Linux 用户可先创建虚拟环境；
+需要 Python 3.11 或更新版本。macOS/Linux 用户可先创建虚拟环境；
 Windows 等环境见[安装说明](docs/install.md)。
 
 ```bash
@@ -61,7 +61,7 @@ yolozu eval-coco \
 [![Latest release](https://img.shields.io/github/v/release/ToppyMicroServices/YOLOZU?sort=semver)](https://github.com/ToppyMicroServices/YOLOZU/releases/latest)
 [![Zenodo (software DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744756.svg)](https://doi.org/10.5281/zenodo.18744756)
 [![Zenodo (manual DOI)](https://zenodo.org/badge/DOI/10.5281/zenodo.18744926.svg)](https://doi.org/10.5281/zenodo.18744926)
-[![Python >=3.10](https://img.shields.io/badge/python-3.10%2B-3776AB)](https://pypi.org/project/yolozu/)
+[![Python >=3.11](https://img.shields.io/badge/python-3.11%2B-3776AB)](https://pypi.org/project/yolozu/)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![CI (required)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ToppyMicroServices/YOLOZU/actions/workflows/build_and_test.yml)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12216/badge)](https://www.bestpractices.dev/projects/12216)

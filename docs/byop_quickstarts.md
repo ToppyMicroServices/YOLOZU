@@ -15,7 +15,7 @@ frameworks, checkpoints, or framework-specific licenses.
 ## Already have a predictions JSON file?
 
 You can use the installed CLI directly without a framework exporter or source
-checkout. In an activated Python 3.10+ environment, install COCO evaluation
+checkout. In an activated Python 3.11+ environment, install COCO evaluation
 support and replace the paths below with your files:
 
 ```bash

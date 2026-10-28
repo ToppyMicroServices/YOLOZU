@@ -46,7 +46,7 @@ The command above deliberately pins ONNX opset 17 for this recorded protocol.
 a universal TensorRT requirement: record the chosen opset in ONNX metadata and
 compare only artifacts built under the same protocol. The repository's
 self-hosted GPU workflow is configured with
-`nvcr.io/nvidia/tensorrt:24.08-py3`, but a current qualification claim still
+`nvcr.io/nvidia/tensorrt:24.12-py3@sha256:611db29a3f616636065e96819ed1aea7ec0913bf14d97a80718e641cd685a021`, but a current qualification claim still
 requires the run-specific container identity, `nvidia-smi`,
 `trtexec --version`, engine metadata, and parity report.
 

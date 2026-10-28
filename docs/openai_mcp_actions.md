@@ -161,6 +161,10 @@ An accepted request returns a `job_id`; poll `GET /jobs/{job_id}`. Missing or
 non-full checkpoints fail before queueing with `stage=preflight`. The resulting
 predictions and TTT report are local diagnostics, not efficacy evidence.
 
+Public Actions responses use fixed messages for preflight exceptions and failed
+job diagnostics. They do not return exception text or CLI stdout/stderr. Local
+tool-runner and stdio MCP calls retain detailed failures for diagnosis.
+
 `export_predictions_job` and `POST /jobs/export-predictions` copy every dataset
 ground-truth bbox into a predictions artifact through `export --backend labels`.
 This is an oracle self-check of validation and evaluation, not model inference.

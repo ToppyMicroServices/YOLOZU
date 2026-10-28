@@ -5,6 +5,11 @@ active adaptive-routing qualification evidence. It does not run qualification,
 extend a validity deadline, activate evidence, change lifecycle state, promote a
 bundle, or edit Beads.
 
+The scheduled workflow uses CPython 3.12 and the complete dependency set in
+`requirements-locks/requirements-scheduled.lock`. PyPI wheel hashes are checked
+before installation. The checked-out CLI is then built without build isolation
+and installed without resolving more dependencies.
+
 The repository workflow runs every Monday at 00:30 UTC (09:30 Asia/Tokyo),
 after the monitored-source scout. It has one non-cancelling concurrency group
 and a ten-minute job limit. A successful public run uploads one aggregate

@@ -3360,6 +3360,7 @@
       "docs": [
         "docs/adaptive_image_routing.md",
         "docs/qualification_freshness.md",
+        "docs/ci_dependency_tiers.md",
         "docs/schemas/qualification_freshness_report.schema.json",
         "manual/chapters/04_cli_reference.tex",
         "reports/adaptive_qualification_freshness_foundation_2026-08-29.md"
@@ -15272,6 +15273,7 @@
         "deploy/runpod/README.md",
         "docs/release_reliability_checklist.md",
         "docs/manual_doi_release.md",
+        "docs/versions.md",
         "docs/tools_index.md",
         "manual/chapters/12_tool_registry.tex"
       ],
@@ -18966,6 +18968,7 @@
         "docs/adaptive_image_routing.md",
         "docs/algorithm_intake/README.md",
         "docs/schemas/algorithm_scout_report.schema.json",
+        "docs/ci_dependency_tiers.md",
         "docs/schemas/algorithm_scout_sources.schema.json",
         "manual/chapters/04_cli_reference.tex",
         "reports/adaptive_algorithm_scout_foundation_2026-08-26.md"

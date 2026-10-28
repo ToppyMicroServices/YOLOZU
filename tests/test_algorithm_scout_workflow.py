@@ -23,7 +23,9 @@ class TestAlgorithmScoutWorkflow(TestCase):
         self.assertNotIn("artifacts:", self.text)
 
     def test_checked_out_cli_installs_required_runtime_dependencies(self) -> None:
-        self.assertIn("run: python3 -m pip install .", self.text)
+        self.assertIn("python-version: '3.12'", self.text)
+        self.assertIn("pip install --require-hashes --only-binary=:all: -r requirements-locks/requirements-scheduled.lock", self.text)
+        self.assertIn("tools/ci/install_with_hashes.py --install-local-wheel", self.text)
         self.assertNotIn("pip install --no-deps .", self.text)
 
     def test_collection_invocation_and_exit_control_flow_are_bounded(self) -> None:
