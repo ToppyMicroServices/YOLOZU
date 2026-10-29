@@ -85,6 +85,11 @@ snapshotとlocal rowの `updated_at` が同じでもissue fieldが異なる場�
 未解決のtieとしてfailします。採用する値を `bd update` で明示してから
 再exportしてください。snapshot fileのpermission modeも維持します。
 
+`bd import` がcomment IDを内部形式へ変換しても、author、text、作成時刻が同じ
+commentは同一内容として扱います。export時はremote snapshotのcomment recordと
+IDを保持し、localにだけある新しいcommentを追加します。comment本文などの内容が
+同じ `updated_at` で異なる場合は、他のissue fieldと同様にtieとしてfailします。
+
 `.beads/interactions.jsonl` に変更がある場合は、そのfileもstageする前に
 localとremoteのappend-only logをstable `id` でmergeします。remote側の
 新しいlogを短いlocal copyで置き換えないでください。

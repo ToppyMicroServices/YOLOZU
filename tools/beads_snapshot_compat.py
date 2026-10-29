@@ -47,6 +47,7 @@ ISSUE_COMPARISON_IGNORED_FIELDS = frozenset(
     }
 )
 ISSUE_TIMESTAMP_FIELDS = ("created_at", "updated_at", "closed_at")
+COMMENT_TIMESTAMP_FIELDS = ("created_at", "updated_at")
 
 
 class SnapshotError(ValueError):
@@ -165,6 +166,36 @@ def _dependency_key(dependency: dict[str, Any]) -> tuple[str, str, str]:
             "dependency requires issue_id, depends_on_id, and type strings"
         )
     return values  # type: ignore[return-value]
+
+
+def _comment_values(item: SnapshotRecord) -> list[dict[str, Any]]:
+    value = item.record.get("comments", [])
+    if value is None:
+        value = []
+    if not isinstance(value, list) or not all(
+        isinstance(comment, dict) for comment in value
+    ):
+        raise SnapshotError(
+            f"record {item.issue_id}: comments must be an object array"
+        )
+    return value
+
+
+def _comment_semantic_view(comment: dict[str, Any]) -> dict[str, Any]:
+    view = {
+        key: copy.deepcopy(value)
+        for key, value in comment.items()
+        if key != "id"
+    }
+    for field in COMMENT_TIMESTAMP_FIELDS:
+        parsed = _parse_timestamp(view.get(field))
+        if parsed is not None:
+            view[field] = parsed.astimezone(timezone.utc).isoformat()
+    return view
+
+
+def _comment_key(comment: dict[str, Any]) -> str:
+    return _canonical_json(_comment_semantic_view(comment))
 
 
 def _dependency_fingerprints(
@@ -442,6 +473,14 @@ def _issue_semantic_view(record: dict[str, Any]) -> dict[str, Any]:
     labels = view.get("labels")
     if isinstance(labels, list) and all(isinstance(label, str) for label in labels):
         view["labels"] = sorted(set(labels))
+    comments = view.get("comments")
+    if isinstance(comments, list) and all(
+        isinstance(comment, dict) for comment in comments
+    ):
+        view["comments"] = sorted(
+            (_comment_semantic_view(comment) for comment in comments),
+            key=_canonical_json,
+        )
     for field in ISSUE_TIMESTAMP_FIELDS:
         parsed = _parse_timestamp(view.get(field))
         if parsed is not None:
@@ -478,11 +517,11 @@ def _require_local_not_older(
         )
 
 
-def _merge_baseline_dependencies(
+def _merge_baseline_state(
     local_item: SnapshotRecord,
     baseline_item: SnapshotRecord,
 ) -> str:
-    """Keep remote edges and append new local edges without duplicating a key."""
+    """Keep remote edges/comments and append new local values without duplicates."""
     baseline_dependencies = _dependency_values(baseline_item)
     local_dependencies = _dependency_values(local_item)
     merged = copy.deepcopy(baseline_dependencies)
@@ -493,11 +532,25 @@ def _merge_baseline_dependencies(
             merged.append(copy.deepcopy(dependency))
             seen.add(key)
 
+    baseline_comments = _comment_values(baseline_item)
+    local_comments = _comment_values(local_item)
+    merged_comments = copy.deepcopy(baseline_comments)
+    seen_comments = {_comment_key(comment) for comment in baseline_comments}
+    for comment in local_comments:
+        key = _comment_key(comment)
+        if key not in seen_comments:
+            merged_comments.append(copy.deepcopy(comment))
+            seen_comments.add(key)
+
     record = copy.deepcopy(local_item.record)
     if merged:
         record["dependencies"] = merged
     else:
         record.pop("dependencies", None)
+    if merged_comments:
+        record["comments"] = merged_comments
+    else:
+        record.pop("comments", None)
     return _compact_json(record)
 
 
@@ -549,7 +602,7 @@ def restore_export(local: Path, baseline: Path, output: Path) -> dict[str, Any]:
                 restored_tombstones.append(local_item.issue_id)
             elif _strictly_newer(local_item, baseline_item):
                 output_lines.append(
-                    _merge_baseline_dependencies(local_item, baseline_item)
+                    _merge_baseline_state(local_item, baseline_item)
                 )
                 superseded_tombstones.append(local_item.issue_id)
             else:
@@ -559,7 +612,7 @@ def restore_export(local: Path, baseline: Path, output: Path) -> dict[str, Any]:
                 )
         else:
             _require_local_not_older(local_item, baseline_item)
-            output_lines.append(_merge_baseline_dependencies(local_item, baseline_item))
+            output_lines.append(_merge_baseline_state(local_item, baseline_item))
 
         emitted_ids.add(local_item.issue_id)
 
