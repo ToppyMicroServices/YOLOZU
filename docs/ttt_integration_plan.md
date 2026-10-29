@@ -13,6 +13,10 @@ Method-specific Research design boundaries:
 - [EATA phase-1 design](eata_design_spec.md)
 - [SAR phase-1 design](sar_design_spec.md)
 
+The separate [CNN quantized LoRA comparison](cnn_qlora_ttt.md) uses a pretrained
+torchvision detector outside the shared RT-DETR exporter. Its own bounded runner
+compares four conditions and does not change the adapter support table below.
+
 ## Current guarantees
 
 - **Zero-impact default:** `tools/export_predictions.py` does not adapt parameters

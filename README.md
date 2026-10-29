@@ -405,6 +405,11 @@ checkpoint byte determinism. All five lanes remain Experimental / `hold`; see
 the
 [compatible-host report](reports/external_runtime_compatible_host_evidence_2026-07-30.md).
 
+A separate [CNN quantized LoRA TTT comparison](docs/cnn_qlora_ttt.md) uses a
+pretrained torchvision detector with four matched conditions, packed INT4 frozen
+weights, and adapter-only updates. It remains Research; storage, measured AP,
+and runtime are reported separately.
+
 TTT comparisons can be run as a fail-closed multi-seed clean/shift matrix with
 `tools/run_ttt_evidence_suite.py`; generated metrics do not promote the Research
 lane. The bounded 2026-07-27 diagnostic bundle is available as a
