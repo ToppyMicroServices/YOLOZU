@@ -261,6 +261,93 @@ class BeadsSnapshotCompatTests(unittest.TestCase):
             "unchanged\n",
         )
 
+    def test_restore_export_preserves_remote_comment_ids(self) -> None:
+        baseline_records = _read_jsonl(self.baseline)
+        baseline_records[2]["comments"] = [
+            {
+                "id": "17",
+                "issue_id": "T42-open",
+                "author": "maintainer",
+                "text": "same comment",
+                "created_at": "2026-01-04T00:01:00Z",
+            }
+        ]
+        _write_jsonl(self.baseline, baseline_records)
+
+        local_records = _read_jsonl(self.baseline)
+        local_records[2]["comments"][0]["id"] = "generated-uuid"
+        local = self.base / "local.jsonl"
+        _write_jsonl(local, local_records)
+
+        COMPAT.restore_export(local, self.baseline, self.restored)
+        restored = _read_jsonl(self.restored)
+        comments = restored[2]["comments"]
+
+        self.assertEqual(len(comments), 1)
+        self.assertEqual(comments[0]["id"], "17")
+
+    def test_restore_export_appends_new_comment_once(self) -> None:
+        baseline_records = _read_jsonl(self.baseline)
+        baseline_records[2]["comments"] = [
+            {
+                "id": "17",
+                "issue_id": "T42-open",
+                "author": "maintainer",
+                "text": "existing comment",
+                "created_at": "2026-01-04T00:01:00Z",
+            }
+        ]
+        _write_jsonl(self.baseline, baseline_records)
+
+        local_records = _read_jsonl(self.baseline)
+        local_records[2]["updated_at"] = "2026-01-05T00:00:00Z"
+        local_records[2]["comments"][0]["id"] = "generated-uuid"
+        local_records[2]["comments"].append(
+            {
+                "id": "new-comment-uuid",
+                "issue_id": "T42-open",
+                "author": "maintainer",
+                "text": "new comment",
+                "created_at": "2026-01-05T00:00:00Z",
+            }
+        )
+        local = self.base / "local.jsonl"
+        _write_jsonl(local, local_records)
+
+        COMPAT.restore_export(local, self.baseline, self.restored)
+        restored = _read_jsonl(self.restored)
+        comments = restored[2]["comments"]
+
+        self.assertEqual(
+            [comment["id"] for comment in comments],
+            ["17", "new-comment-uuid"],
+        )
+
+    def test_restore_export_rejects_changed_comment_at_same_timestamp(self) -> None:
+        baseline_records = _read_jsonl(self.baseline)
+        baseline_records[2]["comments"] = [
+            {
+                "id": "17",
+                "issue_id": "T42-open",
+                "author": "maintainer",
+                "text": "remote comment",
+                "created_at": "2026-01-04T00:01:00Z",
+            }
+        ]
+        _write_jsonl(self.baseline, baseline_records)
+
+        local_records = _read_jsonl(self.baseline)
+        local_records[2]["comments"][0]["id"] = "generated-uuid"
+        local_records[2]["comments"][0]["text"] = "different comment"
+        local = self.base / "local.jsonl"
+        _write_jsonl(local, local_records)
+
+        with self.assertRaisesRegex(
+            COMPAT.SnapshotError,
+            "same updated_at but divergent issue fields",
+        ):
+            COMPAT.restore_export(local, self.baseline, self.restored)
+
 
 if __name__ == "__main__":
     unittest.main()
