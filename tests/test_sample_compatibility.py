@@ -140,21 +140,21 @@ class SampleCompatibilityTests(unittest.TestCase):
 
 
 class SampleCompatibilityWorkflowTests(unittest.TestCase):
-    def test_candidate_matrix_has_all_eight_scoped_lanes(self):
+    def test_candidate_matrix_has_all_seven_scoped_lanes(self):
         workflow = yaml.safe_load((ROOT / ".github/workflows/sample_compatibility.yml").read_text())
         rows = workflow["jobs"]["candidate"]["strategy"]["matrix"]["include"]
         actual = {(row["os"], row["python"], row["dependencies"]) for row in rows}
-        expected = {("ubuntu-latest", version, "latest") for version in ("3.10", "3.11", "3.12", "3.13", "3.14")}
-        expected.update({("ubuntu-latest", "3.10", "minimum"), ("macos-14", "3.14", "latest"),
+        expected = {("ubuntu-latest", version, "latest") for version in ("3.11", "3.12", "3.13", "3.14")}
+        expected.update({("ubuntu-latest", "3.11", "minimum"), ("macos-14", "3.14", "latest"),
                          ("windows-latest", "3.12", "latest")})
         self.assertEqual(actual, expected)
-        self.assertEqual(len(rows), 8)
+        self.assertEqual(len(rows), 7)
         self.assertEqual(workflow["permissions"], {"contents": "read"})
         steps = workflow["jobs"]["candidate"]["steps"]
         install = next(step["run"] for step in steps if step.get("id") == "install")
         self.assertIn("venv.EnvBuilder(with_pip=True)", install)
         self.assertIn('"--only-binary=:all:"', install)
-        for requirement in ("numpy==1.24.0", "PyYAML==6.0", "Pillow==12.2.0", "typing_extensions==4.8.0", "pycocotools==2.0.7"):
+        for requirement in ("numpy==1.24.0", "PyYAML==6.0", "Pillow==13.0.0", "typing_extensions==4.8.0", "pycocotools==2.0.7"):
             self.assertIn(requirement, install)
         self.assertTrue(any("check_sample_compatibility.py" in step.get("run", "") for step in steps))
 

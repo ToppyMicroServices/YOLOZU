@@ -18,8 +18,8 @@ The configured matrix in `.github/workflows/sample_compatibility.yml` covers:
 
 | Environment | Dependencies | Check |
 |---|---|---|
-| Linux, Python 3.10–3.14 | Latest resolvable core + `coco` | Generate labels, strict validation, official COCO evaluation, then repeat after relocation |
-| Linux, Python 3.10 | NumPy 1.24.0, PyYAML 6.0, Pillow 12.2.0, typing_extensions 4.8.0, pycocotools 2.0.7 | Same check at the declared core/COCO floors |
+| Linux, Python 3.11–3.14 | Latest resolvable core + `coco` | Generate labels, strict validation, official COCO evaluation, then repeat after relocation |
+| Linux, Python 3.11 | NumPy 1.24.0, PyYAML 6.0, Pillow 13.0.0, typing_extensions 4.8.0, pycocotools 2.0.7 | Same check at the declared core/COCO floors |
 | macOS, Python 3.14; Windows, Python 3.12 | Latest resolvable core + `coco` | Same installed-wheel check |
 
 Configuration is not a test result. Each run uploads `compatibility-report.json`
@@ -42,7 +42,7 @@ exercise Torch, ONNX, GPU inference, or external training runtimes.
 | MCP Python SDK | `mcp>=2.2,<3` in the `mcp` and `full` extras | `mcp==2.2.0` in `requirements-locks/requirements-docs-actions.lock` | Modern clients use the v2 sessionless protocol. The lightweight gate also exercises the SDK's explicit legacy-client mode. |
 | PyTorch | `torch>=2.10.0` in the Torch-backed extras | `torch==2.10.0+cpu` in `requirements-locks/requirements-ci.lock`; `torch==2.10.0` in the demo and RT-DETR locks | The CI pin qualifies repository CPU tests. Device, accelerator, and custom-wheel behavior remain environment-specific. |
 | Torchvision | `torchvision>=0.25.0` in the Torch-backed extras | `torchvision==0.25.0` in `requirements-locks/requirements-demo-extra.lock` | Applies to the demo/runtime bundle, not the dependency-free validation/evaluation core. |
-| ONNX | `onnx>=1.21.0` in ONNX-backed extras | `onnx==1.21.0` in the CI, TensorRT-tool, and RT-DETR locks | Regenerate and recheck exported artifacts when the runtime or exporter changes. |
+| ONNX | `onnx>=1.22.0` in ONNX-backed extras | `onnx==1.22.0` in the CI, TensorRT-tool, and RT-DETR locks | Regenerate and recheck exported artifacts when the runtime or exporter changes. |
 | ONNX Runtime | `onnxruntime>=1.17` in ONNX-backed extras | CPU `onnxruntime==1.24.2` in the CI and TensorRT-tool locks; task-specific RT-DETR locks use `onnxruntime==1.24.3` or `onnxruntime-gpu==1.24.4` | The floor is packaging compatibility. Backend evidence must record the runtime actually used. |
 
 The exact lock files, rather than this summary, remain the machine-consumed
@@ -58,9 +58,15 @@ opset protocol.
 
 ## TensorRT and CUDA qualification
 
+The configured TensorRT smoke image moves from 24.08 (Python 3.10) to 24.12
+(Python 3.12) to satisfy the Pillow 13 install floor. Both use CUDA 12.6.x;
+the new image contains TensorRT 10.7. The manifest digest was checked against
+NGC, but GPU execution still requires a new host-specific qualification run.
+See the [NVIDIA release notes](https://docs.nvidia.com/deeplearning/frameworks/container-release-notes/#tensorrt-release-24-12).
+
 YOLOZU does not declare one universally qualified TensorRT/CUDA pair. The
 self-hosted GPU workflow is configured with
-`nvcr.io/nvidia/tensorrt:24.08-py3`, but it runs only when the required runner
+`nvcr.io/nvidia/tensorrt:24.12-py3@sha256:611db29a3f616636065e96819ed1aea7ec0913bf14d97a80718e641cd685a021`, but it runs only when the required runner
 and credentials are available. A successful run must retain:
 
 - the exact container image or installed package identity;

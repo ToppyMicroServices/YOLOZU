@@ -61,8 +61,8 @@ fi
 
 "$PY_BIN" - <<'PY'
 import sys
-if sys.version_info < (3, 10):
-    raise SystemExit("error: YOLOZU release requires Python >= 3.10")
+if sys.version_info < (3, 11):
+    raise SystemExit("error: YOLOZU release requires Python >= 3.11")
 PY
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then

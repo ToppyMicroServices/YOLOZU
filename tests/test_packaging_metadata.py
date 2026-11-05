@@ -25,6 +25,12 @@ class TestPackagingMetadata(unittest.TestCase):
     def test_build_backend_supports_pep_639_metadata(self) -> None:
         self.assertIn("setuptools>=77", self.pyproject["build-system"]["requires"])
 
+    def test_security_dependency_floor_requires_supported_python(self) -> None:
+        project = self.pyproject["project"]
+        self.assertEqual(project["requires-python"], ">=3.11")
+        self.assertIn("Pillow>=13.0.0", project["dependencies"])
+        self.assertNotIn("Programming Language :: Python :: 3.10", project["classifiers"])
+
 
 if __name__ == "__main__":
     unittest.main()

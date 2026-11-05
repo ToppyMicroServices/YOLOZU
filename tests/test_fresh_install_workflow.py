@@ -13,7 +13,7 @@ class FreshInstallWorkflowTests(unittest.TestCase):
 
         self.assertIn("ubuntu-latest", workflow)
         self.assertIn("macos-14", workflow)
-        for version in ("3.10", "3.11", "3.12", "3.13", "3.14"):
+        for version in ("3.11", "3.12", "3.13", "3.14"):
             self.assertIn(f'- "{version}"', workflow)
         self.assertIn("scripts/fresh_install_journey.sh", workflow)
         self.assertIn("YOLOZU_PACKAGE_SPEC", workflow)

@@ -17,7 +17,7 @@ installing the generator there.
 
 ## Generate, inspect, evaluate
 
-Requires Python 3.10 or newer. In a new working directory on macOS/Linux:
+Requires Python 3.11 or newer. In a new working directory on macOS/Linux:
 
 ```bash
 python3 -m venv .venv

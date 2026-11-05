@@ -7,6 +7,15 @@ class TestWorkflowReleaseSecurity(unittest.TestCase):
     def setUp(self):
         self.repo_root = Path(__file__).resolve().parents[1]
 
+    def test_tensorrt_lock_consumers_use_the_python312_image(self):
+        image = "nvcr.io/nvidia/tensorrt:24.12-py3@sha256:611db29a3f616636065e96819ed1aea7ec0913bf14d97a80718e641cd685a021"
+        for name in ("gpu_smoke_machine.yml", "gpu_zisn_pipeline.yml", "ngc_test.yml"):
+            text = (self.repo_root / ".github" / "workflows" / name).read_text()
+            with self.subTest(workflow=name):
+                self.assertIn(f"docker pull {image}", text)
+                self.assertEqual(text.count(image), 2)
+                self.assertNotIn("tensorrt:24.08-py3", text)
+
     def test_publish_workflow_requires_manual_version_and_changelog_alignment(self):
         publish = (self.repo_root / ".github" / "workflows" / "publish.yml").read_text(encoding="utf-8")
         self.assertIn("workflow_dispatch:", publish)

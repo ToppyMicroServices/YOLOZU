@@ -8,7 +8,8 @@ For a local, snapshot-backed audit flow, see [`docs/repo_governance_audit.md`](r
 
 - Workflow permissions are explicitly minimized in GitHub Actions.
 - GitHub Actions references are SHA-pinned.
-- Python install paths used by CI/container bootstrap are hash-locked via `tools/ci/install_with_hashes.py`.
+- Most Python install paths use exact top-level versions and a locally hashed wheelhouse via `tools/ci/install_with_hashes.py`. These generated hashes do not authenticate the initial download or pin all transitive versions.
+- The algorithm scout and qualification freshness workflows use a complete, pre-recorded PyPI hash lock for CPython 3.12/Linux x86_64.
 - TensorRT/NGC container base images are pinned by digest.
 - Code scanning uses a repo-managed `codeql.yml`.
 - Fuzzing coverage is present through ClusterFuzzLite:

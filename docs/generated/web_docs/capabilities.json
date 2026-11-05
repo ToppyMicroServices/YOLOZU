@@ -17,28 +17,28 @@
     {
       "description": "Install the checked release, generate a sample, strictly validate it, run COCOeval, and try a portable release gate. Synthetic metrics check the workflow.",
       "id": "first_evaluation",
-      "source_sha256": "5208d9e362d6ade1a71f5742e14a286175fd4872ed4d815049ef981bd413f4e9",
+      "source_sha256": "7367003d1d1bb439020edc444e3acf206a1f74db8f9b17756bcad46d189de505",
       "title": "First evaluation with visible labeled inputs",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/labeled_sample.md"
     },
     {
       "description": "Japanese instructions for the same generated-sample evaluation and release gate; no model or external dataset download is needed.",
       "id": "first_evaluation_ja",
-      "source_sha256": "bdb4ec3137b807d6e4f5cc6e125e3dea08c3e0bf93161d904044b749230cdfe4",
+      "source_sha256": "fb01a5e51f4a678286c9454a62becc6e827234e581ebdd366ec8d7b5abe93021",
       "title": "日本語: モデルなしで最初の評価reportを作る",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/labeled_sample_ja.md"
     },
     {
       "description": "Choose a package extra and distinguish installed commands from repository scripts.",
       "id": "install",
-      "source_sha256": "cef8bc14261454137682c5da8fda064cc0c6580ca4b2f35b85bc037c0c13e07b",
+      "source_sha256": "47d027d41606de0314d74f3c33172be8ac37ccfdf0cba7348404d6c200848429",
       "title": "Installation and dependencies",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/install.md"
     },
     {
       "description": "Command inputs, examples, side effects, dependencies, and maturity.",
       "id": "cli_manifest",
-      "source_sha256": "4bcc6ba6d590a270c8de949d3816ccf17222222849e2bf8c4211dc70567800cd",
+      "source_sha256": "a07dfa9a03a047c29c95b1c5f36c7033cf32689bdb6a3c67b16bdb36b53c4244",
       "title": "CLI tool manifest",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/tools/manifest.json"
     },
@@ -87,7 +87,7 @@
     {
       "description": "Keep Stable, Bridge, Benchmark, and Research claims separate.",
       "id": "readiness",
-      "source_sha256": "93a5a358be9fc590eea563c8354489fe05312d678102ae6b6e00b37a5d7eb08c",
+      "source_sha256": "5b5d7dab98fcdfc4fe5107d78d3b35ec886b8bf497a2d8b32dd84b84786924ac",
       "title": "Readiness and maturity",
       "url": "https://raw.githubusercontent.com/ToppyMicroServices/YOLOZU/main/docs/production_readiness.md"
     },

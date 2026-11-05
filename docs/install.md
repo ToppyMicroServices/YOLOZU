@@ -2,7 +2,7 @@
 
 ## Pip (default stable path)
 
-Requires Python 3.10 or newer. A virtual environment avoids modifying a
+Requires Python 3.11 or newer. A virtual environment avoids modifying a
 system-managed Python installation. On macOS/Linux:
 
 ```bash

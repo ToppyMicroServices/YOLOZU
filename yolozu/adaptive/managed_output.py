@@ -251,8 +251,7 @@ class _ParentGuard:
             raise _fail("root_invalid", "approved root does not exist") from exc
         if not stat.S_ISDIR(root_info.st_mode):
             raise _fail("root_invalid", "approved root must be a non-symlink directory")
-        descriptor_stack = ExitStack()
-        try:
+        with ExitStack() as descriptor_stack:
             try:
                 # ExitStack owns this descriptor until _ParentGuard.close().
                 root_fd = descriptor_stack.enter_context(
@@ -273,15 +272,12 @@ class _ParentGuard:
                 )
                 identities.append(_identity(os.fstat(next_fd)))
                 current_fd = next_fd
-        except Exception:
-            descriptor_stack.close()
-            raise
-        self.root_path = root_path
-        self.parent_parts = parent_parts
-        self._descriptor_stack = descriptor_stack.pop_all()
-        self._identities = tuple(identities)
-        self.root_fd = root_fd
-        self.parent_fd = current_fd
+            self.root_path = root_path
+            self.parent_parts = parent_parts
+            self._identities = tuple(identities)
+            self.root_fd = root_fd
+            self.parent_fd = current_fd
+            self._descriptor_stack = descriptor_stack.pop_all()
 
     @property
     def parent_identity(self) -> _Identity:
@@ -366,9 +362,13 @@ def _read_regular_at(
 def _open_relative_parent(base_fd: int, parts: tuple[str, ...]) -> tuple[int, list[int]]:
     current_fd = base_fd
     opened: list[int] = []
-    for component in parts[:-1]:
-        current_fd = _open_directory_at(current_fd, component)
-        opened.append(current_fd)
+    try:
+        for component in parts[:-1]:
+            current_fd = _open_directory_at(current_fd, component)
+            opened.append(current_fd)
+    except BaseException:
+        _close_all(opened)
+        raise
     return current_fd, opened
 
 
@@ -805,7 +805,7 @@ class ManagedOutputTransaction:
         self._published = False
         try:
             self._begin()
-        except Exception:
+        except BaseException:
             try:
                 self.abort()
             finally:
@@ -875,9 +875,11 @@ class ManagedOutputTransaction:
         return self
 
     def __exit__(self, exc_type: object, exc: object, traceback: object) -> None:
-        if not self._finished and not self._published:
-            self.abort()
-        self.close()
+        try:
+            if not self._finished and not self._published:
+                self.abort()
+        finally:
+            self.close()
 
     def _stage_parent(self, relative: str) -> tuple[int, list[int]]:
         if self._stage_fd is None:
@@ -886,25 +888,27 @@ class ManagedOutputTransaction:
         current_fd = self._stage_fd
         opened: list[int] = []
         prefix: list[str] = []
-        for component in parts[:-1]:
-            prefix.append(component)
-            directory = "/".join(prefix)
-            info = _lstat_at(current_fd, component)
-            if info is None:
-                _step(self.fault_hook, f"before_create_directory:{directory}")
-                os.mkdir(component, mode=0o700, dir_fd=current_fd)
-            next_fd = _open_directory_at(current_fd, component)
-            identity = _identity(os.fstat(next_fd))
-            known = self._created_directories.get(directory)
-            if known is not None and not _same_identity(known, identity):
-                os.close(next_fd)
-                _close_all(opened)
-                raise _fail("identity_changed", f"staged directory {directory!r} changed")
-            self._created_directories[directory] = identity
-            if info is None:
-                _step(self.fault_hook, f"after_create_directory:{directory}")
-            opened.append(next_fd)
-            current_fd = next_fd
+        try:
+            for component in parts[:-1]:
+                prefix.append(component)
+                directory = "/".join(prefix)
+                info = _lstat_at(current_fd, component)
+                if info is None:
+                    _step(self.fault_hook, f"before_create_directory:{directory}")
+                    os.mkdir(component, mode=0o700, dir_fd=current_fd)
+                next_fd = _open_directory_at(current_fd, component)
+                opened.append(next_fd)
+                identity = _identity(os.fstat(next_fd))
+                known = self._created_directories.get(directory)
+                if known is not None and not _same_identity(known, identity):
+                    raise _fail("identity_changed", f"staged directory {directory!r} changed")
+                self._created_directories[directory] = identity
+                if info is None:
+                    _step(self.fault_hook, f"after_create_directory:{directory}")
+                current_fd = next_fd
+        except BaseException:
+            _close_all(opened)
+            raise
         return current_fd, opened
 
     def write_bytes(self, relative_path: str | PurePosixPath, data: bytes) -> None:

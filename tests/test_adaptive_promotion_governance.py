@@ -349,7 +349,6 @@ class _PromotionWorkspace:
         existing = (self.data / "evidence_activation.jsonl").read_bytes()
         if existing:
             prior = existing.strip().splitlines()[-1]
-            import json
 
             previous_event = json.loads(prior)
             activation["sequence"] = 1
@@ -369,7 +368,6 @@ class _PromotionWorkspace:
         )
 
     def write_bindings(self) -> None:
-        import json
 
         records = [
             json.loads(line)
@@ -498,7 +496,6 @@ class PromotionServiceTests(unittest.TestCase):
         self.assertEqual(
             dry_run.planned_record["rollback_target_status"], "none_abstention"
         )
-        import json
 
         schema = json.loads(
             Path("docs/schemas/bundle_lifecycle_record.schema.json").read_text()
@@ -551,7 +548,6 @@ class PromotionServiceTests(unittest.TestCase):
             .read_text()
             .splitlines()
         )
-        import json
 
         site = json.loads(events[0])
         site["trust_domain"] = "site_managed"

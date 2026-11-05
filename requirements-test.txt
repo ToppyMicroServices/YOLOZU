@@ -8,11 +8,11 @@
 torch>=2.10.0
 
 # ONNX export + ONNXRuntime parity tests (CPU).
-onnx>=1.21.0
+onnx>=1.22.0
 onnxruntime>=1.17
 
 # Optional (used by tools/rtdetr_pose train_minimal when --real-images enabled)
-Pillow>=12.2.0
+Pillow>=13.0.0
 
 # Optional: lets you run `pytest` even though tests use `unittest`.
 pytest>=9.0.3

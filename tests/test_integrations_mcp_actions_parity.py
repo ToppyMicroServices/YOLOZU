@@ -12,6 +12,62 @@ except ImportError:  # pragma: no cover - optional Actions dependency
 
 
 class TestIntegrationsMcpActionsParity(unittest.TestCase):
+    def test_public_preflight_errors_do_not_expose_internal_details(self):
+        if actions_api is None:
+            self.skipTest("Actions dependencies are not installed")
+        for route, request_type, local in (
+            (actions_api.ttt_job_route, actions_api.TTTJobRequest, tool_runner.ttt_job),
+            (actions_api.ctta_job_route, actions_api.CTTAJobRequest, tool_runner.ctta_job),
+        ):
+            for failure in (RuntimeError, OSError, ValueError):
+                with self.subTest(route=route.__name__, failure=failure.__name__):
+                    with patch.object(tool_runner, "_workspace_path", side_effect=failure("private preflight detail")):
+                        public = route(request_type(dataset="data/smoke", checkpoint="model.pt"))
+                        diagnostic = local("data/smoke", "model.pt")
+                    self.assertFalse(public["ok"])
+                    self.assertFalse(public["queued"])
+                    self.assertEqual(public["stage"], "preflight")
+                    self.assertEqual(public["exit_code"], 2)
+                    self.assertNotIn("private preflight detail", str(public))
+                    self.assertNotIn("error_type", public)
+                    self.assertIn("private preflight detail", diagnostic["error"])
+
+    def test_public_job_status_redacts_persisted_failure_details(self):
+        if actions_api is None:
+            self.skipTest("Actions dependencies are not installed")
+        status = {
+            "job_id": "job_fixture", "name": "ttt", "status": "failed",
+            "error": "private worker detail", "result": {
+                "ok": False, "error": "private result detail",
+                "summary": "private summary detail", "stderr": "private stderr detail",
+                "error_type": "PrivateException", "exit_code": 2,
+            },
+        }
+        with patch.object(tool_runner, "_job_manager") as manager:
+            manager.return_value.status.return_value = status
+            public = actions_api.jobs_status_route("job_fixture")
+            diagnostic = tool_runner.jobs_status("job_fixture")
+        self.assertFalse(public["ok"])
+        self.assertEqual(public["job"]["status"], "failed")
+        self.assertEqual(public["job"]["result"]["exit_code"], 2)
+        self.assertNotIn("private", str(public).lower())
+        self.assertIn("private worker detail", diagnostic["error"])
+        self.assertEqual(status["error"], "private worker detail")
+
+    def test_public_job_status_preserves_success_and_missing_job(self):
+        if actions_api is None:
+            self.skipTest("Actions dependencies are not installed")
+        with patch.object(tool_runner, "_job_manager") as manager:
+            manager.return_value.status.return_value = {
+                "job_id": "job_fixture", "status": "completed", "error": None,
+                "result": {"ok": True, "artifacts": {"predictions": "runs/result.json"}},
+            }
+            public = actions_api.jobs_status_route("job_fixture")
+            self.assertTrue(public["ok"])
+            self.assertEqual(public["job"]["result"]["artifacts"], {"predictions": "runs/result.json"})
+            manager.return_value.status.return_value = None
+            self.assertEqual(actions_api.jobs_status_route("missing")["summary"], "job not found")
+
     def test_actions_ttt_route_redacts_unexpected_submission_errors(self):
         if actions_api is None:
             self.skipTest("Actions dependencies are not installed")

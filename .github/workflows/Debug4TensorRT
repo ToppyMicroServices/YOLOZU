@@ -22,10 +22,10 @@ jobs:
 
       - name: TensorRT pipeline (example)
         run: |
-          docker pull nvcr.io/nvidia/tensorrt:24.08-py3
+          docker pull nvcr.io/nvidia/tensorrt:24.12-py3@sha256:611db29a3f616636065e96819ed1aea7ec0913bf14d97a80718e641cd685a021
           docker run --rm --gpus all \
             -v "${{ github.workspace }}:/workspace" -w /workspace \
-            nvcr.io/nvidia/tensorrt:24.08-py3 \
+            nvcr.io/nvidia/tensorrt:24.12-py3@sha256:611db29a3f616636065e96819ed1aea7ec0913bf14d97a80718e641cd685a021 \
             bash -lc '
               python3 --version
               nvidia-smi

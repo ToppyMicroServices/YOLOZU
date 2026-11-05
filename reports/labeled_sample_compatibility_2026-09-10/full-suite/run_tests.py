@@ -23,9 +23,11 @@ def main() -> int:
         sys.executable,
         "-I",
         "-c",
-        "import importlib.metadata as m, json; "
-        "print(json.dumps({name: m.version(name) for name in "
-        "['yolozu', 'Pillow', 'numpy', 'PyYAML', 'pycocotools']}))",
+        (
+            "import importlib.metadata as m, json; "
+            "print(json.dumps({name: m.version(name) for name in "
+            "['yolozu', 'Pillow', 'numpy', 'PyYAML', 'pycocotools']}))"
+        ),
     ]
     environment_versions = json.loads(
         subprocess.check_output(metadata_command, text=True)

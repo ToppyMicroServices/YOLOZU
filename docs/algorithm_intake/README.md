@@ -4,6 +4,11 @@
 not search the whole web or establish which algorithm is latest or best. The
 only accepted source file is `docs/algorithm_intake/sources.json`.
 
+The scheduled workflow uses CPython 3.12 and
+`requirements-locks/requirements-scheduled.lock`, with pre-recorded PyPI wheel
+hashes checked before installation. The checked-out CLI is built without build
+isolation and installed without resolving more dependencies.
+
 The safe default validates the allowlist and prints a bounded JSON plan. It does
 not open a network connection or create the output directory.
 
