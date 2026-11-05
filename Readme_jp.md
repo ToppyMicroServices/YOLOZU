@@ -394,6 +394,11 @@ byte 決定性は示しません。5 lane は Experimental / `hold` のままで
 [compatible-host report](reports/external_runtime_compatible_host_evidence_2026-07-30.md)
 に記録しています。
 
+[CNN向け量子化LoRA＋TTTの比較](docs/cnn_qlora_ttt.md)では、学習済みの
+torchvision検出器を4条件で比較します。INT4で圧縮したベース重みを固定し、
+アダプタだけを更新します。Research段階で、保存容量・実測AP・実行時間を
+それぞれ報告します。
+
 `tools/run_ttt_evidence_suite.py` で fail-closed な multi-seed の
 clean/shift matrix を実行できます。生成された metric だけで Research lane
 を昇格させることはありません。2026-07-27 の限定的な診断bundleは

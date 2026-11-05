@@ -25,3 +25,11 @@ Notes:
 - torchao is an optional dependency; install it separately (example: `pip install torchao`).
 - The integration is defensive because torchao APIs can evolve; treat this as experimental.
 - For the beginner-facing intuition of how QLoRA differs from plain LoRA in this repo, read [`docs/continual_learning.md`](continual_learning.md) first and come back here for the concrete knobs.
+
+## 3) Packed INT4 CNN comparison (Research)
+
+The separate [CNN quantized LoRA TTT command](cnn_qlora_ttt.md) packs convolutional
+and linear base weights into four-bit buffers and updates only LoRA parameters.
+It is a portable reference path with transient dequantization and FP32 computation,
+not the trainer torchao hook, NF4, or accelerated INT4 convolution. Its report
+measures layer coverage, storage, adapter reload, and clean/shifted COCO AP.

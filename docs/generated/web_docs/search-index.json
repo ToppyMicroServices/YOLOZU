@@ -896,6 +896,13 @@
     "title": "run_actions_api"
   },
   {
+    "href": "commands.html#tool-run-cnn-qlora-ttt",
+    "kind": "command",
+    "search_text": "run_cnn_qlora_ttt Compare a pretrained CNN detector across fixed/adapted floating and packed INT4 weights with disjoint unlabeled support, COCO evaluation, storage audits, base invariance, and adapter reload checks. research tools/run_cnn_qlora_ttt.py --dataset --checkpoint --output --split --support-images --eval-images --steps --rank --learning-rate --pseudo-threshold --pseudo-topk --min-size --max-size --brightness --seed --threads --device --adapter-include --quant-include --skip-eval python3 tools/run_cnn_qlora_ttt.py --checkpoint /path/to/maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth --dataset /path/to/coco-yolo --split val2017 --output reports/cnn_qlora_ttt_seed11 --seed 11",
+    "summary": "Compare a pretrained CNN detector across fixed/adapted floating and packed INT4 weights with disjoint unlabeled support, COCO evaluation, storage audits, base invariance, and adapter reload checks.",
+    "title": "run_cnn_qlora_ttt"
+  },
+  {
     "href": "commands.html#tool-run-external-finetune-smoke",
     "kind": "command",
     "search_text": "run_external_finetune_smoke Run external finetune smoke matrix for YOLOX/Ultralytics/MMDetection/Detectron2/RT-DETR; non-dry projection-only lanes fail closed, while the report records dependency status, artifact hashes, wall time, peak RSS, runtime, source, and license boundaries. experimental tools/run_external_finetune_smoke.py --dataset-root --split --output --work-dir --python --epochs --max-steps --batch-size --image-size --device --framework --non-dry-framework --require-non-dry --require-training-execution --mmdet-train-script --detectron2-train-script --yolox-train-script python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --output reports/external_finetune_smoke.json python3 tools/run_external_finetune_smoke.py --dataset-root data/smoke --split train --non-dry-framework yolox --non-dry-framework yolov --non-dry-framework rtdetr --yolox-train-script /path/to/YOLOX/tools/train.py --epochs 1 --max-steps 1 --batch-size 2 --image-size 96 --device cpu --require-training-execution --output reports/external_finetune_smoke.exec.json python3 tools/run_external_finetune_smoke.py --dataset-root /path/to/dataset --split train --non-dry-framework mmdetection --non-dry-framework detectron2 --mmdet-train-script /path/to/mmdetection/tools/train.py --detectron2-train-script /path/to/detectron2/tools/train_net.py --epochs 1 --batch-size 2 --require-training-execution --output reports/external_finetune_smoke.external.json",

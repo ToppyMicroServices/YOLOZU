@@ -46,7 +46,7 @@
 <section class="hero" aria-labelledby="page-title">
   <span class="eyebrow">Generated from tools/manifest.json</span>
   <h1 id="page-title">Command reference</h1>
-  <p class="lead">153 manifest entries with declared maturity, inputs,
+  <p class="lead">154 manifest entries with declared maturity, inputs,
   examples, implementation paths, and documentation links. The manifest remains
   the source of truth.</p>
 
@@ -1836,6 +1836,20 @@ python3 rtdetr_pose/tools/train_continual.py --config configs/continual/rtdetr_p
   <pre><code>python3 tools/run_actions_api.py
 python3 tools/run_actions_api.py --host 127.0.0.1 --port 8080 --workers 1</code></pre>
   <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/run_actions_api.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/llm_integrations.md" target="_blank" rel="noopener noreferrer">llm_integrations.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/mcp_extension_architecture.md" target="_blank" rel="noopener noreferrer">mcp_extension_architecture.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/openai_mcp_actions.md" target="_blank" rel="noopener noreferrer">openai_mcp_actions.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/20_llm_mcp_integrations.tex" target="_blank" rel="noopener noreferrer">20_llm_mcp_integrations.tex</a></p>
+</details>
+
+<details class="card" id="tool-run-cnn-qlora-ttt" data-tool-id="run_cnn_qlora_ttt"
+  data-search-card data-search-text="run_cnn_qlora_ttt Compare a pretrained CNN detector across fixed/adapted floating and packed INT4 weights with disjoint unlabeled support, COCO evaluation, storage audits, base invariance, and adapter reload checks. research tools/run_cnn_qlora_ttt.py python3 tools/run_cnn_qlora_ttt.py --checkpoint /path/to/maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth --dataset /path/to/coco-yolo --split val2017 --output reports/cnn_qlora_ttt_seed11 --seed 11">
+  <summary><code>run_cnn_qlora_ttt</code> — Compare a pretrained CNN detector across fixed/adapted floating and packed INT4 weights with disjoint unlabeled support, COCO evaluation, storage audits, base invariance, and adapter reload checks.</summary>
+  <div class="meta">
+    <span class="badge badge-research">research</span>
+    <span><code>tools/run_cnn_qlora_ttt.py</code></span>
+  </div>
+  <h3>Inputs</h3>
+  <ul class="check-list"><li><code>--dataset</code> — required, dir</li><li><code>--checkpoint</code> — required, file</li><li><code>--output</code> — required, dir</li><li><code>--split</code> — default=val2017, string</li><li><code>--support-images</code> — default=2, number</li><li><code>--eval-images</code> — default=4, number</li><li><code>--steps</code> — default=1, number</li><li><code>--rank</code> — default=4, number</li><li><code>--learning-rate</code> — default=0.0001, number</li><li><code>--pseudo-threshold</code> — default=0.7, number</li><li><code>--pseudo-topk</code> — default=20, number</li><li><code>--min-size</code> — default=256, number</li><li><code>--max-size</code> — default=384, number</li><li><code>--brightness</code> — default=0.55, number</li><li><code>--seed</code> — default=11, number</li><li><code>--threads</code> — default=2, number</li><li><code>--device</code> — default=cpu, string</li><li><code>--adapter-include</code> — default=backbone.body.layer4, string</li><li><code>--quant-include</code> — default=*, string</li><li><code>--skip-eval</code> — string</li></ul>
+  <h3>Examples</h3>
+  <pre><code>python3 tools/run_cnn_qlora_ttt.py --checkpoint /path/to/maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth --dataset /path/to/coco-yolo --split val2017 --output reports/cnn_qlora_ttt_seed11 --seed 11</code></pre>
+  <p class="source-note"><a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/tools/run_cnn_qlora_ttt.py" target="_blank" rel="noopener noreferrer">Implementation</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/cnn_qlora_ttt.md" target="_blank" rel="noopener noreferrer">cnn_qlora_ttt.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/docs/quantization.md" target="_blank" rel="noopener noreferrer">quantization.md</a> · <a href="https://github.com/ToppyMicroServices/YOLOZU/blob/main/manual/chapters/15_ttt_tent_mim.tex" target="_blank" rel="noopener noreferrer">15_ttt_tent_mim.tex</a></p>
 </details>
 
 <details class="card" id="tool-run-external-finetune-smoke" data-tool-id="run_external_finetune_smoke"

@@ -1482,6 +1482,20 @@ In this repo, the important operational points are:
   \item For deployment, treat TTT as an optional mode; default inference should not require it.
 \end{itemize}
 
+\section{CNN quantized LoRA comparison}
+\path{tools/run_cnn_qlora_ttt.py} provides a separate Research comparison for
+pretrained torchvision Mask R-CNN ResNet-50 FPN v2 bounding-box detection.
+It compares floating and packed INT4 weights, each with and without LoRA
+adaptation. Adaptation images and held-out evaluation images are disjoint;
+ground-truth labels are used only for evaluation.
+
+The reference implementation stores frozen convolutional and linear weights in
+packed four-bit form, then dequantizes them for floating-point computation.
+It does not reproduce NF4 QLoRA or provide an optimized INT4 kernel. The report
+separates parameter storage, actual compute dtype, memory observations, runtime,
+and COCO AP. Base invariance and adapter reload are checked. See
+\path{docs/cnn_qlora_ttt.md} for the command and evidence boundaries.
+
 \section{Method-specific evaluation tools}
 Manifest-registered benchmark tools for TTT phase validation:
 \begin{itemize}

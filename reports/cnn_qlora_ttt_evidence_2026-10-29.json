@@ -1,0 +1,1787 @@
+{
+  "schema_version": 1,
+  "kind": "cnn_qlora_ttt_local_evidence_summary",
+  "date": "2026-10-29",
+  "maturity": "Research",
+  "execution_status": "complete",
+  "efficacy_conclusion": "not_established",
+  "promotion_eligible": false,
+  "model_id": "torchvision_maskrcnn_resnet50_fpn_v2_bbox",
+  "model_scope": "Torchvision Mask R-CNN ResNet50 FPN v2, strict checkpoint load then bbox-only branch",
+  "config_without_seed": {
+    "dataset": "cnn_ttt_coco16",
+    "checkpoint": "maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth",
+    "output": "seed{seed}",
+    "split": "val2017",
+    "support_images": 4,
+    "eval_images": 12,
+    "steps": 1,
+    "rank": 4,
+    "learning_rate": 0.0001,
+    "pseudo_threshold": 0.7,
+    "pseudo_topk": 20,
+    "min_size": 256,
+    "max_size": 384,
+    "brightness": 0.55,
+    "device": "cpu",
+    "threads": 2,
+    "adapter_include": [
+      "backbone.body.layer4"
+    ],
+    "quant_include": [
+      "*"
+    ],
+    "skip_eval": false
+  },
+  "seeds": [
+    11,
+    22,
+    33
+  ],
+  "runtime": {
+    "torch": "2.12.0.dev20260330",
+    "python": "3.14.10",
+    "torchvision": "0.27.0.dev20260330",
+    "device": "cpu",
+    "compute_dtype": "float32",
+    "quantized_arithmetic": false,
+    "implementation": "packed_int4_dequantize_float_reference"
+  },
+  "protocol": {
+    "dataset": "16 COCO val2017 images with conventional zero-based COCO80 YOLO bounding-box labels",
+    "adaptation_images": 4,
+    "evaluation_images": 12,
+    "evaluation_unique_images_across_seeds": 12,
+    "split": "same ordered images in every seed; support and evaluation disjoint by path and image bytes",
+    "selection": "lexicographic filename order",
+    "prior_exploration": "An earlier two-support/four-evaluation probe used the same 16-image pool; the four/twelve expansion retained hyperparameters. This is exploratory, not an untouched or preregistered confirmatory test.",
+    "seed_semantics": "initialization and training stochasticity; no dataset resampling",
+    "shift": {
+      "kind": "brightness_multiplier",
+      "value": 0.55,
+      "synthetic": true
+    },
+    "teacher": "same-arm frozen pre-adaptation predictions on shifted support, generated once",
+    "student_augmentation": "additional brightness multiplier 0.9, geometry unchanged",
+    "adaptation_uses_ground_truth": false,
+    "metric": "pycocotools COCOeval bbox on the selected YOLO-label subset; not full COCO validation-set performance",
+    "metric_scale": "0 to 1; multiply by 100 for AP points",
+    "quantization": "symmetric INT4 per output channel packed in uint8; transient FP32 dequantization; not original NF4 QLoRA or accelerated INT4 arithmetic"
+  },
+  "storage": {
+    "float_base_bytes": 175086688,
+    "int4_base_bytes": 22434712,
+    "base_storage_reduction_fraction": 0.8718651186091315,
+    "adapter_tensor_bytes": 524288,
+    "trainable_adapter_parameters": 131072,
+    "adapter_layers": 10,
+    "quantized_layers": 72,
+    "float_adapter_serialized_file_bytes": 532455,
+    "int4_adapter_serialized_file_bytes": 540583,
+    "semantics": "resident parameter/buffer tensor storage; excludes activations, gradients, optimizer state, transient dequantized weights and process/runtime overhead",
+    "peak_vram_measured": false
+  },
+  "result": {
+    "all_adaptation_map50_95_deltas_exactly_zero": true,
+    "float_shift_map50_95_delta": -0.06787322720547595,
+    "quantization_map50_95_delta_vs_float": {
+      "clean": -0.11265331744847074,
+      "shifted": -0.059811331059732575
+    },
+    "interpretation": "The storage path and adapter updates executed. TTT did not recover COCO AP in any seed. The quantized baseline had lower AP than the float baseline. This does not establish product efficacy."
+  },
+  "provenance": {
+    "checkpoint_filename": "maskrcnn_resnet50_fpn_v2_coco-73cbd019.pth",
+    "checkpoint_sha256": "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e",
+    "source_sha256": {
+      "cnn_experiment.py": "303a937d36e4e986f57c6aceae4c394b41d735cb35731903efea24b14d4b46ca",
+      "quantized_lora.py": "953c1e9b7fa98d9480b674fd4dca42d829381d9585abe6f63d9894c72b29ca3d",
+      "run_cnn_qlora_ttt.py": "cdd17d745e908577e723ccf1e1e022ee75bfeb5a78189a181a8fc8cd8e67eca4"
+    },
+    "images": {
+      "support": [
+        {
+          "filename": "000000010583.jpg",
+          "sha256": "f163a37f278b6edd09952332066e01a00cf80e3137b427dd49732b91edc3fa9b"
+        },
+        {
+          "filename": "000000025228.jpg",
+          "sha256": "2b6b45ffe7197a9006a98ed31b8f55495bb876e0c224f1695810f04e61f626cd"
+        },
+        {
+          "filename": "000000053505.jpg",
+          "sha256": "ac6b9836a7f1383ed0bc1273664e104f1c2ec48e07506d2e88dfac9dd7150e5e"
+        },
+        {
+          "filename": "000000103548.jpg",
+          "sha256": "648b0a9ebc1f0ed502380ddf6843867c987e2ddeeda6f1d2b97d94f0e829ae9d"
+        }
+      ],
+      "evaluation": [
+        {
+          "filename": "000000180101.jpg",
+          "sha256": "079670676d766b9e53cc1e35c1d90ad1ae6f80849498912153c9fa7001a0c934"
+        },
+        {
+          "filename": "000000230362.jpg",
+          "sha256": "906ec1c6b8076043900ac88333c6ceed1c6900fe06d4e50e32fc83c2c50c8c49"
+        },
+        {
+          "filename": "000000329447.jpg",
+          "sha256": "18068dc748bfccf7a40008044c1a605e47258fc70f448026952e78a9e1c7eb3f"
+        },
+        {
+          "filename": "000000407083.jpg",
+          "sha256": "04a0a063f7f2348a1d18b705903d22f12ef242b5076f6a2580a3242bbb3a8d2a"
+        },
+        {
+          "filename": "000000409268.jpg",
+          "sha256": "0c2172fdc1e19e2b2c7f9ab8126f0e850f354ce50b02c58292891b2619bf5528"
+        },
+        {
+          "filename": "000000409475.jpg",
+          "sha256": "25f106ec83ccc0525071ab67706096e8e692dd651830982ffb297ebffa0be400"
+        },
+        {
+          "filename": "000000415536.jpg",
+          "sha256": "a02be69d9dbaf2ebb1e21950d1a0c54238ea6b479b8200c46fd3330de5863236"
+        },
+        {
+          "filename": "000000446574.jpg",
+          "sha256": "2fa792119957910e428a6dedf63f4e50f3de21ef22e900ca38aa152962daa39c"
+        },
+        {
+          "filename": "000000468577.jpg",
+          "sha256": "bab9b53906323b08abb82f92484fdbedc70fb08dc0dcb40d937a8284b0eb64f6"
+        },
+        {
+          "filename": "000000486112.jpg",
+          "sha256": "8a2918d24583f33aedc6cdc212c129176e6535102c5e87f418a4f230e9002bfb"
+        },
+        {
+          "filename": "000000512194.jpg",
+          "sha256": "3d9db2c38452a8941686c8ce28c9bf8018b04b3540d3a8cd891f77aca90b547a"
+        },
+        {
+          "filename": "000000515577.jpg",
+          "sha256": "6f610a7b45e0cd7e3bb29fceec98a4b10a23658d2ef2f03105e499561c37c0b0"
+        }
+      ]
+    },
+    "evaluation_label_sha256": {
+      "000000180101.txt": "fe5d649583b21c7ec09c469e0d28ade9bd2a64ca25faffcc5adc4595b9e8d4da",
+      "000000230362.txt": "bf1ab995fd3ad1bca011fe61f077e5a30e2124f28d58db28eff4130318fa6eef",
+      "000000329447.txt": "bba5b5b93a47384a91a7e6278e89bfb9d0f8669dd0cf4d5107e57a5add0ef804",
+      "000000407083.txt": "83dfe3901c13fe1c22ac2a5893149922f63c44f8686af260c4a880ce20fbb686",
+      "000000409268.txt": "035f917e42ecb99ed7a6ed443562031cd75e3e51da842794b92438cc63fbf2f5",
+      "000000409475.txt": "ffd3bb6af056944bece0418da8e31378cf58f7c350223e24a7caae34cd60121b",
+      "000000415536.txt": "241ce629b309fcd35be0c9cd4ca5e28862386407dcc83a146457d1b81b138836",
+      "000000446574.txt": "e7d2b6ca043727a29406664ed96bb62eaa62458ec436c783b28b624f3b2b7754",
+      "000000468577.txt": "85e3667c14124595772afea10b2a461577eefc2714d2159f555104b030823079",
+      "000000486112.txt": "42d0941129fb727ebafa569b10cce24b4bd7cd8797f66905b5cf48da5b12aefb",
+      "000000512194.txt": "38e3ea75bed104270b1affc39278ddc6bf123bfe86a2cae251a136b555573d22",
+      "000000515577.txt": "be87a1a9991b330dabee04530993c63bee4293f6daec9bc56e7faaba7c8025b4"
+    },
+    "raw_artifact_policy": "Raw reports are retained locally; their digests are recorded here. Model weights, images and serialized adapter binaries are not included in this summary or committed with it."
+  },
+  "fresh_process_restore": {
+    "status": "passed",
+    "scope": "fresh_model_in_separate_process_same_host",
+    "adapter_sha256": "71fda1b1e2ede66310711086ced3be9814446156308ddfa044da5d533b53427d",
+    "checkpoint_sha256": "73cbd0190fcbe3ba339921fbce2c3a0b6bb9126c9a133c85e43a2a8e060a109e",
+    "prediction_parity_exact": true,
+    "images_checked": 1,
+    "artifact_filename": "seed11/fresh_process_restore.json",
+    "artifact_sha256": "3b793b1e0839dcef12db2d98bbd81264c285fc31870e6c7d15b7fe61f37b0b5e",
+    "limitation": "one image in a separate process on the same host; not an independent environment or full-set reproduction"
+  },
+  "validation": {
+    "focused_tests_passed": 39,
+    "test_command": "python -m unittest tests.test_quantized_lora tests.test_cnn_qlora_ttt tests.test_packaged_tools_manifest tests.test_manifest_docs_references tests.test_ttt_docs_implementation_alignment tests.test_manual_ttt_chapter_structure",
+    "other_checks_passed": [
+      "ruff on the five new Python files",
+      "declarative tool manifest validation",
+      "new CLI --help"
+    ],
+    "ci_claim": null
+  },
+  "limitations": [
+    "One host, one checkpoint, one synthetic illumination shift, twelve evaluation images repeated across three seeds.",
+    "No real-camera adaptation efficacy or population-level accuracy estimate is established.",
+    "Timing was not isolated: the separate-process restore overlapped seed 22. Reported times are observations, not latency superiority evidence.",
+    "CPU process RSS is a process-lifetime high-water mark, not per-arm memory savings. GPU peak VRAM was not measured.",
+    "FP32 compute was used for both float and packed-INT4 paths; no FP16 comparison was executed.",
+    "AP did not improve despite nonzero adapter updates; larger updates or a different protocol require a new declared experiment."
+  ],
+  "per_seed": [
+    {
+      "seed": 11,
+      "raw_report_filename": "seed11/report.json",
+      "raw_report_sha256": "40ac826d9693a7f929ea0f8818fc732e139e1c597a9a770b429998f5926f13d7",
+      "deltas": {
+        "float_lora_ttt": {
+          "clean": 0.0,
+          "shifted": 0.0
+        },
+        "int4_lora_ttt": {
+          "clean": 0.0,
+          "shifted": 0.0
+        }
+      },
+      "arms": {
+        "float_fixed": {
+          "status": "complete",
+          "compute_dtype": "float32",
+          "quantized": false,
+          "ttt": false,
+          "storage_and_layers": {
+            "recipe": "floating_base_lora_v1",
+            "arithmetic": "floating_point",
+            "quantized_layer_count": 0,
+            "adapter_layer_count": 0,
+            "trainable_parameters": 0,
+            "base_storage_bytes_before": 175086688,
+            "base_storage_bytes_after": 175086688,
+            "adapter_storage_bytes": 0
+          },
+          "base_unchanged": true,
+          "adaptation": {
+            "status": "disabled",
+            "optimizer_steps": 0,
+            "seconds": 0.0
+          },
+          "domains": {
+            "clean": {
+              "latency": {
+                "mean_seconds": 1.8715496041677397,
+                "p95_seconds": 2.125418791998527,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 253,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.6451002696985847,
+                  "map50": 0.7989448557858881,
+                  "map75": 0.7786729100260453,
+                  "ar100": 0.6660612535612536
+                },
+                "stats": [
+                  0.6451002696985847,
+                  0.7989448557858881,
+                  0.7786729100260453,
+                  0.050495049504950484,
+                  0.5155570729486741,
+                  0.7345420761856405,
+                  0.5521011396011397,
+                  0.6545227920227921,
+                  0.6660612535612536,
+                  0.05,
+                  0.5671428571428571,
+                  0.7661111111111112
+                ]
+              },
+              "predictions_filename": "seed11/float_fixed/clean_predictions.json",
+              "predictions_sha256": "cc36f5c9024e1db81cf4de03f4093a3620784091c40d584644dc2437129a0d81"
+            },
+            "shifted": {
+              "latency": {
+                "mean_seconds": 1.9117615034156188,
+                "p95_seconds": 2.06622070800222,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 248,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.5772270424931087,
+                  "map50": 0.7124679440017112,
+                  "map75": 0.6375368306061375,
+                  "ar100": 0.5932692307692308
+                },
+                "stats": [
+                  0.5772270424931087,
+                  0.7124679440017112,
+                  0.6375368306061375,
+                  0.01683168316831683,
+                  0.34781660835766837,
+                  0.6770350654113029,
+                  0.5011752136752137,
+                  0.5842948717948718,
+                  0.5932692307692308,
+                  0.016666666666666666,
+                  0.37428571428571433,
+                  0.7027777777777777
+                ]
+              },
+              "predictions_filename": "seed11/float_fixed/shifted_predictions.json",
+              "predictions_sha256": "368220e72470bd401cc8d878b2c27dbd42bb4a175054a0ba933269f34a319fd8"
+            }
+          },
+          "total_seconds_observed": 46.34081225000409,
+          "memory_observed": {
+            "cuda_peak_allocated_bytes": null,
+            "process_lifetime_peak_rss_bytes": 1043070976,
+            "rss_semantics": "process_lifetime_high_watermark_not_per_arm_or_model_storage"
+          }
+        },
+        "int4_fixed": {
+          "status": "complete",
+          "compute_dtype": "float32",
+          "quantized": true,
+          "ttt": false,
+          "storage_and_layers": {
+            "recipe": "symmetric_int4_per_output_channel_v1",
+            "arithmetic": "floating_point_after_transient_dequantization",
+            "quantized_layer_count": 72,
+            "adapter_layer_count": 0,
+            "trainable_parameters": 0,
+            "base_storage_bytes_before": 175086688,
+            "base_storage_bytes_after": 22434712,
+            "adapter_storage_bytes": 0
+          },
+          "base_unchanged": true,
+          "adaptation": {
+            "status": "disabled",
+            "optimizer_steps": 0,
+            "seconds": 0.0
+          },
+          "domains": {
+            "clean": {
+              "latency": {
+                "mean_seconds": 1.9842168436656114,
+                "p95_seconds": 2.019458000002487,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 340,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.532446952250114,
+                  "map50": 0.7468032406784421,
+                  "map75": 0.6731948694665468,
+                  "ar100": 0.5811609686609687
+                },
+                "stats": [
+                  0.532446952250114,
+                  0.7468032406784421,
+                  0.6731948694665468,
+                  0.02103960396039604,
+                  0.34955806116325916,
+                  0.645023692845475,
+                  0.43333333333333335,
+                  0.5657763532763533,
+                  0.5811609686609687,
+                  0.03333333333333333,
+                  0.5042857142857143,
+                  0.6722222222222222
+                ]
+              },
+              "predictions_filename": "seed11/int4_fixed/clean_predictions.json",
+              "predictions_sha256": "cfdebf28886d84f104b4ea681c68ac910d4533b97dbf555dfd53f1a644530f03"
+            },
+            "shifted": {
+              "latency": {
+                "mean_seconds": 2.044605864667877,
+                "p95_seconds": 2.197197417001007,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 285,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.5174157114333762,
+                  "map50": 0.7571042978147742,
+                  "map75": 0.557258796055044,
+                  "ar100": 0.5607193732193733
+                },
+                "stats": [
+                  0.5174157114333762,
+                  0.7571042978147742,
+                  0.557258796055044,
+                  0.04470644432864339,
+                  0.3505785386230931,
+                  0.6163551783749803,
+                  0.44120370370370365,
+                  0.5408475783475784,
+                  0.5607193732193733,
+                  0.06666666666666667,
+                  0.41,
+                  0.6537037037037037
+                ]
+              },
+              "predictions_filename": "seed11/int4_fixed/shifted_predictions.json",
+              "predictions_sha256": "8f5a204ee069e595a88f8072b8dd978925b5f7252480b063f5f3649a8885bbee"
+            }
+          },
+          "total_seconds_observed": 49.312655791996804,
+          "memory_observed": {
+            "cuda_peak_allocated_bytes": null,
+            "process_lifetime_peak_rss_bytes": 1054932992,
+            "rss_semantics": "process_lifetime_high_watermark_not_per_arm_or_model_storage"
+          }
+        },
+        "float_lora_ttt": {
+          "status": "complete",
+          "compute_dtype": "float32",
+          "quantized": false,
+          "ttt": true,
+          "storage_and_layers": {
+            "recipe": "floating_base_lora_v1",
+            "arithmetic": "floating_point",
+            "quantized_layer_count": 0,
+            "adapter_layer_count": 10,
+            "trainable_parameters": 131072,
+            "base_storage_bytes_before": 175086688,
+            "base_storage_bytes_after": 175086688,
+            "adapter_storage_bytes": 524288
+          },
+          "base_unchanged": true,
+          "adaptation": {
+            "status": "updated",
+            "stop_reason": null,
+            "base_unchanged": true,
+            "base_sha256": "994be33e09ee31945e07c447c94fd6515b89d63b0d3bdc16a52e5b48605f8512",
+            "adapter_changed": true,
+            "optimizer_steps": 4,
+            "seconds": 14.845236582994403,
+            "teacher_seconds": 7.891083374997834,
+            "update_seconds": 6.953634834004333,
+            "pseudo_label_counts": [
+              5,
+              2,
+              2,
+              5
+            ],
+            "teacher": "same_arm_before_adaptation_fixed_pseudo_labels",
+            "steps": [
+              {
+                "step": 0,
+                "support_index": 0,
+                "selected": 5,
+                "updated": true,
+                "loss": 0.3628162741661072,
+                "gradient_norm": 0.13080492615699768,
+                "update_norm": 1.3080492863082327e-05
+              },
+              {
+                "step": 0,
+                "support_index": 1,
+                "selected": 2,
+                "updated": true,
+                "loss": 0.09218370169401169,
+                "gradient_norm": 0.04112079739570618,
+                "update_norm": 1.3797469364362769e-05
+              },
+              {
+                "step": 0,
+                "support_index": 2,
+                "selected": 2,
+                "updated": true,
+                "loss": 0.20182828605175018,
+                "gradient_norm": 0.2136070877313614,
+                "update_norm": 2.5350194846396334e-05
+              },
+              {
+                "step": 0,
+                "support_index": 3,
+                "selected": 5,
+                "updated": true,
+                "loss": 0.5592466592788696,
+                "gradient_norm": 0.09640530496835709,
+                "update_norm": 2.727393621171359e-05
+              }
+            ]
+          },
+          "domains": {
+            "clean": {
+              "latency": {
+                "mean_seconds": 2.022045427083261,
+                "p95_seconds": 2.3126892500004033,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 253,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.6451002696985847,
+                  "map50": 0.7989448557858881,
+                  "map75": 0.7786729100260453,
+                  "ar100": 0.6660612535612536
+                },
+                "stats": [
+                  0.6451002696985847,
+                  0.7989448557858881,
+                  0.7786729100260453,
+                  0.050495049504950484,
+                  0.5155570729486741,
+                  0.7345420761856405,
+                  0.5521011396011397,
+                  0.6545227920227921,
+                  0.6660612535612536,
+                  0.05,
+                  0.5671428571428571,
+                  0.7661111111111112
+                ]
+              },
+              "predictions_filename": "seed11/float_lora_ttt/clean_predictions.json",
+              "predictions_sha256": "98049dce51673dbbf334b4635ef0ca1255947385dc9f39cb070d40d3b2c684ba"
+            },
+            "shifted": {
+              "latency": {
+                "mean_seconds": 2.0055940383329776,
+                "p95_seconds": 2.120835417001217,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 248,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.5772270424931087,
+                  "map50": 0.7124679440017112,
+                  "map75": 0.6375368306061375,
+                  "ar100": 0.5932692307692308
+                },
+                "stats": [
+                  0.5772270424931087,
+                  0.7124679440017112,
+                  0.6375368306061375,
+                  0.01683168316831683,
+                  0.34781660835766837,
+                  0.6770350654113029,
+                  0.5011752136752137,
+                  0.5842948717948718,
+                  0.5932692307692308,
+                  0.016666666666666666,
+                  0.37428571428571433,
+                  0.7027777777777777
+                ]
+              },
+              "predictions_filename": "seed11/float_lora_ttt/shifted_predictions.json",
+              "predictions_sha256": "bb380e612e6fd18f35886474d2f8d5c0f9b037f146ba63fb37418bd970720522"
+            }
+          },
+          "total_seconds_observed": 68.50936333299614,
+          "memory_observed": {
+            "cuda_peak_allocated_bytes": null,
+            "process_lifetime_peak_rss_bytes": 1226522624,
+            "rss_semantics": "process_lifetime_high_watermark_not_per_arm_or_model_storage"
+          },
+          "adapter": {
+            "filename": "seed11/float_lora_ttt/adapter.pt",
+            "sha256": "1ca6c20e9990bb1cbb06bba7fd7318c3d70e4652cdf3ca2c4b73a6e2f3ae1708",
+            "serialized_file_bytes": 532455,
+            "same_process_reload_prediction_parity": true
+          }
+        },
+        "int4_lora_ttt": {
+          "status": "complete",
+          "compute_dtype": "float32",
+          "quantized": true,
+          "ttt": true,
+          "storage_and_layers": {
+            "recipe": "symmetric_int4_per_output_channel_v1",
+            "arithmetic": "floating_point_after_transient_dequantization",
+            "quantized_layer_count": 72,
+            "adapter_layer_count": 10,
+            "trainable_parameters": 131072,
+            "base_storage_bytes_before": 175086688,
+            "base_storage_bytes_after": 22434712,
+            "adapter_storage_bytes": 524288
+          },
+          "base_unchanged": true,
+          "adaptation": {
+            "status": "updated",
+            "stop_reason": null,
+            "base_unchanged": true,
+            "base_sha256": "82e38a168d038f2dc23edebf2fc3f1d73900dd18f56a162d6111035702546d37",
+            "adapter_changed": true,
+            "optimizer_steps": 4,
+            "seconds": 15.653934458998265,
+            "teacher_seconds": 8.371474416999263,
+            "update_seconds": 7.282371583998611,
+            "pseudo_label_counts": [
+              3,
+              2,
+              1,
+              1
+            ],
+            "teacher": "same_arm_before_adaptation_fixed_pseudo_labels",
+            "steps": [
+              {
+                "step": 0,
+                "support_index": 0,
+                "selected": 3,
+                "updated": true,
+                "loss": 0.3674933910369873,
+                "gradient_norm": 0.08674056828022003,
+                "update_norm": 8.674057426105719e-06
+              },
+              {
+                "step": 0,
+                "support_index": 1,
+                "selected": 2,
+                "updated": true,
+                "loss": 0.17077721655368805,
+                "gradient_norm": 0.03955464065074921,
+                "update_norm": 9.567642337060533e-06
+              },
+              {
+                "step": 0,
+                "support_index": 2,
+                "selected": 1,
+                "updated": true,
+                "loss": 0.27114933729171753,
+                "gradient_norm": 0.10968969762325287,
+                "update_norm": 1.491807597631123e-05
+              },
+              {
+                "step": 0,
+                "support_index": 3,
+                "selected": 1,
+                "updated": true,
+                "loss": 0.26382744312286377,
+                "gradient_norm": 0.20433011651039124,
+                "update_norm": 2.5977931727538817e-05
+              }
+            ]
+          },
+          "domains": {
+            "clean": {
+              "latency": {
+                "mean_seconds": 2.0749743229165083,
+                "p95_seconds": 2.1102415420027683,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 340,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.532446952250114,
+                  "map50": 0.7468032406784421,
+                  "map75": 0.6731948694665468,
+                  "ar100": 0.5811609686609687
+                },
+                "stats": [
+                  0.532446952250114,
+                  0.7468032406784421,
+                  0.6731948694665468,
+                  0.02103960396039604,
+                  0.34955806116325916,
+                  0.645023692845475,
+                  0.43333333333333335,
+                  0.5657763532763533,
+                  0.5811609686609687,
+                  0.03333333333333333,
+                  0.5042857142857143,
+                  0.6722222222222222
+                ]
+              },
+              "predictions_filename": "seed11/int4_lora_ttt/clean_predictions.json",
+              "predictions_sha256": "325a6b0cea7c72ca507611de7c1eaf5ae208b01679c9cb0cdd879b0a7b6b8577"
+            },
+            "shifted": {
+              "latency": {
+                "mean_seconds": 2.081996868000109,
+                "p95_seconds": 2.169861040994874,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 285,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.5174157114333762,
+                  "map50": 0.7571042978147742,
+                  "map75": 0.557258796055044,
+                  "ar100": 0.5607193732193733
+                },
+                "stats": [
+                  0.5174157114333762,
+                  0.7571042978147742,
+                  0.557258796055044,
+                  0.04470644432864339,
+                  0.3505785386230931,
+                  0.6163551783749803,
+                  0.44120370370370365,
+                  0.5408475783475784,
+                  0.5607193732193733,
+                  0.06666666666666667,
+                  0.41,
+                  0.6537037037037037
+                ]
+              },
+              "predictions_filename": "seed11/int4_lora_ttt/shifted_predictions.json",
+              "predictions_sha256": "1350bf2cc71cdd04e8fbd3157c9d723a1e5c1e5645a41ba1a5fe859f08af402e"
+            }
+          },
+          "total_seconds_observed": 70.73481183300464,
+          "memory_observed": {
+            "cuda_peak_allocated_bytes": null,
+            "process_lifetime_peak_rss_bytes": 1226522624,
+            "rss_semantics": "process_lifetime_high_watermark_not_per_arm_or_model_storage"
+          },
+          "adapter": {
+            "filename": "seed11/int4_lora_ttt/adapter.pt",
+            "sha256": "71fda1b1e2ede66310711086ced3be9814446156308ddfa044da5d533b53427d",
+            "serialized_file_bytes": 540583,
+            "same_process_reload_prediction_parity": true
+          }
+        }
+      }
+    },
+    {
+      "seed": 22,
+      "raw_report_filename": "seed22/report.json",
+      "raw_report_sha256": "e8bc250fea7d8833b4da3c08365e4067e253a7ee64296bbcd836133ccf177813",
+      "deltas": {
+        "float_lora_ttt": {
+          "clean": 0.0,
+          "shifted": 0.0
+        },
+        "int4_lora_ttt": {
+          "clean": 0.0,
+          "shifted": 0.0
+        }
+      },
+      "arms": {
+        "float_fixed": {
+          "status": "complete",
+          "compute_dtype": "float32",
+          "quantized": false,
+          "ttt": false,
+          "storage_and_layers": {
+            "recipe": "floating_base_lora_v1",
+            "arithmetic": "floating_point",
+            "quantized_layer_count": 0,
+            "adapter_layer_count": 0,
+            "trainable_parameters": 0,
+            "base_storage_bytes_before": 175086688,
+            "base_storage_bytes_after": 175086688,
+            "adapter_storage_bytes": 0
+          },
+          "base_unchanged": true,
+          "adaptation": {
+            "status": "disabled",
+            "optimizer_steps": 0,
+            "seconds": 0.0
+          },
+          "domains": {
+            "clean": {
+              "latency": {
+                "mean_seconds": 2.0130005590841997,
+                "p95_seconds": 2.060260042002483,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 253,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.6451002696985847,
+                  "map50": 0.7989448557858881,
+                  "map75": 0.7786729100260453,
+                  "ar100": 0.6660612535612536
+                },
+                "stats": [
+                  0.6451002696985847,
+                  0.7989448557858881,
+                  0.7786729100260453,
+                  0.050495049504950484,
+                  0.5155570729486741,
+                  0.7345420761856405,
+                  0.5521011396011397,
+                  0.6545227920227921,
+                  0.6660612535612536,
+                  0.05,
+                  0.5671428571428571,
+                  0.7661111111111112
+                ]
+              },
+              "predictions_filename": "seed22/float_fixed/clean_predictions.json",
+              "predictions_sha256": "cc36f5c9024e1db81cf4de03f4093a3620784091c40d584644dc2437129a0d81"
+            },
+            "shifted": {
+              "latency": {
+                "mean_seconds": 2.0189204618333556,
+                "p95_seconds": 2.0699263750066166,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 248,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.5772270424931087,
+                  "map50": 0.7124679440017112,
+                  "map75": 0.6375368306061375,
+                  "ar100": 0.5932692307692308
+                },
+                "stats": [
+                  0.5772270424931087,
+                  0.7124679440017112,
+                  0.6375368306061375,
+                  0.01683168316831683,
+                  0.34781660835766837,
+                  0.6770350654113029,
+                  0.5011752136752137,
+                  0.5842948717948718,
+                  0.5932692307692308,
+                  0.016666666666666666,
+                  0.37428571428571433,
+                  0.7027777777777777
+                ]
+              },
+              "predictions_filename": "seed22/float_fixed/shifted_predictions.json",
+              "predictions_sha256": "368220e72470bd401cc8d878b2c27dbd42bb4a175054a0ba933269f34a319fd8"
+            }
+          },
+          "total_seconds_observed": 49.23127262500202,
+          "memory_observed": {
+            "cuda_peak_allocated_bytes": null,
+            "process_lifetime_peak_rss_bytes": 1226522624,
+            "rss_semantics": "process_lifetime_high_watermark_not_per_arm_or_model_storage"
+          }
+        },
+        "int4_fixed": {
+          "status": "complete",
+          "compute_dtype": "float32",
+          "quantized": true,
+          "ttt": false,
+          "storage_and_layers": {
+            "recipe": "symmetric_int4_per_output_channel_v1",
+            "arithmetic": "floating_point_after_transient_dequantization",
+            "quantized_layer_count": 72,
+            "adapter_layer_count": 0,
+            "trainable_parameters": 0,
+            "base_storage_bytes_before": 175086688,
+            "base_storage_bytes_after": 22434712,
+            "adapter_storage_bytes": 0
+          },
+          "base_unchanged": true,
+          "adaptation": {
+            "status": "disabled",
+            "optimizer_steps": 0,
+            "seconds": 0.0
+          },
+          "domains": {
+            "clean": {
+              "latency": {
+                "mean_seconds": 2.0830030728351026,
+                "p95_seconds": 2.1410553750029067,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 340,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.532446952250114,
+                  "map50": 0.7468032406784421,
+                  "map75": 0.6731948694665468,
+                  "ar100": 0.5811609686609687
+                },
+                "stats": [
+                  0.532446952250114,
+                  0.7468032406784421,
+                  0.6731948694665468,
+                  0.02103960396039604,
+                  0.34955806116325916,
+                  0.645023692845475,
+                  0.43333333333333335,
+                  0.5657763532763533,
+                  0.5811609686609687,
+                  0.03333333333333333,
+                  0.5042857142857143,
+                  0.6722222222222222
+                ]
+              },
+              "predictions_filename": "seed22/int4_fixed/clean_predictions.json",
+              "predictions_sha256": "cfdebf28886d84f104b4ea681c68ac910d4533b97dbf555dfd53f1a644530f03"
+            },
+            "shifted": {
+              "latency": {
+                "mean_seconds": 2.090685756998937,
+                "p95_seconds": 2.10899233300006,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 285,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.5174157114333762,
+                  "map50": 0.7571042978147742,
+                  "map75": 0.557258796055044,
+                  "ar100": 0.5607193732193733
+                },
+                "stats": [
+                  0.5174157114333762,
+                  0.7571042978147742,
+                  0.557258796055044,
+                  0.04470644432864339,
+                  0.3505785386230931,
+                  0.6163551783749803,
+                  0.44120370370370365,
+                  0.5408475783475784,
+                  0.5607193732193733,
+                  0.06666666666666667,
+                  0.41,
+                  0.6537037037037037
+                ]
+              },
+              "predictions_filename": "seed22/int4_fixed/shifted_predictions.json",
+              "predictions_sha256": "8f5a204ee069e595a88f8072b8dd978925b5f7252480b063f5f3649a8885bbee"
+            }
+          },
+          "total_seconds_observed": 51.039750625001034,
+          "memory_observed": {
+            "cuda_peak_allocated_bytes": null,
+            "process_lifetime_peak_rss_bytes": 1226522624,
+            "rss_semantics": "process_lifetime_high_watermark_not_per_arm_or_model_storage"
+          }
+        },
+        "float_lora_ttt": {
+          "status": "complete",
+          "compute_dtype": "float32",
+          "quantized": false,
+          "ttt": true,
+          "storage_and_layers": {
+            "recipe": "floating_base_lora_v1",
+            "arithmetic": "floating_point",
+            "quantized_layer_count": 0,
+            "adapter_layer_count": 10,
+            "trainable_parameters": 131072,
+            "base_storage_bytes_before": 175086688,
+            "base_storage_bytes_after": 175086688,
+            "adapter_storage_bytes": 524288
+          },
+          "base_unchanged": true,
+          "adaptation": {
+            "status": "updated",
+            "stop_reason": null,
+            "base_unchanged": true,
+            "base_sha256": "994be33e09ee31945e07c447c94fd6515b89d63b0d3bdc16a52e5b48605f8512",
+            "adapter_changed": true,
+            "optimizer_steps": 4,
+            "seconds": 15.137082415996701,
+            "teacher_seconds": 8.085148415993899,
+            "update_seconds": 7.051880207996874,
+            "pseudo_label_counts": [
+              5,
+              2,
+              2,
+              5
+            ],
+            "teacher": "same_arm_before_adaptation_fixed_pseudo_labels",
+            "steps": [
+              {
+                "step": 0,
+                "support_index": 0,
+                "selected": 5,
+                "updated": true,
+                "loss": 0.3639987111091614,
+                "gradient_norm": 0.12253647297620773,
+                "update_norm": 1.225364667334361e-05
+              },
+              {
+                "step": 0,
+                "support_index": 1,
+                "selected": 2,
+                "updated": true,
+                "loss": 0.10451138019561768,
+                "gradient_norm": 0.04552064463496208,
+                "update_norm": 1.3165698874217924e-05
+              },
+              {
+                "step": 0,
+                "support_index": 2,
+                "selected": 2,
+                "updated": true,
+                "loss": 0.21574322879314423,
+                "gradient_norm": 0.1935105323791504,
+                "update_norm": 2.32593829423422e-05
+              },
+              {
+                "step": 0,
+                "support_index": 3,
+                "selected": 5,
+                "updated": true,
+                "loss": 0.4899752140045166,
+                "gradient_norm": 0.0803009644150734,
+                "update_norm": 2.4624230718472973e-05
+              }
+            ]
+          },
+          "domains": {
+            "clean": {
+              "latency": {
+                "mean_seconds": 2.0271800763324186,
+                "p95_seconds": 2.077478291001171,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 253,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.6451002696985847,
+                  "map50": 0.7989448557858881,
+                  "map75": 0.7786729100260453,
+                  "ar100": 0.6660612535612536
+                },
+                "stats": [
+                  0.6451002696985847,
+                  0.7989448557858881,
+                  0.7786729100260453,
+                  0.050495049504950484,
+                  0.5155570729486741,
+                  0.7345420761856405,
+                  0.5521011396011397,
+                  0.6545227920227921,
+                  0.6660612535612536,
+                  0.05,
+                  0.5671428571428571,
+                  0.7661111111111112
+                ]
+              },
+              "predictions_filename": "seed22/float_lora_ttt/clean_predictions.json",
+              "predictions_sha256": "3cbcfcafa108f42f0e4aa34a9312347418a1c9289130094f965d46f53c4563d0"
+            },
+            "shifted": {
+              "latency": {
+                "mean_seconds": 2.0910504444170024,
+                "p95_seconds": 2.4193080839977483,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 248,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.5772270424931087,
+                  "map50": 0.7124679440017112,
+                  "map75": 0.6375368306061375,
+                  "ar100": 0.5932692307692308
+                },
+                "stats": [
+                  0.5772270424931087,
+                  0.7124679440017112,
+                  0.6375368306061375,
+                  0.01683168316831683,
+                  0.34781660835766837,
+                  0.6770350654113029,
+                  0.5011752136752137,
+                  0.5842948717948718,
+                  0.5932692307692308,
+                  0.016666666666666666,
+                  0.37428571428571433,
+                  0.7027777777777777
+                ]
+              },
+              "predictions_filename": "seed22/float_lora_ttt/shifted_predictions.json",
+              "predictions_sha256": "56763c36f32a8839c454b2970ac0e0b6f0ed347c8c400683ef2c2d233e3d19ea"
+            }
+          },
+          "total_seconds_observed": 70.03491324999777,
+          "memory_observed": {
+            "cuda_peak_allocated_bytes": null,
+            "process_lifetime_peak_rss_bytes": 1279787008,
+            "rss_semantics": "process_lifetime_high_watermark_not_per_arm_or_model_storage"
+          },
+          "adapter": {
+            "filename": "seed22/float_lora_ttt/adapter.pt",
+            "sha256": "f43381d4e14c0ca41e164b29ace3948d6f54a53a6cdd71146cd26274878b32c7",
+            "serialized_file_bytes": 532455,
+            "same_process_reload_prediction_parity": true
+          }
+        },
+        "int4_lora_ttt": {
+          "status": "complete",
+          "compute_dtype": "float32",
+          "quantized": true,
+          "ttt": true,
+          "storage_and_layers": {
+            "recipe": "symmetric_int4_per_output_channel_v1",
+            "arithmetic": "floating_point_after_transient_dequantization",
+            "quantized_layer_count": 72,
+            "adapter_layer_count": 10,
+            "trainable_parameters": 131072,
+            "base_storage_bytes_before": 175086688,
+            "base_storage_bytes_after": 22434712,
+            "adapter_storage_bytes": 524288
+          },
+          "base_unchanged": true,
+          "adaptation": {
+            "status": "updated",
+            "stop_reason": null,
+            "base_unchanged": true,
+            "base_sha256": "82e38a168d038f2dc23edebf2fc3f1d73900dd18f56a162d6111035702546d37",
+            "adapter_changed": true,
+            "optimizer_steps": 4,
+            "seconds": 15.562020709003264,
+            "teacher_seconds": 8.339340500002436,
+            "update_seconds": 7.222627082999679,
+            "pseudo_label_counts": [
+              3,
+              2,
+              1,
+              1
+            ],
+            "teacher": "same_arm_before_adaptation_fixed_pseudo_labels",
+            "steps": [
+              {
+                "step": 0,
+                "support_index": 0,
+                "selected": 3,
+                "updated": true,
+                "loss": 0.3701286315917969,
+                "gradient_norm": 0.09768252074718475,
+                "update_norm": 9.768252311914694e-06
+              },
+              {
+                "step": 0,
+                "support_index": 1,
+                "selected": 2,
+                "updated": true,
+                "loss": 0.19032728672027588,
+                "gradient_norm": 0.0382046103477478,
+                "update_norm": 1.0573266081337351e-05
+              },
+              {
+                "step": 0,
+                "support_index": 2,
+                "selected": 1,
+                "updated": true,
+                "loss": 0.2616705894470215,
+                "gradient_norm": 0.09368573129177094,
+                "update_norm": 1.4357857253344264e-05
+              },
+              {
+                "step": 0,
+                "support_index": 3,
+                "selected": 1,
+                "updated": true,
+                "loss": 0.23487703502178192,
+                "gradient_norm": 0.14549802243709564,
+                "update_norm": 2.0998208128730766e-05
+              }
+            ]
+          },
+          "domains": {
+            "clean": {
+              "latency": {
+                "mean_seconds": 2.1126840624177325,
+                "p95_seconds": 2.1578166660037823,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 340,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.532446952250114,
+                  "map50": 0.7468032406784421,
+                  "map75": 0.6731948694665468,
+                  "ar100": 0.5811609686609687
+                },
+                "stats": [
+                  0.532446952250114,
+                  0.7468032406784421,
+                  0.6731948694665468,
+                  0.02103960396039604,
+                  0.34955806116325916,
+                  0.645023692845475,
+                  0.43333333333333335,
+                  0.5657763532763533,
+                  0.5811609686609687,
+                  0.03333333333333333,
+                  0.5042857142857143,
+                  0.6722222222222222
+                ]
+              },
+              "predictions_filename": "seed22/int4_lora_ttt/clean_predictions.json",
+              "predictions_sha256": "9e0bdb086d3071f656c4d66a0bd9a9932acba79c0a83e1d833f0c6fa4e7dd7fa"
+            },
+            "shifted": {
+              "latency": {
+                "mean_seconds": 2.109017829664784,
+                "p95_seconds": 2.1512564169970574,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 285,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.5174157114333762,
+                  "map50": 0.7571042978147742,
+                  "map75": 0.557258796055044,
+                  "ar100": 0.5607193732193733
+                },
+                "stats": [
+                  0.5174157114333762,
+                  0.7571042978147742,
+                  0.557258796055044,
+                  0.04470644432864339,
+                  0.3505785386230931,
+                  0.6163551783749803,
+                  0.44120370370370365,
+                  0.5408475783475784,
+                  0.5607193732193733,
+                  0.06666666666666667,
+                  0.41,
+                  0.6537037037037037
+                ]
+              },
+              "predictions_filename": "seed22/int4_lora_ttt/shifted_predictions.json",
+              "predictions_sha256": "e1dbcf0a7d17b08926f808a30bff948393b6d6a94d99d51b7f2a408e7341d30a"
+            }
+          },
+          "total_seconds_observed": 71.4671339580018,
+          "memory_observed": {
+            "cuda_peak_allocated_bytes": null,
+            "process_lifetime_peak_rss_bytes": 1279787008,
+            "rss_semantics": "process_lifetime_high_watermark_not_per_arm_or_model_storage"
+          },
+          "adapter": {
+            "filename": "seed22/int4_lora_ttt/adapter.pt",
+            "sha256": "b1ab55aeceb3008969baff0fe25b8867e5a9c210d10cdec66048bf534fe75bd7",
+            "serialized_file_bytes": 540583,
+            "same_process_reload_prediction_parity": true
+          }
+        }
+      }
+    },
+    {
+      "seed": 33,
+      "raw_report_filename": "seed33/report.json",
+      "raw_report_sha256": "28c41ffe1c9baf36b81d1dbe3e6ddc32a1c6cda92e6d377931951b02f69305c6",
+      "deltas": {
+        "float_lora_ttt": {
+          "clean": 0.0,
+          "shifted": 0.0
+        },
+        "int4_lora_ttt": {
+          "clean": 0.0,
+          "shifted": 0.0
+        }
+      },
+      "arms": {
+        "float_fixed": {
+          "status": "complete",
+          "compute_dtype": "float32",
+          "quantized": false,
+          "ttt": false,
+          "storage_and_layers": {
+            "recipe": "floating_base_lora_v1",
+            "arithmetic": "floating_point",
+            "quantized_layer_count": 0,
+            "adapter_layer_count": 0,
+            "trainable_parameters": 0,
+            "base_storage_bytes_before": 175086688,
+            "base_storage_bytes_after": 175086688,
+            "adapter_storage_bytes": 0
+          },
+          "base_unchanged": true,
+          "adaptation": {
+            "status": "disabled",
+            "optimizer_steps": 0,
+            "seconds": 0.0
+          },
+          "domains": {
+            "clean": {
+              "latency": {
+                "mean_seconds": 2.0620764096681037,
+                "p95_seconds": 2.142964208003832,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 253,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.6451002696985847,
+                  "map50": 0.7989448557858881,
+                  "map75": 0.7786729100260453,
+                  "ar100": 0.6660612535612536
+                },
+                "stats": [
+                  0.6451002696985847,
+                  0.7989448557858881,
+                  0.7786729100260453,
+                  0.050495049504950484,
+                  0.5155570729486741,
+                  0.7345420761856405,
+                  0.5521011396011397,
+                  0.6545227920227921,
+                  0.6660612535612536,
+                  0.05,
+                  0.5671428571428571,
+                  0.7661111111111112
+                ]
+              },
+              "predictions_filename": "seed33/float_fixed/clean_predictions.json",
+              "predictions_sha256": "cc36f5c9024e1db81cf4de03f4093a3620784091c40d584644dc2437129a0d81"
+            },
+            "shifted": {
+              "latency": {
+                "mean_seconds": 2.0428019686666326,
+                "p95_seconds": 2.104509374999907,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 248,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.5772270424931087,
+                  "map50": 0.7124679440017112,
+                  "map75": 0.6375368306061375,
+                  "ar100": 0.5932692307692308
+                },
+                "stats": [
+                  0.5772270424931087,
+                  0.7124679440017112,
+                  0.6375368306061375,
+                  0.01683168316831683,
+                  0.34781660835766837,
+                  0.6770350654113029,
+                  0.5011752136752137,
+                  0.5842948717948718,
+                  0.5932692307692308,
+                  0.016666666666666666,
+                  0.37428571428571433,
+                  0.7027777777777777
+                ]
+              },
+              "predictions_filename": "seed33/float_fixed/shifted_predictions.json",
+              "predictions_sha256": "368220e72470bd401cc8d878b2c27dbd42bb4a175054a0ba933269f34a319fd8"
+            }
+          },
+          "total_seconds_observed": 50.08269224999822,
+          "memory_observed": {
+            "cuda_peak_allocated_bytes": null,
+            "process_lifetime_peak_rss_bytes": 1279787008,
+            "rss_semantics": "process_lifetime_high_watermark_not_per_arm_or_model_storage"
+          }
+        },
+        "int4_fixed": {
+          "status": "complete",
+          "compute_dtype": "float32",
+          "quantized": true,
+          "ttt": false,
+          "storage_and_layers": {
+            "recipe": "symmetric_int4_per_output_channel_v1",
+            "arithmetic": "floating_point_after_transient_dequantization",
+            "quantized_layer_count": 72,
+            "adapter_layer_count": 0,
+            "trainable_parameters": 0,
+            "base_storage_bytes_before": 175086688,
+            "base_storage_bytes_after": 22434712,
+            "adapter_storage_bytes": 0
+          },
+          "base_unchanged": true,
+          "adaptation": {
+            "status": "disabled",
+            "optimizer_steps": 0,
+            "seconds": 0.0
+          },
+          "domains": {
+            "clean": {
+              "latency": {
+                "mean_seconds": 2.1047916979156676,
+                "p95_seconds": 2.1398707089974778,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 340,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.532446952250114,
+                  "map50": 0.7468032406784421,
+                  "map75": 0.6731948694665468,
+                  "ar100": 0.5811609686609687
+                },
+                "stats": [
+                  0.532446952250114,
+                  0.7468032406784421,
+                  0.6731948694665468,
+                  0.02103960396039604,
+                  0.34955806116325916,
+                  0.645023692845475,
+                  0.43333333333333335,
+                  0.5657763532763533,
+                  0.5811609686609687,
+                  0.03333333333333333,
+                  0.5042857142857143,
+                  0.6722222222222222
+                ]
+              },
+              "predictions_filename": "seed33/int4_fixed/clean_predictions.json",
+              "predictions_sha256": "cfdebf28886d84f104b4ea681c68ac910d4533b97dbf555dfd53f1a644530f03"
+            },
+            "shifted": {
+              "latency": {
+                "mean_seconds": 2.3959438785835423,
+                "p95_seconds": 3.92465975000232,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 285,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.5174157114333762,
+                  "map50": 0.7571042978147742,
+                  "map75": 0.557258796055044,
+                  "ar100": 0.5607193732193733
+                },
+                "stats": [
+                  0.5174157114333762,
+                  0.7571042978147742,
+                  0.557258796055044,
+                  0.04470644432864339,
+                  0.3505785386230931,
+                  0.6163551783749803,
+                  0.44120370370370365,
+                  0.5408475783475784,
+                  0.5607193732193733,
+                  0.06666666666666667,
+                  0.41,
+                  0.6537037037037037
+                ]
+              },
+              "predictions_filename": "seed33/int4_fixed/shifted_predictions.json",
+              "predictions_sha256": "8f5a204ee069e595a88f8072b8dd978925b5f7252480b063f5f3649a8885bbee"
+            }
+          },
+          "total_seconds_observed": 54.997018707996176,
+          "memory_observed": {
+            "cuda_peak_allocated_bytes": null,
+            "process_lifetime_peak_rss_bytes": 1279787008,
+            "rss_semantics": "process_lifetime_high_watermark_not_per_arm_or_model_storage"
+          }
+        },
+        "float_lora_ttt": {
+          "status": "complete",
+          "compute_dtype": "float32",
+          "quantized": false,
+          "ttt": true,
+          "storage_and_layers": {
+            "recipe": "floating_base_lora_v1",
+            "arithmetic": "floating_point",
+            "quantized_layer_count": 0,
+            "adapter_layer_count": 10,
+            "trainable_parameters": 131072,
+            "base_storage_bytes_before": 175086688,
+            "base_storage_bytes_after": 175086688,
+            "adapter_storage_bytes": 524288
+          },
+          "base_unchanged": true,
+          "adaptation": {
+            "status": "updated",
+            "stop_reason": null,
+            "base_unchanged": true,
+            "base_sha256": "994be33e09ee31945e07c447c94fd6515b89d63b0d3bdc16a52e5b48605f8512",
+            "adapter_changed": true,
+            "optimizer_steps": 4,
+            "seconds": 15.35640533399419,
+            "teacher_seconds": 8.13296766699932,
+            "update_seconds": 7.223344707999786,
+            "pseudo_label_counts": [
+              5,
+              2,
+              2,
+              5
+            ],
+            "teacher": "same_arm_before_adaptation_fixed_pseudo_labels",
+            "steps": [
+              {
+                "step": 0,
+                "support_index": 0,
+                "selected": 5,
+                "updated": true,
+                "loss": 0.38401079177856445,
+                "gradient_norm": 0.14478699862957,
+                "update_norm": 1.4478702723863535e-05
+              },
+              {
+                "step": 0,
+                "support_index": 1,
+                "selected": 2,
+                "updated": true,
+                "loss": 0.10251728445291519,
+                "gradient_norm": 0.042058296501636505,
+                "update_norm": 1.522598813608056e-05
+              },
+              {
+                "step": 0,
+                "support_index": 2,
+                "selected": 2,
+                "updated": true,
+                "loss": 0.2269078940153122,
+                "gradient_norm": 0.23406857252120972,
+                "update_norm": 2.800119727908168e-05
+              },
+              {
+                "step": 0,
+                "support_index": 3,
+                "selected": 5,
+                "updated": true,
+                "loss": 0.5750282406806946,
+                "gradient_norm": 0.1101723238825798,
+                "update_norm": 3.015046240761876e-05
+              }
+            ]
+          },
+          "domains": {
+            "clean": {
+              "latency": {
+                "mean_seconds": 2.0329717432505277,
+                "p95_seconds": 2.07035912500578,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 253,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.6451002696985847,
+                  "map50": 0.7989448557858881,
+                  "map75": 0.7786729100260453,
+                  "ar100": 0.6660612535612536
+                },
+                "stats": [
+                  0.6451002696985847,
+                  0.7989448557858881,
+                  0.7786729100260453,
+                  0.050495049504950484,
+                  0.5155570729486741,
+                  0.7345420761856405,
+                  0.5521011396011397,
+                  0.6545227920227921,
+                  0.6660612535612536,
+                  0.05,
+                  0.5671428571428571,
+                  0.7661111111111112
+                ]
+              },
+              "predictions_filename": "seed33/float_lora_ttt/clean_predictions.json",
+              "predictions_sha256": "b590788a22aef6e00a0c56f00b0642b1aae608fa6245fb172b4c2bed874bca1a"
+            },
+            "shifted": {
+              "latency": {
+                "mean_seconds": 2.02125432649882,
+                "p95_seconds": 2.0815027089993237,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 248,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.5772270424931087,
+                  "map50": 0.7124679440017112,
+                  "map75": 0.6375368306061375,
+                  "ar100": 0.5932692307692308
+                },
+                "stats": [
+                  0.5772270424931087,
+                  0.7124679440017112,
+                  0.6375368306061375,
+                  0.01683168316831683,
+                  0.34781660835766837,
+                  0.6770350654113029,
+                  0.5011752136752137,
+                  0.5842948717948718,
+                  0.5932692307692308,
+                  0.016666666666666666,
+                  0.37428571428571433,
+                  0.7027777777777777
+                ]
+              },
+              "predictions_filename": "seed33/float_lora_ttt/shifted_predictions.json",
+              "predictions_sha256": "bd218fcb5dcc9ec8c246fc5877f763fa02b1ee6e4c46ab545a954755f1249348"
+            }
+          },
+          "total_seconds_observed": 69.4260798749965,
+          "memory_observed": {
+            "cuda_peak_allocated_bytes": null,
+            "process_lifetime_peak_rss_bytes": 1279787008,
+            "rss_semantics": "process_lifetime_high_watermark_not_per_arm_or_model_storage"
+          },
+          "adapter": {
+            "filename": "seed33/float_lora_ttt/adapter.pt",
+            "sha256": "754096d23ea26c91075e083b364b1870720bf3bcf30a54090b02b3de2b163821",
+            "serialized_file_bytes": 532455,
+            "same_process_reload_prediction_parity": true
+          }
+        },
+        "int4_lora_ttt": {
+          "status": "complete",
+          "compute_dtype": "float32",
+          "quantized": true,
+          "ttt": true,
+          "storage_and_layers": {
+            "recipe": "symmetric_int4_per_output_channel_v1",
+            "arithmetic": "floating_point_after_transient_dequantization",
+            "quantized_layer_count": 72,
+            "adapter_layer_count": 10,
+            "trainable_parameters": 131072,
+            "base_storage_bytes_before": 175086688,
+            "base_storage_bytes_after": 22434712,
+            "adapter_storage_bytes": 524288
+          },
+          "base_unchanged": true,
+          "adaptation": {
+            "status": "updated",
+            "stop_reason": null,
+            "base_unchanged": true,
+            "base_sha256": "82e38a168d038f2dc23edebf2fc3f1d73900dd18f56a162d6111035702546d37",
+            "adapter_changed": true,
+            "optimizer_steps": 4,
+            "seconds": 15.884538625003188,
+            "teacher_seconds": 8.537968500000716,
+            "update_seconds": 7.3463569579980685,
+            "pseudo_label_counts": [
+              3,
+              2,
+              1,
+              1
+            ],
+            "teacher": "same_arm_before_adaptation_fixed_pseudo_labels",
+            "steps": [
+              {
+                "step": 0,
+                "support_index": 0,
+                "selected": 3,
+                "updated": true,
+                "loss": 0.3861110806465149,
+                "gradient_norm": 0.10346303880214691,
+                "update_norm": 1.0346305316488724e-05
+              },
+              {
+                "step": 0,
+                "support_index": 1,
+                "selected": 2,
+                "updated": true,
+                "loss": 0.1884722262620926,
+                "gradient_norm": 0.049003660678863525,
+                "update_norm": 1.1630535482254345e-05
+              },
+              {
+                "step": 0,
+                "support_index": 2,
+                "selected": 1,
+                "updated": true,
+                "loss": 0.2758554518222809,
+                "gradient_norm": 0.1341032236814499,
+                "update_norm": 1.850029184424784e-05
+              },
+              {
+                "step": 0,
+                "support_index": 3,
+                "selected": 1,
+                "updated": true,
+                "loss": 0.28838616609573364,
+                "gradient_norm": 0.2482965886592865,
+                "update_norm": 3.233996903873049e-05
+              }
+            ]
+          },
+          "domains": {
+            "clean": {
+              "latency": {
+                "mean_seconds": 2.095421288250994,
+                "p95_seconds": 2.158456083998317,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 340,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.532446952250114,
+                  "map50": 0.7468032406784421,
+                  "map75": 0.6731948694665468,
+                  "ar100": 0.5811609686609687
+                },
+                "stats": [
+                  0.532446952250114,
+                  0.7468032406784421,
+                  0.6731948694665468,
+                  0.02103960396039604,
+                  0.34955806116325916,
+                  0.645023692845475,
+                  0.43333333333333335,
+                  0.5657763532763533,
+                  0.5811609686609687,
+                  0.03333333333333333,
+                  0.5042857142857143,
+                  0.6722222222222222
+                ]
+              },
+              "predictions_filename": "seed33/int4_lora_ttt/clean_predictions.json",
+              "predictions_sha256": "94d98c4d64a920bae91d87eded77c0ab25a5b1b9f533b34070803b35bf980ee9"
+            },
+            "shifted": {
+              "latency": {
+                "mean_seconds": 2.1193792569980965,
+                "p95_seconds": 2.166098041998339,
+                "sample_count": 12,
+                "warmup_excluded": false
+              },
+              "detections": 285,
+              "evaluation": {
+                "metric_semantics": "pycocotools_coco_bbox",
+                "metrics": {
+                  "map50_95": 0.5174157114333762,
+                  "map50": 0.7571042978147742,
+                  "map75": 0.557258796055044,
+                  "ar100": 0.5607193732193733
+                },
+                "stats": [
+                  0.5174157114333762,
+                  0.7571042978147742,
+                  0.557258796055044,
+                  0.04470644432864339,
+                  0.3505785386230931,
+                  0.6163551783749803,
+                  0.44120370370370365,
+                  0.5408475783475784,
+                  0.5607193732193733,
+                  0.06666666666666667,
+                  0.41,
+                  0.6537037037037037
+                ]
+              },
+              "predictions_filename": "seed33/int4_lora_ttt/shifted_predictions.json",
+              "predictions_sha256": "df3f121fd84c8ff02e828f700e024eaf424763eaa5747c052b4009380417f9a8"
+            }
+          },
+          "total_seconds_observed": 71.68116299999383,
+          "memory_observed": {
+            "cuda_peak_allocated_bytes": null,
+            "process_lifetime_peak_rss_bytes": 1279787008,
+            "rss_semantics": "process_lifetime_high_watermark_not_per_arm_or_model_storage"
+          },
+          "adapter": {
+            "filename": "seed33/int4_lora_ttt/adapter.pt",
+            "sha256": "c714eccabdd6f03624dfd1bdfa043272580ef05b17de055fe9114685d1bbabe6",
+            "serialized_file_bytes": 540583,
+            "same_process_reload_prediction_parity": true
+          }
+        }
+      }
+    }
+  ]
+}

@@ -274,6 +274,7 @@ Reference docs:
 - [Predictions schema](predictions_schema.md)
 - [Adapter interface contract](adapter_contract.md)
 - [TTT protocol](ttt_protocol.md)
+- [CNN quantized LoRA TTT comparison](cnn_qlora_ttt.md)
 - [TTT before-after compare boilerplates](ttt_compare_boilerplates.md)
 
 ## D) Bench/Parity (qualification lane)
